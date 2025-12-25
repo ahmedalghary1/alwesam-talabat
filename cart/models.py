@@ -28,9 +28,10 @@ class CartItem(models.Model):
     variant = models.ForeignKey(ProductVariant, on_delete=models.SET_NULL, null=True, blank=True)
     quantity = models.PositiveIntegerField(default=1)  # Always stored in pieces
     unit_type = models.CharField(max_length=10, choices=UNIT_TYPE_CHOICES, default='carton')
+    size_name = models.CharField(max_length=100, blank=True, help_text="اسم الطول/المقاس المختار")
 
     class Meta:
-        unique_together = ['cart', 'product', 'variant', 'unit_type']
+        unique_together = ['cart', 'product', 'variant', 'unit_type', 'size_name']
 
     def get_pcs_carton(self):
         """Get pcs_carton from variant or product"""

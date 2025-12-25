@@ -85,6 +85,14 @@ def add_to_cart(request, product_id):
         return redirect(request.META.get('HTTP_REFERER', 'products:all_categories'))
 
     variant_id = request.POST.get('variant_id')  # NEW: variant support
+    size_name = request.POST.get('size_name', '')  # NEW: get selected size name
+    
+    logger.info(f"=== add_to_cart Debug ===")
+    logger.info(f"POST data: {dict(request.POST)}")
+    logger.info(f"variant_id: {variant_id}")
+    logger.info(f"size_name received: '{size_name}'")
+    logger.info(f"size_name type: {type(size_name)}")
+    logger.info(f"size_name length: {len(size_name) if size_name else 0}")
     
     # Calculate quantity in pieces based on unit type (NEW)
     quantity_in_pieces = quantity
@@ -116,19 +124,32 @@ def add_to_cart(request, product_id):
     
     cart, created = Cart.objects.get_or_create(user=request.user)
     
-    # Get or create cart item with variant and unit_type (UPDATED)
+    logger.info(f"Before get_or_create - size_name: '{size_name}'")
+    
+    # Get or create cart item with variant, unit_type, and size_name (UPDATED)
     cart_item, item_created = CartItem.objects.get_or_create(
         cart=cart,
         product=product,
         variant_id=variant_id if variant_id else None,
-        unit_type=unit_type,  # NEW: Include unit_type in lookup
-        defaults={'quantity': quantity_in_pieces}
+        unit_type=unit_type,  # Include unit_type in lookup
+        size_name=size_name,  # NEW: Include size_name in lookup to treat different sizes as separate items
+        defaults={
+            'quantity': quantity_in_pieces
+        }
     )
+    
+    logger.info(f"After get_or_create - item_created: {item_created}, cart_item.size_name: '{cart_item.size_name}'")
     
     if not item_created:
         # Item already exists, increase quantity (in pieces)
         cart_item.quantity += quantity_in_pieces
+        # Update size_name in case user selected a different size
+        if size_name:
+            cart_item.size_name = size_name
         cart_item.save()
+        logger.info(f"CartItem updated - size_name: '{cart_item.size_name}'")
+    else:
+        logger.info(f"CartItem created - size_name: '{cart_item.size_name}'")
     
     message = f'تم إضافة {product.name} إلى السلة'
     if cart_item.variant:
@@ -220,6 +241,7 @@ def sync_cart_from_local(request):
             quantity = item.get('quantity', 1)
             variant_id = item.get('variant_id') # Assuming variant_id might be in local storage
             unit_type = item.get('unit_type', 'carton') # Assuming unit_type might be in local storage
+            size_name = item.get('size_name', '') # NEW: Get size_name from localStorage
             
             try:
                 product = Product.objects.get(id=product_id)
@@ -254,7 +276,10 @@ def sync_cart_from_local(request):
                     product=product,
                     variant=variant, # Use the variant object
                     unit_type=unit_type, # Include unit_type in lookup
-                    defaults={'quantity': quantity_in_pieces}
+                    size_name=size_name,  # NEW: Include size_name in lookup
+                    defaults={
+                        'quantity': quantity_in_pieces
+                    }
                 )
                 
                 if not created:

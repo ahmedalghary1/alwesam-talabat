@@ -86,12 +86,29 @@ def create_order(request):
             # نقل عناصر السلة إلى الطلب
             cart_items = cart.items.all()
             for cart_item in cart_items:
+                # Extract color and size information
+                color_name = ''
+                size_name = cart_item.size_name  # Use saved size_name from cart
+                
+                if cart_item.variant:
+                    # Get color name if variant has color
+                    if cart_item.variant.color:
+                        color_name = cart_item.variant.color.name
+                    
+                    # If size_name not saved in cart, get first size from variant as fallback
+                    if not size_name:
+                        sizes = cart_item.variant.sizes.all()
+                        if sizes.exists():
+                            size_name = sizes.first().name
+                
                 OrderItem.objects.create(
                     order=order,
                     product=cart_item.product,
                     variant=cart_item.variant,
                     quantity=cart_item.quantity,  # Already in pieces
-                    unit_type=cart_item.unit_type  # NEW: preserve unit type
+                    unit_type=cart_item.unit_type,  # NEW: preserve unit type
+                    color_name=color_name,  # NEW: preserve color
+                    size_name=size_name  # NEW: preserve size
                 )
             
             # تفريغ السلة

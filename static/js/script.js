@@ -96,7 +96,7 @@ const CartManager = {
     },
 
     // Add item to cart
-    addItem(productId, productName, quantity, pcsCarton, imageUrl, variantId = null, unitType = 'carton') {
+    addItem(productId, productName, quantity, pcsCarton, imageUrl, variantId = null, unitType = 'carton', sizeName = '') {
         let cart = this.getCart();
 
         // Convert to pieces if ordering by carton
@@ -105,11 +105,12 @@ const CartManager = {
             quantityInPieces = quantity * (pcsCarton || 1);
         }
 
-        // Find existing item (match by product_id, variant_id, and unit_type)
+        // Find existing item (match by product_id, variant_id, unit_type, and size_name)
         const existingIndex = cart.findIndex(item =>
             item.product_id === productId &&
             item.variant_id === variantId &&
-            item.unit_type === unitType
+            item.unit_type === unitType &&
+            (item.size_name || '') === sizeName
         );
 
         if (existingIndex !== -1) {
@@ -123,6 +124,7 @@ const CartManager = {
                 image_url: imageUrl,
                 variant_id: variantId,
                 unit_type: unitType,  // NEW
+                size_name: sizeName,  // NEW: Store size name
                 added_at: new Date().toISOString()
             });
         }
@@ -228,7 +230,7 @@ function getCartFromLocal() {
 
 function updateCartCount() {
     // Only update from localStorage if user is NOT authenticated
-    // For authenticated users, Django renders the correct count
+    // For authenticated users, Django renders the correct count via context processor
     const isAuthenticated = document.body.dataset.userAuthenticated === 'true';
     if (!isAuthenticated) {
         CartManager.updateBadge();
@@ -248,7 +250,7 @@ function removeFromCartLocal(productId, variantId = null, unitType = 'carton') {
 }
 
 // ==================== ADD TO CART - UNIVERSAL FUNCTION ====================
-async function addToCart(productId, productName, quantity, pcsCarton, imageUrl, isAuthenticated, variantId = null, unitType = 'carton') {
+async function addToCart(productId, productName, quantity, pcsCarton, imageUrl, isAuthenticated, variantId = null, unitType = 'carton', sizeName = '') {
     if (isAuthenticated) {
         // Authenticated user - add via server
         try {
@@ -267,6 +269,9 @@ async function addToCart(productId, productName, quantity, pcsCarton, imageUrl, 
             formData.append('csrfmiddlewaretoken', csrfToken);
             if (variantId) {
                 formData.append('variant_id', variantId);
+            }
+            if (sizeName) {
+                formData.append('size_name', sizeName);  // NEW: Add size_name
             }
 
             const response = await fetch(`/cart/add/${productId}/`, {
@@ -301,7 +306,7 @@ async function addToCart(productId, productName, quantity, pcsCarton, imageUrl, 
         }
     } else {
         // Non-authenticated user - use localStorage
-        CartManager.addItem(productId, productName, quantity, pcsCarton, imageUrl, variantId, unitType);
+        CartManager.addItem(productId, productName, quantity, pcsCarton, imageUrl, variantId, unitType, sizeName);
         showNotification(`تم إضافة ${productName} إلى السلة`, 'success');
         return { success: true };
     }
@@ -367,11 +372,16 @@ document.addEventListener('DOMContentLoaded', function () {
         themeIcon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
     }
 
-    // Update cart badge
-    CartManager.updateBadge();
+    // Check if user is authenticated
+    const isAuthenticated = document.body.dataset.userAuthenticated === 'true';
+
+    // CRITICAL FIX: Only update badge from localStorage for non-authenticated users
+    // For authenticated users, Django renders the count via context processor
+    if (!isAuthenticated) {
+        CartManager.updateBadge();
+    }
 
     // Check if user just logged in and has items in localStorage
-    const isAuthenticated = document.body.dataset.userAuthenticated === 'true';
     if (isAuthenticated && CartManager.hasItems()) {
         // Auto-sync cart to server
         CartManager.syncToServer().then(result => {

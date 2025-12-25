@@ -47,6 +47,12 @@ class OrderItem(models.Model):
                                     help_text="معلومات النمط وقت الطلب")
     variant_pcs_carton = models.PositiveIntegerField(null=True, blank=True,
                                                      help_text="عدد القطع في الكرتونة وقت الطلب")
+    
+    # Preserve color and size information at order time
+    color_name = models.CharField(max_length=100, blank=True, 
+                                  help_text="اسم اللون وقت الطلب")
+    size_name = models.CharField(max_length=100, blank=True,
+                                 help_text="اسم الطول/المقاس وقت الطلب")
 
     def save(self, *args, **kwargs):
         # Automatically save variant info when order is created
@@ -80,10 +86,22 @@ class OrderItem(models.Model):
         return self.quantity
 
     def get_display_name(self):
-        """Display name with variant"""
-        if self.variant_info:
-            return f"{self.product.name} ({self.variant_info})"
-        return self.product.name
+        """Display name with variant, color, and size"""
+        name_parts = [self.product.name]
+        
+        # Add color if available
+        if self.color_name:
+            name_parts.append(f"لون: {self.color_name}")
+        
+        # Add size if available
+        if self.size_name:
+            name_parts.append(f"مقاس: {self.size_name}")
+        
+        # Add variant info if available and not redundant
+        if self.variant_info and not (self.color_name or self.size_name):
+            name_parts.append(f"({self.variant_info})")
+        
+        return " - ".join(name_parts)
 
     def __str__(self):
         unit = 'قطعة' if self.unit_type == 'piece' else 'كرتونة'

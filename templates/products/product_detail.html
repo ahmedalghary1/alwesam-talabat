@@ -125,8 +125,9 @@
         font-family: "Font Awesome 5 Free";
         font-weight: 900;
         position: absolute;
-        top: 8px;
-        right: 8px;
+        top: 50%;
+        left: 8px;
+        transform: translateY(-50%);
         width: 22px;
         height: 22px;
         background: #FFC400;
@@ -198,18 +199,26 @@
     .variant-section .variant-btn {
         background: var(--card-bg);
         padding: 15px;
+        padding-left: 40px;
+        /* Extra padding on left to avoid overlap with checkmark */
+        padding-right: 20px;
+        /* Extra padding on right for text spacing */
         border-radius: 10px;
         border: 2px solid var(--border-color);
         cursor: pointer;
         transition: all 0.3s ease;
-        text-align: left;
+        text-align: right;
+        /* Align text to the right (Arabic direction) */
         position: relative;
         font-weight: 600;
         color: var(--text-primary);
         display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        justify-content: flex-start;
+        flex-direction: row;
+        /* Normal direction to put text on right, icon on left */
+        align-items: center;
+        justify-content: flex-end;
+        /* Justify to the right for Arabic */
+        gap: 8px;
         min-height: 60px;
     }
 
@@ -275,37 +284,142 @@
         font-size: 1.1rem;
     }
 
+    /* Mobile: Show variant selection after gallery */
+    @media (max-width: 768px) {
+        .product-info-col {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Reorder elements on mobile */
+        .stock-badge {
+            order: 1;
+        }
+
+        .page-title {
+            order: 2;
+        }
+
+        .variant-selection-section {
+            order: 3;
+            /* Show variant selection right after title */
+            margin-top: 1rem;
+        }
+
+        .specs-panel {
+            order: 4;
+        }
+
+        .product-description {
+            order: 5;
+        }
+
+        .variant-section {
+            order: 6;
+        }
+
+        .action-row {
+            order: 7;
+        }
+    }
+
     .color-selection {
         display: flex;
-        gap: 12px;
+        gap: 15px;
+        row-gap: 50px;
+        /* Larger vertical spacing between rows */
         flex-wrap: wrap;
         margin-bottom: 1.5rem;
+        padding-top: 20px;
+        /* Space above color squares */
+        padding-bottom: 20px;
+        /* Space for color name labels below squares */
     }
 
     .color-option {
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
+        /* Square shape with rounded corners */
+        width: 70px;
+        height: 70px;
+        border-radius: 12px;
         border: 3px solid transparent;
         cursor: pointer;
-        transition: all 0.3s ease;
+        transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
         position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+
+        /* 3D Effect - Elevated look */
+        box-shadow:
+            0 4px 8px rgba(0, 0, 0, 0.15),
+            0 8px 16px rgba(0, 0, 0, 0.1),
+            inset 0 -2px 4px rgba(0, 0, 0, 0.2),
+            inset 0 2px 4px rgba(255, 255, 255, 0.3);
+
+        /* Subtle outline for visibility */
+        outline: 1px solid rgba(128, 128, 128, 0.2);
+        outline-offset: 0px;
     }
 
-    .color-option:hover {
-        transform: scale(1.1);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    .theme-dark .color-option {
+        outline: 1px solid rgba(255, 255, 255, 0.15);
+        box-shadow:
+            0 4px 10px rgba(0, 0, 0, 0.4),
+            0 8px 20px rgba(0, 0, 0, 0.3),
+            inset 0 -2px 4px rgba(0, 0, 0, 0.4),
+            inset 0 2px 4px rgba(255, 255, 255, 0.1);
+    }
+
+    .color-option:hover:not(.disabled) {
+        transform: translateY(-8px) scale(1.05);
+        box-shadow:
+            0 4px 8px rgba(0, 0, 0, 0.15),
+            0 8px 16px rgba(0, 0, 0, 0.1),
+            inset 0 -2px 4px rgba(0, 0, 0, 0.2),
+            inset 0 2px 4px rgba(255, 255, 255, 0.4);
+        outline-color: #FFC400;
+        outline-width: 2px;
     }
 
     .color-option.selected {
-        border-color: #FFC400;
-        box-shadow: 0 0 15px rgba(255, 196, 0, 0.6);
-        transform: scale(1.15);
+        outline-color: #FFC400;
+        outline-width: 3px;
+        outline-offset: 1px;
+        transform: translateY(-3px) scale(1.08);
+        box-shadow:
+            0 4px 8px rgba(0, 0, 0, 0.15),
+            0 8px 16px rgba(0, 0, 0, 0.1),
+            inset 0 -3px 6px rgba(0, 0, 0, 0.25),
+            inset 0 3px 6px rgba(255, 255, 255, 0.5);
     }
 
     .color-option.disabled {
         opacity: 0.4;
         cursor: not-allowed;
+        transform: none;
+    }
+
+    /* Color name label below the square */
+    .color-option::before {
+        content: attr(data-color-name);
+        position: absolute;
+        bottom: -35px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-weight: 700;
+        font-size: 0.75rem;
+        color: var(--text-primary);
+        white-space: nowrap;
+        padding: 4px 8px;
+        opacity: 0.9;
+    }
+
+    .color-option.selected::before {
+        color: #FFC400;
+        font-weight: 800;
+        opacity: 1;
     }
 
     .size-selection-wrapper {
@@ -350,8 +464,13 @@
 
     @media (max-width: 768px) {
         .color-option {
-            width: 40px;
-            height: 40px;
+            width: 60px;
+            height: 60px;
+        }
+
+        .color-option::before {
+            font-size: 0.7rem;
+            bottom: -32px;
         }
 
         .size-option {
@@ -362,8 +481,14 @@
 
     @media (max-width: 576px) {
         .color-option {
-            width: 35px;
-            height: 35px;
+            width: 55px;
+            height: 55px;
+        }
+
+        .color-option::before {
+            font-size: 0.65rem;
+            bottom: -30px;
+            padding: 3px 6px;
         }
 
         .size-option {
@@ -434,14 +559,8 @@
                     <span><i class="fas fa-box"></i> القطع في الكرتون</span>
                     <strong id="pcs-carton-display">{{ product.pcs_carton }}</strong>
                 </div>
-                <div class="spec-row">
-                    <span><i class="fas fa-cubes"></i> عدد الكراتين</span>
-                    <strong id="quantity-display">1</strong>
-                </div>
-                <div class="spec-row">
-                    <span><i class="fas fa-calculator"></i> إجمالي القطع</span>
-                    <strong id="total-pieces-display">{{ product.pcs_carton }}</strong>
-                </div>
+
+
             </div>
 
             {% if product.description %}
@@ -453,7 +572,7 @@
 
             {% if variants %}
             <!-- Color and Size Selection Section -->
-            <div class="variant-selection-section">
+            <div class="variant-selection-section mt-3">
                 <h4><i class="fas fa-palette"></i> اختر اللون</h4>
                 <div class="color-selection" id="color-selection">
                     <!-- Will be populated by JavaScript -->
@@ -477,10 +596,10 @@
                 <h4><i class="fas fa-balance-scale"></i> وحدة الطلب</h4>
                 <div class="variant-options">
                     <button type="button" class="variant-btn active" data-unit="carton" onclick="selectUnit('carton')">
-                        <i class="fas fa-box"></i> كرتونة
+                        كرتونة <i class="fas fa-box"></i>
                     </button>
                     <button type="button" class="variant-btn" data-unit="piece" onclick="selectUnit('piece')">
-                        <i class="fas fa-cube"></i> قطعة
+                        قطعة <i class="fas fa-cube"></i>
                     </button>
                 </div>
             </div>
@@ -491,8 +610,7 @@
                     <span id="quantity-value">1</span>
                     <button class="qty-btn" onclick="increaseQty()" {% if not product.is_available %}disabled{% endif %}>+</button>
                 </div>
-                <button class="btn-add-to-cart" id="add-to-cart-btn" {% if not product.is_available %}disabled
-                    style="opacity: 0.5; cursor: not-allowed; background: #ccc;" {% endif %}>
+                <button class="btn-add-to-cart" id="add-to-cart-btn" {% if not product.is_available %}disabled style="opacity: 0.5; cursor: not-allowed; background: #ccc;" {% endif %}>
                     <i class="fas fa-shopping-cart"></i>
                     {% if product.is_available %}
                     إضافة للسلة
@@ -540,6 +658,48 @@
 {% block extra_js %}
 <parameter name="StartLine">540
     <script>
+        // Calculate contrasting text color based on background brightness
+        function getContrastColor(hexColor) {
+            if (!hexColor || typeof hexColor !== 'string') {
+                return '#000000';
+            }
+
+            // Remove # if present
+            hexColor = hexColor.replace('#', '');
+
+            // Validate hex color
+            if (hexColor.length !== 6) {
+                return '#000000';
+            }
+
+            try {
+                // Convert hex to RGB
+                const r = parseInt(hexColor.substr(0, 2), 16) / 255.0;
+                const g = parseInt(hexColor.substr(2, 2), 16) / 255.0;
+                const b = parseInt(hexColor.substr(4, 2), 16) / 255.0;
+
+                // Calculate relative luminance (WCAG standard)
+                function gammaCorrect(channel) {
+                    if (channel <= 0.03928) {
+                        return channel / 12.92;
+                    } else {
+                        return Math.pow((channel + 0.055) / 1.055, 2.4);
+                    }
+                }
+
+                const rGamma = gammaCorrect(r);
+                const gGamma = gammaCorrect(g);
+                const bGamma = gammaCorrect(b);
+
+                const luminance = 0.2126 * rGamma + 0.7152 * gGamma + 0.0722 * bGamma;
+
+                // Return white for dark backgrounds, black for light backgrounds
+                return luminance < 0.5 ? '#FFFFFF' : '#000000';
+            } catch (error) {
+                return '#000000';
+            }
+        }
+
         // ==================== Variant Selection System ====================
         // All variants data from Django
         const ALL_VARIANTS = [
@@ -547,15 +707,15 @@
         {
             id: {{ v.id }},
             name: '{{v.variant_value|escapejs}}',
-                pcsCarton: {{ v.pcs_carton }},
+            pcsCarton: {{ v.pcs_carton }},
             isAvailable: {{ v.is_available | yesno:"true,false" }},
             colorId: {% if v.color %} {{ v.color.id }} {% else %} null{% endif %},
             colorName: '{% if v.color %}{{v.color.name|escapejs}}{% endif %}',
-            colorHex: '{% if v.color %}{{v.color.hex_code}}{% endif %}',
+                colorHex: '{% if v.color %}{{v.color.hex_code}}{% endif %}',
             sizes: [{% for size in v.sizes.all %} {{ size.id }} {% if not forloop.last %}, {% endif %} {% endfor %}],
-            sizeNames: [{% for size in v.sizes.all %}'{{size.name|escapejs}}'{% if not forloop.last %}, {% endif %} {% endfor %}],
-            image: '{% if v.image %}{{v.image.url}}{% endif %}'
-    }
+        sizeNames: [{% for size in v.sizes.all %}'{{size.name|escapejs}}'{% if not forloop.last %}, {% endif %} {% endfor %}],
+        image: '{% if v.image %}{{v.image.url}}{% endif %}'
+        }
         {% if not forloop.last %}, {% endif %}
         {% endfor %}
     ];
@@ -591,11 +751,15 @@
 
                 const colorDiv = document.createElement('div');
                 colorDiv.className = 'color-option';
-                colorDiv.style.backgroundColor = colorGroup.colorHex || '#cccccc';
+                const bgColor = colorGroup.colorHex || '#cccccc';
+                colorDiv.style.backgroundColor = bgColor;
+
+                // Store color name for display via CSS ::before
+                const colorName = colorGroup.colorName || 'بدون لون';
                 colorDiv.dataset.colorId = colorGroup.colorId || 'no-color';
+                colorDiv.dataset.colorName = colorName;
 
                 // Create a descriptive title showing color name and availability
-                const colorName = colorGroup.colorName || 'بدون لون';
                 const availabilityText = hasAvailableVariant ? 'متوفر' : 'غير متوفر';
                 colorDiv.title = `${colorName} (${availabilityText})`;
 
@@ -615,11 +779,17 @@
             const selectedColor = document.querySelector(`[data-color-id="${colorId}"]`);
             if (selectedColor) selectedColor.classList.add('selected');
 
+            // Store selected color info
+            selectedColorId = colorId !== 'no-color' ? colorId : null;
+            selectedColorName = variants[0]?.colorName || null;
+
             const sizeWrapper = document.getElementById('size-selection-wrapper');
-            if (variants.length === 1) {
-                sizeWrapper.style.display = 'none';
-                selectVariantById(variants[0].id);
-            } else {
+
+            // Check if any variant has sizes
+            const hasSizes = variants.some(v => v.sizeNames && v.sizeNames.length > 0);
+
+            if (hasSizes && variants.length > 0) {
+                // Variants have sizes - show size selection
                 sizeWrapper.style.display = 'block';
                 renderSizeSelection(variants);
 
@@ -627,11 +797,24 @@
                 const firstAvailable = variants.find(v => v.isAvailable);
                 if (firstAvailable) {
                     selectVariantById(firstAvailable.id);
+
+                    // Auto-select first size name
+                    if (firstAvailable.sizeNames && firstAvailable.sizeNames.length > 0) {
+                        selectedSizeName = firstAvailable.sizeNames[0];
+                        console.log('✓ Auto-selected first size:', selectedSizeName);
+                    }
+
                     // Also mark it as selected in UI
                     setTimeout(() => {
                         const firstSizeBtn = document.querySelector(`[data-variant-id="${firstAvailable.id}"]`);
                         if (firstSizeBtn) firstSizeBtn.classList.add('selected');
                     }, 0);
+                }
+            } else {
+                // No sizes - hide size selection and select first variant
+                sizeWrapper.style.display = 'none';
+                if (variants.length > 0) {
+                    selectVariantById(variants[0].id);
                 }
             }
         }
@@ -641,30 +824,57 @@
             if (!sizeContainer) return;
 
             sizeContainer.innerHTML = '';
+
             variants.forEach(variant => {
-                const sizeDiv = document.createElement('div');
-                sizeDiv.className = 'size-option';
-                sizeDiv.dataset.variantId = variant.id;
+                // If variant has multiple sizes, create a button for each size
+                if (variant.sizeNames && variant.sizeNames.length > 0) {
+                    variant.sizeNames.forEach((sizeName, index) => {
+                        const sizeDiv = document.createElement('div');
+                        sizeDiv.className = 'size-option';
+                        sizeDiv.dataset.variantId = variant.id;
+                        sizeDiv.dataset.sizeIndex = index;
+                        sizeDiv.textContent = sizeName;
 
-                const displayName = variant.sizeNames.length > 0
-                    ? variant.sizeNames.join(', ')
-                    : variant.name;
-                sizeDiv.textContent = displayName;
+                        if (!variant.isAvailable) {
+                            sizeDiv.classList.add('disabled');
+                            sizeDiv.title = 'غير متوفر';
+                        }
 
-                if (!variant.isAvailable) {
-                    sizeDiv.classList.add('disabled');
-                    sizeDiv.title = 'غير متوفر';
-                }
+                        sizeDiv.onclick = () => {
+                            if (variant.isAvailable) {
+                                document.querySelectorAll('.size-option').forEach(el => el.classList.remove('selected'));
+                                sizeDiv.classList.add('selected');
+                                selectVariantById(variant.id);
+                                // Store the specific size name selected
+                                selectedSizeName = sizeName;
+                                console.log('✓ Size clicked, selectedSizeName set to:', selectedSizeName);
+                            }
+                        };
 
-                sizeDiv.onclick = () => {
-                    if (variant.isAvailable) {
-                        document.querySelectorAll('.size-option').forEach(el => el.classList.remove('selected'));
-                        sizeDiv.classList.add('selected');
-                        selectVariantById(variant.id);
+                        sizeContainer.appendChild(sizeDiv);
+                    });
+                } else {
+                    // Fallback: variant without sizes
+                    const sizeDiv = document.createElement('div');
+                    sizeDiv.className = 'size-option';
+                    sizeDiv.dataset.variantId = variant.id;
+                    sizeDiv.textContent = variant.name;
+
+                    if (!variant.isAvailable) {
+                        sizeDiv.classList.add('disabled');
+                        sizeDiv.title = 'غير متوفر';
                     }
-                };
 
-                sizeContainer.appendChild(sizeDiv);
+                    sizeDiv.onclick = () => {
+                        if (variant.isAvailable) {
+                            document.querySelectorAll('.size-option').forEach(el => el.classList.remove('selected'));
+                            sizeDiv.classList.add('selected');
+                            selectVariantById(variant.id);
+                        }
+                    };
+
+                    sizeContainer.appendChild(sizeDiv);
+                }
             });
         }
 
@@ -680,6 +890,10 @@
             document.getElementById('selected-variant-id').value = variantId;
             selectedVariantId = variantId;
             pcsPerCarton = variant.pcsCarton;
+
+            // Note: selectedSizeName is set by renderSizeSelection onClick handler
+            // Don't override it here to preserve user's selection
+
             updateDisplay();
 
             // Update gallery with variant images
@@ -706,15 +920,18 @@
         let quantity = 1;
         let pcsPerCarton = {{ product.pcs_carton }};
         let selectedVariantId = null;
+        let selectedColorId = null;
+        let selectedColorName = null;
+        let selectedSizeName = null;
         let selectedUnit = 'carton';
 
         // Product info
         const PRODUCT_DATA = {
             id: {{ product.id }},
-            name: "{{ product.name|escapejs }}",
+        name: "{{ product.name|escapejs }}",
             image: "{% if product.image %}{{ product.image.url }}{% endif %}",
             pcsCarton: {{ product.pcs_carton }}
-    }
+        }
 
         // Variant images data
         const variantImagesData = {
@@ -777,11 +994,18 @@
         function switchImage(src, btn) {
             const img = document.getElementById('main-product-img');
             if (img) {
-                img.style.opacity = '0.5';
+                // Start fade out and scale down
+                img.style.opacity = '0';
+                img.style.transform = 'scale(0.95)';
+
                 setTimeout(() => {
                     img.src = src;
-                    img.style.opacity = '1';
-                }, 150);
+                    // Fade in and scale to normal
+                    setTimeout(() => {
+                        img.style.opacity = '1';
+                        img.style.transform = 'scale(1)';
+                    }, 50);
+                }, 200);
             }
 
             document.querySelectorAll('.thumb-btn').forEach(b => b.classList.remove('active'));
@@ -837,8 +1061,13 @@
         async function handleAddToCart() {
             const isAuth = document.body.dataset.userAuthenticated === 'true';
 
+            console.log('=== handleAddToCart Debug ===');
+            console.log('selectedSizeName:', selectedSizeName);
+            console.log('selectedVariantId:', selectedVariantId);
+            console.log('selectedColorName:', selectedColorName);
+
             if (window.addToCart) {
-                await window.addToCart(PRODUCT.id, PRODUCT.name, quantity, pcsPerCarton, PRODUCT.image, isAuth, selectedVariantId, selectedUnit);
+                await window.addToCart(PRODUCT_DATA.id, PRODUCT_DATA.name, quantity, pcsPerCarton, PRODUCT_DATA.image, isAuth, selectedVariantId, selectedUnit, selectedSizeName);
                 return;
             }
 
@@ -848,10 +1077,20 @@
                     formData.append('quantity', quantity);
                     formData.append('unit_type', selectedUnit);
                     if (selectedVariantId) formData.append('variant_id', selectedVariantId);
+                    if (selectedSizeName) {
+                        formData.append('size_name', selectedSizeName);
+                        console.log('✓ size_name added to FormData:', selectedSizeName);
+                    } else {
+                        console.warn('⚠ selectedSizeName is empty!');
+                        console.warn('Possible reasons:');
+                        console.warn('1. No size was selected');
+                        console.warn('2. Product variant has no sizes');
+                        console.warn('3. selectedSizeName was not set during size selection');
+                    }
 
                     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
 
-                    const response = await fetch(`/cart/add/${PRODUCT.id}/`, {
+                    const response = await fetch(`/cart/add/${PRODUCT_DATA.id}/`, {
                         method: 'POST',
                         headers: {
                             'X-Requested-With': 'XMLHttpRequest',
@@ -880,7 +1119,7 @@
                 const quantityInPieces = selectedUnit === 'carton' ? (quantity * pcsPerCarton) : quantity;
 
                 const idx = cart.findIndex(i =>
-                    i.product_id === PRODUCT.id &&
+                    i.product_id === PRODUCT_DATA.id &&
                     i.variant_id === selectedVariantId &&
                     i.unit_type === selectedUnit
                 );
@@ -889,12 +1128,15 @@
                     cart[idx].quantity += quantityInPieces;
                 } else {
                     cart.push({
-                        product_id: PRODUCT.id,
-                        product_name: PRODUCT.name,
+                        product_id: PRODUCT_DATA.id,
+                        product_name: PRODUCT_DATA.name,
                         quantity: quantityInPieces,
                         pcs_carton: pcsPerCarton,
-                        image_url: PRODUCT.image,
+                        image_url: PRODUCT_DATA.image,
                         variant_id: selectedVariantId,
+                        color_id: selectedColorId,
+                        color_name: selectedColorName,
+                        size_name: selectedSizeName,
                         unit_type: selectedUnit,
                         added_at: new Date().toISOString()
                     });
@@ -906,7 +1148,7 @@
                 const badge = document.getElementById('cart-count');
                 if (badge) badge.textContent = total;
 
-                showNotification(`تم إضافة ${PRODUCT.name} إلى السلة`, 'success');
+                showNotification(`تم إضافة ${PRODUCT_DATA.name} إلى السلة`, 'success');
             }
         }
 

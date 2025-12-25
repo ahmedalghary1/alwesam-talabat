@@ -220,17 +220,28 @@
             <div class="order-item">
                 <div style="flex: 1;">
                     <div class="item-name">{{ item.product.name }}</div>
-                    {% if item.variant_info %}
+                    {% if item.color_name or item.size_name or item.variant_info %}
                     <div style="font-size: 0.85rem; color: #FFC400; margin-bottom: 0.25rem;">
-                        <i class="fas fa-tag"></i> {{ item.variant_info }}
+                        <i class="fas fa-tag"></i>
+                        {% if item.color_name %}
+                        <span>لون: {{ item.color_name }}</span>
+                        {% endif %}
+                        {% if item.color_name and item.size_name %}
+                        <span> • </span>
+                        {% endif %}
+                        {% if item.size_name %}
+                        <span>مقاس: {{ item.size_name }}</span>
+                        {% endif %}
+                        {% if item.variant_info and not item.color_name and not item.size_name %}
+                        <span>{{ item.variant_info }}</span>
+                        {% endif %}
                     </div>
                     {% endif %}
                     <div class="item-meta">
                         {% if item.unit_type == 'piece' %}
                         <i class="fas fa-cube"></i> طلب بالقطعة: <strong>{{ item.quantity }} قطعة</strong> ({{ item.get_pcs_carton }} قطعة/كرتون)
                         {% else %}
-                        <i class="fas fa-box"></i> طلب بالكرتونة: <strong>{{ item.get_quantity_in_cartons|floatformat:0 }} كرتون</strong> × {{ item.get_pcs_carton }} قطعة = <strong>{{ item.quantity }} قطعة
-                            إجمالي</strong>
+                        <i class="fas fa-box"></i> طلب بالكرتونة: <strong>{{ item.get_quantity_in_cartons|floatformat:0 }} كرتون</strong> × {{ item.get_pcs_carton }} قطعة = <strong>{{ item.quantity }} قطعة إجمالي</strong>
                         {% endif %}
                     </div>
                 </div>

@@ -6,29 +6,32 @@
 
 {% block extra_css %}
 <style>
+    /* ==================== BASE STYLES ==================== */
     .cart-container {
         max-width: 1200px;
         margin: 0 auto;
-        padding: 2rem 1rem;
+        padding: 1rem;
     }
 
     .page-title {
-        font-size: 2rem;
+        font-size: 1.5rem;
         font-weight: 800;
-        margin-bottom: 2rem;
+        margin-bottom: 1.5rem;
         display: flex;
         align-items: center;
-        gap: 0.75rem;
+        gap: 0.5rem;
     }
 
     .page-title i {
         color: #FFC400;
+        font-size: 1.25rem;
     }
 
+    /* ==================== CART GRID ==================== */
     .cart-grid {
         display: grid;
-        grid-template-columns: 1fr 350px;
-        gap: 2rem;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
     }
 
     .cart-items {
@@ -37,81 +40,145 @@
         gap: 1rem;
     }
 
+    /* ==================== CART ITEM ==================== */
     .cart-item {
         background: var(--card-bg);
         border: 2px solid var(--border-color);
-        border-radius: 16px;
-        padding: 1.5rem;
+        border-radius: 12px;
+        padding: 1rem;
         display: flex;
-        gap: 1.5rem;
+        flex-direction: column;
+        gap: 1rem;
         align-items: center;
+        transition: all 0.3s ease;
+        min-height: 280px;
+        /* Prevent size changes on content update */
     }
 
     .cart-item:hover {
         border-color: #FFC400;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 196, 0, 0.15);
     }
 
     .item-image {
-        width: 100px;
-        height: 100px;
-        border-radius: 12px;
-        object-fit: cover;
-        background: var(--bg-secondary);
+        width: 80px;
+        height: 80px;
+        border-radius: 10px;
+        object-fit: contain;
+        background: #ffffff;
+        padding: 0.5rem;
+        flex-shrink: 0;
     }
 
     .item-placeholder {
-        width: 100px;
-        height: 100px;
-        border-radius: 12px;
+        width: 80px;
+        height: 80px;
+        border-radius: 10px;
         background: var(--bg-secondary);
         display: flex;
         align-items: center;
         justify-content: center;
         color: var(--text-secondary);
-        font-size: 2rem;
+        font-size: 1.5rem;
+        flex-shrink: 0;
     }
 
     .item-details {
         flex: 1;
+        width: 100%;
+        text-align: center;
     }
 
     .item-name {
-        font-size: 1.125rem;
+        font-size: 1rem;
         font-weight: 700;
         margin-bottom: 0.5rem;
+        line-height: 1.3;
     }
 
     .item-meta {
         color: var(--text-secondary);
         font-size: 0.875rem;
+        line-height: 1.5;
+        margin-top: 0.5rem;
     }
 
-    .item-meta span {
-        color: #FFC400;
-        font-weight: 600;
+    .item-meta strong {
+        font-weight: 700;
+        font-size: 1rem;
     }
 
     .item-variant {
-        display: flex;
+        display: inline-flex;
         align-items: center;
         gap: 0.5rem;
-        font-size: 0.875rem;
+        font-size: 0.8rem;
         color: var(--text-secondary);
         background: var(--bg-secondary);
-        padding: 0.375rem 0.75rem;
+        padding: 0.3rem 0.6rem;
         border-radius: 6px;
-        width: fit-content;
         margin-bottom: 0.5rem;
     }
 
     .item-variant i {
         color: #FFC400;
+        font-size: 0.75rem;
     }
 
+    /* ==================== BADGES (NEW CLASSES) ==================== */
+    .badges-container {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.3rem 0.65rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        transition: all 0.2s ease;
+    }
+
+    .badge i {
+        font-size: 0.7rem;
+    }
+
+    .badge-color {
+        /* Color will be set inline with actual hex */
+        border: 2px solid rgba(0, 0, 0, 0.1);
+        font-weight: 700;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .badge-size {
+        background: rgba(59, 130, 246, 0.15);
+        color: #3b82f6;
+    }
+
+    .badge-unit-piece {
+        background: rgba(34, 197, 94, 0.15);
+        color: #22c55e;
+    }
+
+    .badge-unit-carton {
+        background: rgba(255, 196, 0, 0.15);
+        color: #FFC400;
+    }
+
+    /* ==================== ACTIONS ==================== */
     .item-actions {
         display: flex;
         align-items: center;
-        gap: 1rem;
+        gap: 0.75rem;
+        width: 100%;
+        justify-content: center;
     }
 
     .quantity-control {
@@ -119,63 +186,82 @@
         align-items: center;
         gap: 0.5rem;
         background: var(--bg-secondary);
-        border-radius: 8px;
-        padding: 0.25rem;
+        border-radius: 10px;
+        padding: 0.3rem;
     }
 
     .qty-btn {
-        width: 36px;
-        height: 36px;
+        width: 44px;
+        height: 44px;
         border: none;
-        border-radius: 6px;
+        border-radius: 8px;
         background: #FFC400;
         color: #1a1a1a;
         font-weight: 700;
+        font-size: 1.25rem;
         cursor: pointer;
-        transition: all 0.3s ease;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-tap-highlight-color: transparent;
     }
 
     .qty-btn:hover {
-        background: #e6b000;
+        background: #FFD000;
+        transform: scale(1.05);
+    }
+
+    .qty-btn:active {
+        transform: scale(0.95);
     }
 
     .qty-value {
         font-weight: 700;
-        min-width: 40px;
+        min-width: 45px;
         text-align: center;
+        font-size: 1rem;
     }
 
     .btn-remove {
-        width: 40px;
-        height: 40px;
+        width: 44px;
+        height: 44px;
         border: none;
-        border-radius: 8px;
+        border-radius: 10px;
         background: rgba(239, 68, 68, 0.1);
         color: #ef4444;
         cursor: pointer;
-        transition: all 0.3s ease;
+        font-size: 1.1rem;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-tap-highlight-color: transparent;
     }
 
     .btn-remove:hover {
         background: #ef4444;
         color: white;
+        transform: scale(1.05);
     }
 
-    /* Summary */
+    .btn-remove:active {
+        transform: scale(0.95);
+    }
+
+    /* ==================== SUMMARY ==================== */
     .cart-summary {
         background: var(--card-bg);
         border: 2px solid var(--border-color);
-        border-radius: 16px;
-        padding: 1.5rem;
+        border-radius: 12px;
+        padding: 1.25rem;
         height: fit-content;
-        position: sticky;
-        top: 100px;
     }
 
     .summary-title {
-        font-size: 1.25rem;
+        font-size: 1.125rem;
         font-weight: 700;
-        margin-bottom: 1.5rem;
+        margin-bottom: 1.25rem;
         display: flex;
         align-items: center;
         gap: 0.5rem;
@@ -198,15 +284,18 @@
 
     .summary-label {
         color: var(--text-secondary);
+        font-size: 0.9rem;
     }
 
     .summary-value {
         font-weight: 700;
+        font-size: 0.95rem;
     }
 
     .btn-checkout {
         width: 100%;
-        padding: 1rem;
+        min-height: 48px;
+        padding: 0.875rem 1rem;
         background: #FFC400;
         color: #1a1a1a;
         border: none;
@@ -220,16 +309,23 @@
         gap: 0.5rem;
         margin-top: 1rem;
         transition: all 0.3s ease;
+        -webkit-tap-highlight-color: transparent;
     }
 
     .btn-checkout:hover {
-        background: #e6b000;
+        background: #FFD000;
         transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 196, 0, 0.3);
+    }
+
+    .btn-checkout:active {
+        transform: translateY(0);
     }
 
     .btn-continue {
         width: 100%;
-        padding: 0.75rem;
+        min-height: 48px;
+        padding: 0.75rem 1rem;
         background: transparent;
         color: #FFC400;
         border: 2px solid #FFC400;
@@ -243,51 +339,232 @@
         margin-top: 0.75rem;
         transition: all 0.3s ease;
         text-decoration: none;
+        -webkit-tap-highlight-color: transparent;
     }
 
     .btn-continue:hover {
         background: #FFC400;
         color: #1a1a1a;
+        transform: translateY(-2px);
     }
 
-    /* Empty Cart */
+    .btn-continue:active {
+        transform: translateY(0);
+    }
+
+    /* ==================== EMPTY CART ==================== */
     .empty-cart {
         text-align: center;
-        padding: 4rem 1rem;
+        padding: 3rem 1rem;
         grid-column: 1 / -1;
     }
 
     .empty-icon {
-        font-size: 5rem;
+        font-size: 4rem;
         color: #FFC400;
-        margin-bottom: 1.5rem;
+        margin-bottom: 1rem;
         opacity: 0.3;
     }
 
-    @media (max-width: 768px) {
-        .cart-grid {
-            grid-template-columns: 1fr;
+    /* ==================== MOBILE SMALL (< 480px) ==================== */
+    @media (max-width: 480px) {
+        .cart-container {
+            padding: 0.75rem;
+        }
+
+        .page-title {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .page-title i {
+            font-size: 1.1rem;
+        }
+
+        .cart-items {
+            gap: 0.875rem;
         }
 
         .cart-item {
-            flex-direction: column;
-            align-items: center;
+            padding: 0.875rem;
+            gap: 0.875rem;
         }
 
-        .item-details {
-            width: 100%;
-            text-align: center;
+        .item-name {
+            font-size: 0.95rem;
         }
 
         .item-meta {
-            display: block !important;
-            text-align: center;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
+        }
+
+        .badge {
+            font-size: 0.7rem;
+            padding: 0.25rem 0.55rem;
+        }
+
+        .qty-btn {
+            width: 40px;
+            height: 40px;
+        }
+
+        .btn-remove {
+            width: 40px;
+            height: 40px;
+        }
+
+        .cart-summary {
+            padding: 1rem;
+        }
+
+        .empty-cart {
+            padding: 2rem 1rem;
+        }
+
+        .empty-icon {
+            font-size: 3rem;
+        }
+    }
+
+    /* ==================== TABLET (768px - 1023px) ==================== */
+    @media (min-width: 768px) {
+        .cart-container {
+            padding: 1.5rem;
+        }
+
+        .page-title {
+            font-size: 1.75rem;
+            margin-bottom: 1.75rem;
+            gap: 0.625rem;
+        }
+
+        .page-title i {
+            font-size: 1.5rem;
+        }
+
+        .cart-grid {
+            grid-template-columns: 1fr;
+            gap: 1.75rem;
+        }
+
+        .cart-items {
+            gap: 1.25rem;
+        }
+
+        .cart-item {
+            flex-direction: row;
+            padding: 1.25rem;
+            gap: 1.25rem;
+            align-items: center;
+        }
+
+        .item-image,
+        .item-placeholder {
+            width: 90px;
+            height: 90px;
+        }
+
+        .item-details {
+            text-align: right;
+        }
+
+        .badges-container {
+            justify-content: flex-start;
+        }
+
+        .item-name {
+            font-size: 1.125rem;
         }
 
         .item-actions {
-            width: 100%;
-            justify-content: center;
+            justify-content: flex-end;
+            width: auto;
+        }
+
+        .cart-summary {
+            padding: 1.5rem;
+        }
+
+        .summary-title {
+            font-size: 1.25rem;
+        }
+
+        .empty-cart {
+            padding: 4rem 1.5rem;
+        }
+
+        .empty-icon {
+            font-size: 5rem;
+        }
+    }
+
+    /* ==================== DESKTOP (1024px+) ==================== */
+    @media (min-width: 1024px) {
+        .cart-container {
+            padding: 2rem 1.5rem;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            margin-bottom: 2rem;
+            gap: 0.75rem;
+        }
+
+        .cart-grid {
+            grid-template-columns: 1fr 380px;
+            gap: 2rem;
+        }
+
+        .cart-item {
+            padding: 1.5rem;
+            gap: 1.5rem;
+        }
+
+        .item-image,
+        .item-placeholder {
+            width: 100px;
+            height: 100px;
+        }
+
+        .cart-summary {
+            position: sticky;
+            top: 100px;
+        }
+
+        .qty-btn:hover {
+            background: #e6b000;
+        }
+    }
+
+    /* ==================== LARGE DESKTOP (1280px+) ==================== */
+    @media (min-width: 1280px) {
+        .cart-container {
+            padding: 2.5rem 2rem;
+        }
+
+        .page-title {
+            font-size: 2.25rem;
+        }
+
+        .cart-grid {
+            grid-template-columns: 1fr 400px;
+            gap: 2.5rem;
+        }
+
+        .empty-cart {
+            padding: 5rem 2rem;
+        }
+    }
+
+    /* ==================== ACCESSIBILITY ==================== */
+    @media (prefers-reduced-motion: reduce) {
+
+        .cart-item,
+        .qty-btn,
+        .btn-remove,
+        .btn-checkout,
+        .btn-continue {
+            transition: none;
         }
     }
 </style>
@@ -325,16 +602,30 @@
                     </p>
                     {% endif %}
 
-                    <!-- Unit Type Badge (NEW) -->
-                    <div style="margin-bottom: 0.5rem;">
+                    <!-- Color and Size Badges -->
+                    <div class="badges-container">
+                        {% if item.variant.color %}
+                        <span class="badge badge-color"
+                            style="background-color: {{ item.variant.color.hex_code }}; color: {{ item.variant.color.hex_code|contrast_color }};">
+                            {{ item.variant.color.name }}
+                        </span>
+                        {% endif %}
+
+                        {% if item.size_name %}
+                        <span class="badge badge-size">
+                            <i class="fas fa-ruler"></i> {{ item.size_name }}
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Unit Type Badge -->
+                    <div class="badges-container">
                         {% if item.unit_type == 'piece' %}
-                        <span
-                            style="display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.25rem 0.6rem; background: rgba(34, 197, 94, 0.1); color: #22c55e; border-radius: 6px; font-size: 0.75rem; font-weight: 600;">
+                        <span class="badge badge-unit-piece">
                             <i class="fas fa-cube"></i> طلب بالقطعة
                         </span>
                         {% else %}
-                        <span
-                            style="display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.25rem 0.6rem; background: rgba(255, 196, 0, 0.1); color: #FFC400; border-radius: 6px; font-size: 0.75rem; font-weight: 600;">
+                        <span class="badge badge-unit-carton">
                             <i class="fas fa-box"></i> طلب بالكرتونة
                         </span>
                         {% endif %}
@@ -496,6 +787,48 @@
 <script>
     const isAuthenticated = {% if user.is_authenticated %}true{% else %} false{% endif %};
     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+
+    // Calculate contrasting text color based on background brightness
+    function getContrastColor(hexColor) {
+        if (!hexColor || typeof hexColor !== 'string') {
+            return '#000000';
+        }
+
+        // Remove # if present
+        hexColor = hexColor.replace('#', '');
+
+        // Validate hex color
+        if (hexColor.length !== 6) {
+            return '#000000';
+        }
+
+        try {
+            // Convert hex to RGB
+            const r = parseInt(hexColor.substr(0, 2), 16) / 255.0;
+            const g = parseInt(hexColor.substr(2, 2), 16) / 255.0;
+            const b = parseInt(hexColor.substr(4, 2), 16) / 255.0;
+
+            // Calculate relative luminance (WCAG standard)
+            function gammaCorrect(channel) {
+                if (channel <= 0.03928) {
+                    return channel / 12.92;
+                } else {
+                    return Math.pow((channel + 0.055) / 1.055, 2.4);
+                }
+            }
+
+            const rGamma = gammaCorrect(r);
+            const gGamma = gammaCorrect(g);
+            const bGamma = gammaCorrect(b);
+
+            const luminance = 0.2126 * rGamma + 0.7152 * gGamma + 0.0722 * bGamma;
+
+            // Return white for dark backgrounds, black for light backgrounds
+            return luminance < 0.5 ? '#FFFFFF' : '#000000';
+        } catch (error) {
+            return '#000000';
+        }
+    }
 
     // Update totals in summary
     function updateSummaryTotals() {
@@ -759,13 +1092,35 @@
                 const quantityInPieces = item.quantity;
 
                 // Calculate display quantity based on unit type
-                let displayQuantity, badgeHtml, metaHtml;
+                let displayQuantity, badgeHtml, metaHtml, colorSizeBadges = '';
+
+                // Add color and size badges if available
+                if (item.color_name || item.size_name) {
+                    colorSizeBadges = '<div class="badges-container">';
+
+                    if (item.color_name && item.color_hex) {
+                        const textColor = getContrastColor(item.color_hex);
+                        colorSizeBadges += `<span class="badge badge-color" style="background-color: ${item.color_hex}; color: ${textColor};">
+                            ${item.color_name}
+                        </span>`;
+                    }
+
+                    if (item.size_name) {
+                        colorSizeBadges += `<span class="badge badge-size">
+                            <i class="fas fa-ruler"></i> ${item.size_name}
+                        </span>`;
+                    }
+
+                    colorSizeBadges += '</div>';
+                }
 
                 if (unitType === 'piece') {
                     displayQuantity = quantityInPieces;
-                    badgeHtml = `<span style="display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.25rem 0.6rem; background: rgba(34, 197, 94, 0.1); color: #22c55e; border-radius: 6px; font-size: 0.75rem; font-weight: 600; margin-bottom: 0.5rem;">
-                        <i class="fas fa-cube"></i> طلب بالقطعة
-                    </span>`;
+                    badgeHtml = `<div class="badges-container">
+                        <span class="badge badge-unit-piece">
+                            <i class="fas fa-cube"></i> طلب بالقطعة
+                        </span>
+                    </div>`;
                     metaHtml = `<i class="fas fa-cube"></i>
                         <strong style="color: #22c55e; font-size: 1.1rem;">${quantityInPieces}</strong> قطعة
                         <span style="color: var(--text-secondary); font-size: 0.9rem;">
@@ -774,9 +1129,11 @@
                 } else {
                     const quantityInCartons = Math.floor(quantityInPieces / pcsCarton);
                     displayQuantity = quantityInCartons;
-                    badgeHtml = `<span style="display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.25rem 0.6rem; background: rgba(255, 196, 0, 0.1); color: #FFC400; border-radius: 6px; font-size: 0.75rem; font-weight: 600; margin-bottom: 0.5rem;">
-                        <i class="fas fa-box"></i> طلب بالكرتونة
-                    </span>`;
+                    badgeHtml = `<div class="badges-container">
+                        <span class="badge badge-unit-carton">
+                            <i class="fas fa-box"></i> طلب بالكرتونة
+                        </span>
+                    </div>`;
                     metaHtml = `<i class="fas fa-box"></i>
                         <strong style="color: #FFC400; font-size: 1.1rem;">${quantityInCartons}</strong> كرتون
                         <span style="color: var(--text-secondary); font-size: 0.9rem;">
@@ -792,6 +1149,7 @@
                     }
                         <div class="item-details">
                             <h3 class="item-name">${item.product_name}</h3>
+                            ${colorSizeBadges}
                             ${badgeHtml}
                             <p class="item-meta">${metaHtml}</p>
                         </div>
