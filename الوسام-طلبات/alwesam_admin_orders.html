@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة الطلبات - الوسام</title>
+    <link href="css/base.css" rel="stylesheet">
+    <link href="css/layout.css" rel="stylesheet">
+    <link href="css/components.css" rel="stylesheet">
+    <link href="css/admin.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="theme-light">
+    <div class="admin-layout">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="logo mb-2">
+                <div class="logo-icon icon-sm"><i class="fas fa-bolt"></i></div>
+                <span>الوسام</span>
+            </div>
+
+            <nav class="flex-col gap-05">
+                <a href="alwesam_admin.html" class="dashboard-link-inactive">
+                    <i class="fas fa-home ml-2"></i> لوحة التحكم
+                </a>
+                <a href="alwesam_admin_products.html" class="dashboard-link-inactive">
+                    <i class="fas fa-box ml-2"></i> المنتجات
+                </a>
+                <a href="alwesam_admin_orders.html" class="dashboard-link">
+                    <i class="fas fa-shopping-bag ml-2"></i> الطلبات
+                </a>
+                <a href="alwesam_home.html" class="dashboard-link-inactive mt-auto text-red">
+                    <i class="fas fa-sign-out-alt ml-2"></i> خروج
+                </a>
+            </nav>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="container py-2">
+            <header class="flex-between mb-2 pt-1">
+                <h1 class="page-title text-xl">الطلبات</h1>
+                <div class="flex-center gap-1">
+                    <button class="action-btn" onclick="toggleTheme()">
+                        <i class="fas fa-moon" id="theme-icon"></i>
+                    </button>
+                    <div class="mobile-toggle" onclick="/* Toggle sidebar script */">
+                        <i class="fas fa-bars"></i>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Filters -->
+            <div class="filter-bar no-scrollbar mb-1">
+                <button class="filter-chip active">الكل</button>
+                <button class="filter-chip">قيد الانتظار</button>
+                <button class="filter-chip">جاري التجهيز</button>
+                <button class="filter-chip">تم الشحن</button>
+            </div>
+
+            <div class="modern-card p-0" style="padding: 0; overflow: hidden;">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>رقم الطلب</th>
+                            <th>العميل</th>
+                            <th>التاريخ</th>
+                            <th>المجموع</th>
+                            <th>الحالة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="font-bold">#10234</td>
+                            <td>أحمد محمد</td>
+                            <td class="text-secondary">2023-10-15</td>
+                            <td class="font-bold">6200 ر.س</td>
+                            <td><span class="status-badge status-pending">قيد الانتظار</span></td>
+                            <td>
+                                <a href="alwesam_admin_order_details.html" class="action-btn icon-xs"
+                                    title="عرض التفاصيل"><i class="fas fa-eye"></i></a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="font-bold">#10233</td>
+                            <td>شركة البناء الحديث</td>
+                            <td class="text-secondary">2023-10-14</td>
+                            <td class="font-bold">15400 ر.س</td>
+                            <td><span class="status-badge status-success">مكتمل</span></td>
+                            <td>
+                                <a href="alwesam_admin_order_details.html" class="action-btn icon-xs"
+                                    title="عرض التفاصيل"><i class="fas fa-eye"></i></a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+
+</html>

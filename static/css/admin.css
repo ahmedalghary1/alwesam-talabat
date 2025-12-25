@@ -1,0 +1,106 @@
+/* ==================== ADMIN DASHBOARD ==================== */
+
+.stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.dashboard-link {
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    background: rgba(255, 196, 0, 0.1);
+    color: var(--industrial-yellow);
+    display: block;
+}
+
+.dashboard-link-inactive {
+    padding: 0.75rem 1rem;
+    display: block;
+    color: var(--text-secondary);
+}
+
+.dashboard-link-inactive:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.animate-spin-slow {
+    animation: spin 8s linear infinite;
+}
+
+@keyframes spin {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.avatar-sm {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+.empty-state {
+    background: var(--bg-secondary);
+    padding: 2rem;
+    border-radius: 8px;
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+.floating-count {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: var(--primary-black);
+    color: var(--industrial-yellow);
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+}
+
+/* Tables for Admin */
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.admin-table th,
+.admin-table td {
+    padding: 1rem;
+    text-align: right;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.admin-table th {
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.status-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.status-pending {
+    background: rgba(255, 196, 0, 0.1);
+    color: var(--industrial-yellow);
+}
+
+.status-success {
+    background: rgba(46, 204, 113, 0.1);
+    color: #2ecc71;
+}

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>جميع الأقسام - الوسام</title>
+    <link href="css/base.css" rel="stylesheet">
+    <link href="css/layout.css" rel="stylesheet">
+    <link href="css/components.css" rel="stylesheet">
+    <link href="css/pages.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="theme-light">
+    <!-- NAVIGATION -->
+    <nav class="navbar">
+        <div class="container nav-container">
+            <div class="nav-left">
+                <a href="alwesam_home.html" class="logo">
+                    <div class="logo-icon"><img src="./ELWSAM.png" alt="" width="110%" height="110%"></div>
+                    <span>الوسام</span>
+                </a>
+            </div>
+
+            <ul class="nav-menu" id="nav-menu">
+                <li><a href="alwesam_home.html" class="nav-link">الرئيسية</a></li>
+                <li><a href="alwesam_category.html" class="nav-link active">المنتجات</a></li>
+                <li><a href="alwesam_cart.html" class="nav-link">الطلبات</a></li>
+                <li><a href="alwesam_admin.html" class="nav-link">لوحة التحكم</a></li>
+            </ul>
+
+            <div class="nav-actions">
+                <button class="action-btn" onclick="toggleTheme()"><i class="fas fa-moon" id="theme-icon"></i></button>
+                <div class="lang-selector">
+                    <button class="lang-btn" title="تبديل اللغة">
+                        <i class="fas fa-globe"></i>
+                    </button>
+                    <!-- Dropdown Code Omitted for brevity, assumed JS handles logic or standard consistent HTML needed? -->
+                    <!-- I should probably include the standard full HTML to be safe/consistent -->
+                    <div class="lang-dropdown">
+                        <button class="lang-option active" disabled>
+                            <i class="fas fa-check-circle"></i> العربية
+                        </button>
+                        <button class="lang-option" disabled>
+                            <i class="fas fa-circle"></i> English
+                        </button>
+                    </div>
+                </div>
+                <a href="alwesam_cart.html" class="action-btn">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="badge">3</span>
+                </a>
+                <div class="mobile-toggle" onclick="toggleMenu()"><i class="fas fa-bars"></i></div>
+                <a href="alwesam_login.html" class="btn-primary btn-login">
+                    <i class="fas fa-sign-in-alt ml-2"></i> <span>تسجيل الدخول</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- HEADER -->
+    <header class="page-header">
+        <div class="container text-center">
+            <h1 class="text-3xl font-black mb-1">جميع الأقسام</h1>
+            <p class="text-secondary">تصفح كافة تصنيفات المنتجات المتوفرة لدينا</p>
+        </div>
+    </header>
+
+    <!-- ALL CATEGORIES GRID -->
+    <main class="container py-3">
+        <div class="card-grid">
+            <!-- Lighting -->
+            <a href="alwesam_category.html" class="modern-card tilt-card animate-on-scroll delay-100">
+                <div class="card-icon"><i class="fas fa-lightbulb"></i></div>
+                <h3 class="card-title">الإضاءة</h3>
+                <p class="text-secondary">داخلي، خارجي، ولمبات LED</p>
+            </a>
+            <!-- Cables -->
+            <a href="alwesam_category.html" class="modern-card tilt-card animate-on-scroll delay-200">
+                <div class="card-icon"><i class="fas fa-plug"></i></div>
+                <h3 class="card-title">الكابلات والأسلاك</h3>
+                <p class="text-secondary">ضغط عالي وشبكات</p>
+            </a>
+            <!-- Safety -->
+            <a href="alwesam_category.html" class="modern-card tilt-card animate-on-scroll delay-300">
+                <div class="card-icon"><i class="fas fa-shield-alt"></i></div>
+                <h3 class="card-title">معدات السلامة</h3>
+                <p class="text-secondary">خوذات، قفازات، وأحذية</p>
+            </a>
+            <!-- Transformers -->
+            <a href="alwesam_category.html" class="modern-card tilt-card animate-on-scroll delay-100">
+                <div class="card-icon"><i class="fas fa-cube"></i></div>
+                <h3 class="card-title">المحولات الكهربائية</h3>
+                <p class="text-secondary">محولات جهد وقدرة</p>
+            </a>
+            <!-- Panels -->
+            <a href="alwesam_category.html" class="modern-card tilt-card animate-on-scroll delay-200">
+                <div class="card-icon"><i class="fas fa-th"></i></div>
+                <h3 class="card-title">اللوحات الكهربائية</h3>
+                <p class="text-secondary">توزيع وتحكم كهربائي</p>
+            </a>
+            <!-- Switches -->
+            <a href="alwesam_category.html" class="modern-card tilt-card animate-on-scroll delay-300">
+                <div class="card-icon"><i class="fas fa-toggle-on"></i></div>
+                <h3 class="card-title">المفاتيح والمقابس</h3>
+                <p class="text-secondary">تجهيزات كهربائية منزلية</p>
+            </a>
+            <!-- Generators -->
+            <a href="alwesam_category.html" class="modern-card tilt-card animate-on-scroll delay-100">
+                <div class="card-icon"><i class="fas fa-bolt"></i></div>
+                <h3 class="card-title">المولدات الكهربائية</h3>
+                <p class="text-secondary">مولدات احتياطية وطوارئ</p>
+            </a>
+            <!-- Tools -->
+            <a href="alwesam_category.html" class="modern-card tilt-card animate-on-scroll delay-200">
+                <div class="card-icon"><i class="fas fa-tools"></i></div>
+                <h3 class="card-title">العدد والأدوات</h3>
+                <p class="text-secondary">مفكات، زراديات، ومطارق</p>
+            </a>
+            <!-- Measuring -->
+            <a href="alwesam_category.html" class="modern-card tilt-card animate-on-scroll delay-300">
+                <div class="card-icon"><i class="fas fa-ruler-combined"></i></div>
+                <h3 class="card-title">أجهزة القياس</h3>
+                <p class="text-secondary">ملتيميتر، ومقياس حرارة</p>
+            </a>
+            <!-- Smart Home -->
+            <a href="alwesam_category.html" class="modern-card tilt-card animate-on-scroll delay-100">
+                <div class="card-icon"><i class="fas fa-wifi"></i></div>
+                <h3 class="card-title">المنازل الذكية</h3>
+                <p class="text-secondary">حساسات، وكاميرات</p>
+            </a>
+            <!-- MORE CATEGORIES EXAMPLE -->
+            <a href="alwesam_category.html" class="modern-card tilt-card animate-on-scroll delay-200">
+                <div class="card-icon"><i class="fas fa-fan"></i></div>
+                <h3 class="card-title">التهوية</h3>
+                <p class="text-secondary">مراوح شفط وتبريد</p>
+            </a>
+            <a href="alwesam_category.html" class="modern-card tilt-card animate-on-scroll delay-300">
+                <div class="card-icon"><i class="fas fa-solar-panel"></i></div>
+                <h3 class="card-title">الطاقة الشمسية</h3>
+                <p class="text-secondary">ألواح ومنظمات شحن</p>
+            </a>
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <!-- Reusing standard footer structure for consistency -->
+        <div class="container">
+            <div class="footer-copyright">
+                <p>© 2024 متجر الوسام. جميع الحقوق محفوظة.</p>
+            </div>
+        </div>
+    </footer>
+    <script src="script.js"></script>
+</body>
+
+</html>

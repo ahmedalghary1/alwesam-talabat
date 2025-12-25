@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>المعدات الكهربائية - طلبات الوسام</title>
+    <link href="css/base.css" rel="stylesheet">
+    <link href="css/layout.css" rel="stylesheet">
+    <link href="css/components.css" rel="stylesheet">
+    <link href="css/pages.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Specific page styles moved here temporarily or should be in style.css, 
+           but for specific unique elements we can keep internal style if it's unique enough, 
+           HOWEVER user asked for "separate all styles". 
+           I will move these to style.css in next step or use existing classes. 
+           Actually, I'll add these specific classes to style.css update or just use inline block for now 
+           and then move to style.css. 
+           Wait, user said "NO inline styles". 
+           I should put these in style.css. 
+           I will add them to style.css in a subsequent update or just use the generic classes I made.
+           The filter-bar styles were in previous category page. I need to make sure they are in style.css.
+           I will check style.css again. I didn't add filter-bar specific styles in the last write.
+           I will add them to the head here as <style> is technically internal CSS not inline, 
+           but ideally should be external. 
+           Let's stick to adding them to style.css to be 100% compliant.
+           I will assume I will update style.css right after this batch or include them in the file content 
+           if I can edit style.css again. 
+           Actually, the Prompt said "separate all styles into files". 
+           So I should NOT put them in <style> tag.
+           I will append them to style.css now.
+        */
+    </style>
+</head>
+
+<body class="theme-light">
+    <!-- NAVIGATION -->
+    <nav class="navbar">
+        <div class="container nav-container">
+            <div class="nav-left">
+                <a href="alwesam_home.html" class="logo">
+                    <div class="logo-icon"><img src="./ELWSAM.png" alt="" width="110%" height="110%"></div>
+                    <span>الوسام</span>
+                </a>
+            </div>
+
+            <ul class="nav-menu" id="nav-menu">
+                <li><a href="alwesam_home.html" class="nav-link">الرئيسية</a></li>
+                <li><a href="alwesam_category.html" class="nav-link active">المنتجات</a></li>
+                <li><a href="alwesam_cart.html" class="nav-link">الطلبات</a></li>
+                <li><a href="alwesam_admin.html" class="nav-link">لوحة التحكم</a></li>
+            </ul>
+
+            <div class="nav-actions mr-2">
+                <button class="action-btn" onclick="toggleTheme()">
+                    <i class="fas fa-moon" id="theme-icon"></i>
+                </button>
+                <div class="lang-selector">
+                    <button class="lang-btn" title="تبديل اللغة">
+                        <i class="fas fa-globe"></i>
+                    </button>
+                    <div class="lang-dropdown">
+                        <button class="lang-option active" disabled>
+                            <i class="fas fa-check-circle"></i> العربية
+                        </button>
+                        <button class="lang-option" disabled>
+                            <i class="fas fa-circle"></i> English
+                        </button>
+                    </div>
+                </div>
+                <a href="alwesam_cart.html" class="btn-primary">
+                    <i class="fas fa-shopping-cart ml-2"></i>
+                    <span class="badge-counter">3</span>
+                </a>
+                <div class="mobile-toggle" onclick="toggleMenu()">
+                    <i class="fas fa-bars"></i>
+                </div>
+                <a href="alwesam_login.html" class="btn-primary btn-login">
+                    <i class="fas fa-sign-in-alt ml-2"></i> <span>تسجيل الدخول</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <!-- FILTER BAR -->
+        <div class="filter-bar no-scrollbar mb-2">
+            <button class="filter-chip active">الكل</button>
+            <button class="filter-chip">دريل</button>
+            <button class="filter-chip">مناشير</button>
+            <button class="filter-chip">صواريخ</button>
+            <button class="filter-chip">ماركة</button>
+            <button class="filter-chip">جهد كهربائي</button>
+        </div>
+
+        <!-- PRODUCTS GRID -->
+        <div class="card-grid pt-1">
+
+            <!-- Product 1 -->
+            <a href="alwesam_product_detail.html" class="product-card animate-on-scroll tilt-card">
+                <div class="relative">
+                    <span class="product-badge-new">جديد</span>
+                    <div class="product-image-wrapper">
+                        <img src="https://via.placeholder.com/300x200/FFC400/000000?text=Drill" class="product-image"
+                            alt="Drill">
+                    </div>
+                </div>
+                <div class="product-details">
+                    <div class="product-sku">SKU: DCD796N</div>
+                    <h3 class="product-title">دريل ديوالت 18 فولت</h3>
+                    <div class="flex-between mt-auto">
+                        <span class="product-price">10 قطع/كرتون</span>
+                        <button class="action-btn btn-add">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Product 2 -->
+            <a href="alwesam_product_detail.html" class="product-card animate-on-scroll delay-100 tilt-card">
+                <div class="relative">
+                    <div class="product-image-wrapper">
+                        <img src="https://via.placeholder.com/300x200/000000/FFC400?text=Grinder" class="product-image"
+                            alt="Grinder">
+                    </div>
+                </div>
+                <div class="product-details">
+                    <div class="product-sku">SKU: GA4530R</div>
+                    <h3 class="product-title">صاروخ ماكيتا 115 ملم</h3>
+                    <div class="flex-between mt-auto">
+                        <span class="product-price">8 قطع/كرتون</span>
+                        <button class="action-btn btn-add">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Product 3 -->
+            <a href="alwesam_product_detail.html" class="product-card animate-on-scroll delay-200 tilt-card">
+                <div class="relative">
+                    <div class="product-image-wrapper">
+                        <img src="https://via.placeholder.com/300x200/1A1A1A/FFC400?text=Hammer" class="product-image"
+                            alt="Hammer">
+                    </div>
+                </div>
+                <div class="product-details">
+                    <div class="product-sku">SKU: GBH-2-26</div>
+                    <h3 class="product-title">دريل بوش دوار</h3>
+                    <div class="flex-between mt-auto">
+                        <span class="product-price">5 قطع/كرتون</span>
+                        <button class="action-btn btn-add">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+            </a>
+
+        </div>
+    </main>
+
+    <!-- FLOATING ORDER BUTTON -->
+    <a href="alwesam_cart.html" class="floating-btn ripple-btn">
+        <i class="fas fa-list"></i>
+        <span class="floating-count">3</span>
+    </a>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,394 @@
+{% extends 'admin/admin_base.html' %}
+{% load static %}
+
+{% block title %}جميع المستخدمين - لوحة التحكم{% endblock %}
+
+{% block sidebar_all_users %}active{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/messages.css' %}">
+{% endblock %}
+
+{% block admin_content %}
+{% include 'includes/messages.html' %}
+
+<div class="admin-container">
+    <div class="page-header">
+        <h1>
+            <i class="fas fa-users"></i>
+            إدارة المستخدمين
+        </h1>
+        <p>جميع المستخدمين المسجلين في النظام</p>
+    </div>
+
+    <!-- Search and Filter -->
+    <div class="filters-card">
+        <form method="get" class="filter-form">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" name="search" placeholder="بحث بالاسم، البريد، أو الهاتف..."
+                    value="{{ search_query }}">
+            </div>
+
+            <select name="status" onchange="this.form.submit()">
+                <option value="">جميع الحالات</option>
+                <option value="active" {% if status_filter == 'active' %}selected{% endif %}>مفعل</option>
+                <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>معلق</option>
+            </select>
+
+            <button type="submit" class="btn-search">بحث</button>
+        </form>
+    </div>
+
+    {% if users %}
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>المستخدم</th>
+                    <th>البريد الإلكتروني</th>
+                    <th>رقم الهاتف</th>
+                    <th>الحالة</th>
+                    <th>تاريخ التسجيل</th>
+                    <th style="width: 150px;">الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>
+                        <div class="user-info">
+                            <div class="user-avatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div>
+                                <strong>{{ user.username }}</strong>
+                                {% if user.first_name or user.last_name %}
+                                <br><small>{{ user.first_name }} {{ user.last_name }}</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.phone }}</td>
+                    <td>
+                        {% if user.is_active %}
+                        <span class="status-badge status-active">
+                            <i class="fas fa-check-circle"></i>
+                            مفعل
+                        </span>
+                        {% else %}
+                        <span class="status-badge status-inactive">
+                            <i class="fas fa-clock"></i>
+                            معلق
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td>{{ user.date_joined|date:"Y/m/d" }}</td>
+                    <td>
+                        {% if not user.is_staff %}
+                        <form method="post" action="{% url 'admin_app:toggle_user_status' user.id %}"
+                            style="display: inline;">
+                            {% csrf_token %}
+                            {% if user.is_active %}
+                            <button type="submit" class="btn-suspend"
+                                onclick="return confirm('هل أنت متأكد من إيقاف حساب هذا المستخدم؟')">
+                                <i class="fas fa-ban"></i>
+                                إيقاف
+                            </button>
+                            {% else %}
+                            <button type="submit" class="btn-activate"
+                                onclick="return confirm('هل أنت متأكد من تفعيل حساب هذا المستخدم؟')">
+                                <i class="fas fa-check"></i>
+                                تفعيل
+                            </button>
+                            {% endif %}
+                        </form>
+                        {% else %}
+                        <span class="admin-badge">
+                            <i class="fas fa-shield-alt"></i>
+                            مسؤول
+                        </span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-users"></i>
+        <h3>لا يوجد مستخدمين</h3>
+        <p>لم يتم العثور على أي مستخدمين</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block admin_extra_css %}
+<style>
+    .filters-card {
+        background: var(--card-bg);
+        border: 2px solid var(--border-color);
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .filter-form {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+
+    .search-box {
+        flex: 1;
+        position: relative;
+    }
+
+    .search-box i {
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-secondary);
+    }
+
+    .search-box input {
+        width: 100%;
+        padding: 0.75rem 1rem 0.75rem 2.5rem;
+        border: 2px solid var(--border-color);
+        border-radius: 10px;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+    }
+
+    .filter-form select {
+        padding: 0.75rem 1rem;
+        border: 2px solid var(--border-color);
+        border-radius: 10px;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        cursor: pointer;
+    }
+
+    .btn-search {
+        padding: 0.75rem 1.5rem;
+        background: #FFC400;
+        color: #1a1a1a;
+        border: none;
+        border-radius: 10px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-search:hover {
+        background: #e6b000;
+        transform: translateY(-2px);
+    }
+
+    /* Enhanced table spacing */
+    .data-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .data-table thead th {
+        background: var(--bg-secondary);
+        padding: 1.25rem 1.5rem;
+        text-align: right;
+        font-weight: 700;
+        color: var(--text-primary);
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    .data-table tbody tr {
+        transition: background 0.2s ease;
+    }
+
+    .data-table tbody tr:hover {
+        background: var(--bg-secondary);
+    }
+
+    .data-table tbody td {
+        padding: 1.5rem 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        vertical-align: middle;
+    }
+
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .user-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #FFC400, #FFD700);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #1a1a1a;
+        font-size: 1.25rem;
+        flex-shrink: 0;
+    }
+
+    .user-info strong {
+        display: block;
+        margin-bottom: 0.25rem;
+        font-size: 1rem;
+    }
+
+    .user-info small {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+    }
+
+    .btn-suspend,
+    .btn-activate {
+        padding: 0.625rem 1.25rem;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.625rem;
+        font-size: 0.9rem;
+        white-space: nowrap;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn-suspend::before,
+    .btn-activate::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+    }
+
+    .btn-suspend:hover::before,
+    .btn-activate:hover::before {
+        width: 300px;
+        height: 300px;
+    }
+
+    .btn-suspend {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        color: white;
+    }
+
+    .btn-suspend:hover {
+        background: linear-gradient(135deg, #dc2626, #b91c1c);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+    }
+
+    .btn-suspend:active {
+        transform: translateY(0);
+        box-shadow: 0 3px 10px rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-activate {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+    }
+
+    .btn-activate:hover {
+        background: linear-gradient(135deg, #059669, #047857);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+    }
+
+    .btn-activate:active {
+        transform: translateY(0);
+        box-shadow: 0 3px 10px rgba(16, 185, 129, 0.3);
+    }
+
+    .admin-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1.25rem;
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(79, 70, 229, 0.15));
+        color: #6366f1;
+        border: 2px solid rgba(99, 102, 241, 0.3);
+        border-radius: 10px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .status-active {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .status-inactive {
+        background: rgba(255, 196, 0, 0.1);
+        color: #FFC400;
+        border: 1px solid rgba(255, 196, 0, 0.3);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--text-secondary);
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        color: var(--text-secondary);
+        margin-bottom: 1rem;
+    }
+
+    .empty-state h3 {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+        color: var(--text-primary);
+    }
+
+    @media (max-width: 768px) {
+        .filter-form {
+            flex-direction: column;
+        }
+
+        .search-box,
+        .filter-form select,
+        .btn-search {
+            width: 100%;
+        }
+
+        .data-table tbody td {
+            font-size: 0.85rem;
+        }
+    }
+</style>
+{% endblock %}

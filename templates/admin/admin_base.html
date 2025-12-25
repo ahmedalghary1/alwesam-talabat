@@ -1,0 +1,451 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    /* Mobile Menu Toggle - Enhanced */
+    .mobile-menu-toggle {
+        display: none;
+        /* Hidden by default on desktop */
+        position: fixed;
+        bottom: 80px;
+        right: 20px;
+        z-index: 1000;
+        background: linear-gradient(135deg, #FFC400, #FFD700);
+        color: #1a1a1a;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        border: none;
+        box-shadow: 0 6px 20px rgba(255, 196, 0, 0.5);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .mobile-menu-toggle:hover {
+        transform: scale(1.1) rotate(90deg);
+        box-shadow: 0 8px 30px rgba(255, 196, 0, 0.7);
+    }
+
+    .mobile-menu-toggle i {
+        font-size: 1.75rem;
+    }
+
+    .mobile-menu-toggle.menu-open {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+    }
+
+    .admin-layout {
+        display: flex;
+        gap: 2rem;
+        max-width: 1600px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+        position: relative;
+    }
+
+    .admin-sidebar {
+        width: 250px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 80px;
+        height: fit-content;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .sidebar-header {
+        display: none;
+    }
+
+    .sidebar-menu {
+        background: var(--card-bg);
+        border: 2px solid var(--border-color);
+        border-radius: 16px;
+        padding: 1rem;
+    }
+
+    .sidebar-link {
+        display: flex;
+        align-items: center;
+        gap: 0.875rem;
+        padding: 1rem 1.25rem;
+        border-radius: 12px;
+        color: var(--text-primary);
+        transition: all 0.3s ease;
+        margin-bottom: 0.625rem;
+        text-decoration: none;
+        font-size: 0.95rem;
+    }
+
+    .sidebar-link:hover {
+        background: var(--bg-secondary);
+        transform: translateX(5px);
+    }
+
+    .sidebar-link.active {
+        background: linear-gradient(135deg, #FFC400, #FFD700);
+        color: #1a1a1a;
+        font-weight: 700;
+        box-shadow: 0 4px 12px rgba(255, 196, 0, 0.3);
+    }
+
+    .sidebar-link i {
+        width: 24px;
+        text-align: center;
+        font-size: 1.1rem;
+    }
+
+    .sidebar-badge {
+        background: #FFC400;
+        color: #1a1a1a;
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 0.25rem 0.625rem;
+        border-radius: 12px;
+        margin-right: auto;
+    }
+
+    .sidebar-link.active .sidebar-badge {
+        background: #1a1a1a;
+        color: #FFC400;
+    }
+
+    .admin-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    /* Responsive Tablet (1024px) */
+    @media (max-width: 1024px) {
+        .admin-layout {
+            padding: 1.5rem 1rem;
+            gap: 1.5rem;
+        }
+
+        .admin-sidebar {
+            width: 220px;
+        }
+
+        .sidebar-link {
+            padding: 0.875rem 1rem;
+            font-size: 0.9rem;
+        }
+    }
+
+    /* Responsive Mobile (768px and below) */
+    @media (max-width: 768px) {
+        .mobile-menu-toggle {
+            display: flex !important;
+        }
+
+        .admin-layout {
+            flex-direction: column;
+            padding: 1rem 0.75rem;
+            padding-bottom: 120px;
+        }
+
+        .admin-sidebar {
+            position: fixed;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 85%;
+            max-width: 320px;
+            height: 100vh;
+            z-index: 1001;
+            transform: translateX(100%);
+            overflow-y: auto;
+            box-shadow: -4px 0 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .admin-sidebar.mobile-open {
+            transform: translateX(0);
+        }
+
+        /* Sidebar Header for Mobile */
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.5rem 1.25rem;
+            background: linear-gradient(135deg, #FFC400, #FFD700);
+            color: #1a1a1a;
+            border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar-header-title {
+            font-size: 1.25rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+        }
+
+        .sidebar-header-title i {
+            font-size: 1.5rem;
+        }
+
+        .sidebar-close-btn {
+            background: rgba(0, 0, 0, 0.1);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #1a1a1a;
+            font-size: 1.25rem;
+        }
+
+        .sidebar-close-btn:hover {
+            background: rgba(0, 0, 0, 0.2);
+            transform: rotate(90deg);
+        }
+
+        .sidebar-menu {
+            height: calc(100% - 80px);
+            border-radius: 0;
+            border: none;
+            border-top: 2px solid var(--border-color);
+            padding: 1.25rem 1rem;
+            overflow-y: auto;
+        }
+
+        .sidebar-link {
+            padding: 1.125rem 1.25rem;
+            margin-bottom: 0.75rem;
+            font-size: 1rem;
+        }
+
+        .sidebar-link i {
+            font-size: 1.25rem;
+            width: 28px;
+        }
+
+        .admin-content {
+            width: 100%;
+        }
+
+        /* Mobile Overlay - Enhanced */
+        .mobile-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .mobile-overlay.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+    }
+
+    /* Very Small Screens (480px) */
+    @media (max-width: 480px) {
+        .admin-layout {
+            padding: 0.75rem 0.5rem;
+            padding-bottom: 120px;
+        }
+
+        .admin-sidebar {
+            width: 90%;
+            max-width: 280px;
+        }
+
+        .sidebar-header {
+            padding: 1.25rem 1rem;
+        }
+
+        .sidebar-header-title {
+            font-size: 1.1rem;
+        }
+
+        .sidebar-link {
+            padding: 1rem 1rem;
+            font-size: 0.95rem;
+        }
+
+        .mobile-menu-toggle {
+            width: 56px;
+            height: 56px;
+            bottom: 70px;
+            right: 15px;
+        }
+
+        .mobile-menu-toggle i {
+            font-size: 1.5rem;
+        }
+    }
+</style>
+<link rel="stylesheet" href="{% static 'css/admin-responsive.css' %}">
+{% block admin_extra_css %}{% endblock %}
+{% endblock %}
+
+{% block content %}
+<!-- Mobile Menu Toggle -->
+<button class="mobile-menu-toggle" onclick="toggleMobileMenu()" aria-label="Toggle Menu">
+    <i class="fas fa-bars"></i>
+</button>
+
+<!-- Mobile Overlay -->
+<div class="mobile-overlay" onclick="closeMobileMenu()"></div>
+
+<div class="admin-layout">
+    <!-- Sidebar -->
+    <div class="admin-sidebar" id="adminSidebar">
+        <!-- Mobile Header -->
+        <div class="sidebar-header">
+            <div class="sidebar-header-title">
+                <i class="fas fa-shield-alt"></i>
+                لوحة التحكم
+            </div>
+            <button class="sidebar-close-btn" onclick="closeMobileMenu()" aria-label="Close Menu">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <!-- Menu Links -->
+        <div class="sidebar-menu">
+            <a href="{% url 'admin_app:dashboard' %}" class="sidebar-link {% block sidebar_dashboard %}{% endblock %}">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>لوحة التحكم</span>
+            </a>
+            <a href="{% url 'admin_app:admin_products' %}"
+                class="sidebar-link {% block sidebar_products %}{% endblock %}">
+                <i class="fas fa-box"></i>
+                <span>المنتجات</span>
+            </a>
+            <a href="{% url 'admin_app:admin_product_add' %}"
+                class="sidebar-link {% block sidebar_add_product %}{% endblock %}">
+                <i class="fas fa-plus-circle"></i>
+                <span>إضافة منتج</span>
+            </a>
+            <a href="{% url 'admin_app:admin_categories' %}"
+                class="sidebar-link {% block sidebar_categories %}{% endblock %}">
+                <i class="fas fa-th-large"></i>
+                <span>الأقسام</span>
+            </a>
+            <a href="{% url 'admin_app:admin_category_add' %}"
+                class="sidebar-link {% block sidebar_add_category %}{% endblock %}">
+                <i class="fas fa-folder-plus"></i>
+                <span>إضافة قسم</span>
+            </a>
+            <a href="{% url 'admin_app:admin_orders' %}" class="sidebar-link {% block sidebar_orders %}{% endblock %}">
+                <i class="fas fa-shopping-bag"></i>
+                <span>الطلبات</span>
+            </a>
+            <a href="{% url 'admin_app:pending_users' %}"
+                class="sidebar-link {% block sidebar_pending_users %}{% endblock %}">
+                <i class="fas fa-user-clock"></i>
+                <span>طلبات الانضمام</span>
+                {% if pending_count > 0 %}
+                <span class="sidebar-badge">{{ pending_count }}</span>
+                {% endif %}
+            </a>
+            <a href="{% url 'admin_app:all_users' %}" class="sidebar-link {% block sidebar_all_users %}{% endblock %}">
+                <i class="fas fa-users"></i>
+                <span>المستخدمين</span>
+            </a>
+            <a href="{% url 'home:home' %}" class="sidebar-link"
+                style="margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+                <i class="fas fa-home"></i>
+                <span>العودة للموقع</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="admin-content">
+        {% block admin_content %}{% endblock %}
+    </div>
+</div>
+
+<script>
+    function toggleMobileMenu() {
+        const sidebar = document.getElementById('adminSidebar');
+        const overlay = document.querySelector('.mobile-overlay');
+        const toggle = document.querySelector('.mobile-menu-toggle');
+
+        sidebar.classList.toggle('mobile-open');
+        overlay.classList.toggle('active');
+        toggle.classList.toggle('menu-open');
+
+        // Change icon
+        const icon = toggle.querySelector('i');
+        if (sidebar.classList.contains('mobile-open')) {
+            icon.className = 'fas fa-times';
+        } else {
+            icon.className = 'fas fa-bars';
+        }
+
+        // Prevent body scroll when menu is open
+        if (sidebar.classList.contains('mobile-open')) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+    }
+
+    function closeMobileMenu() {
+        const sidebar = document.getElementById('adminSidebar');
+        const overlay = document.querySelector('.mobile-overlay');
+        const toggle = document.querySelector('.mobile-menu-toggle');
+        const icon = toggle.querySelector('i');
+
+        sidebar.classList.remove('mobile-open');
+        overlay.classList.remove('active');
+        toggle.classList.remove('menu-open');
+        icon.className = 'fas fa-bars';
+        document.body.style.overflow = '';
+    }
+
+    // Close mobile menu when clicking on a link
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.sidebar-link').forEach(link => {
+            link.addEventListener('click', () => {
+                if (window.innerWidth <= 768) {
+                    closeMobileMenu();
+                }
+            });
+        });
+    });
+
+    // Close menu on window resize if open
+    window.addEventListener('resize', () => {
+        if (window.innerWidth > 768) {
+            closeMobileMenu();
+        }
+    });
+
+    // Close menu on escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeMobileMenu();
+        }
+    });
+</script>
+{% endblock %}
+
+{% block extra_js %}
+{% block admin_extra_js %}{% endblock %}
+{% endblock %}

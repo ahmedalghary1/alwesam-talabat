@@ -1,0 +1,257 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load cart_filters %}
+
+{% block title %}تأكيد الطلب - الوسام{% endblock %}
+
+{% block extra_css %}
+<style>
+    .checkout-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+    }
+
+    .page-title {
+        font-size: 2rem;
+        font-weight: 800;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .page-title i {
+        color: #FFC400;
+    }
+
+    .checkout-grid {
+        display: grid;
+        grid-template-columns: 1fr 380px;
+        gap: 2rem;
+    }
+
+    .card {
+        background: var(--card-bg);
+        border: 2px solid var(--border-color);
+        border-radius: 16px;
+        padding: 1.5rem;
+    }
+
+    .card-title {
+        font-size: 1.125rem;
+        font-weight: 700;
+        margin-bottom: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .card-title i {
+        color: #FFC400;
+    }
+
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+
+    .form-label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-input,
+    .form-textarea {
+        width: 100%;
+        padding: 0.875rem 1rem;
+        border: 2px solid var(--border-color);
+        border-radius: 10px;
+        font-size: 1rem;
+        font-family: inherit;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        transition: all 0.3s ease;
+    }
+
+    .form-input:focus,
+    .form-textarea:focus {
+        outline: none;
+        border-color: #FFC400;
+    }
+
+    .form-textarea {
+        resize: vertical;
+        min-height: 80px;
+    }
+
+    .cart-item {
+        display: flex;
+        gap: 1rem;
+        padding: 0.875rem 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .cart-item:last-child {
+        border-bottom: none;
+    }
+
+    .item-image {
+        width: 50px;
+        height: 50px;
+        border-radius: 8px;
+        object-fit: cover;
+        background: var(--bg-secondary);
+    }
+
+    .item-name {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .item-meta {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+    }
+
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+    }
+
+    .summary-row.total {
+        border-top: 2px solid var(--border-color);
+        font-weight: 700;
+        font-size: 1.125rem;
+        margin-top: 0.5rem;
+    }
+
+    .btn-confirm {
+        width: 100%;
+        background: #FFC400;
+        color: #1a1a1a;
+        padding: 1rem;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 1rem;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .btn-confirm:hover {
+        background: #e6b000;
+        transform: translateY(-2px);
+    }
+
+    .btn-back {
+        background: transparent;
+        color: var(--text-primary);
+        border: 2px solid var(--border-color);
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .btn-back:hover {
+        border-color: #FFC400;
+    }
+
+    @media (max-width: 768px) {
+        .checkout-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="checkout-container">
+    <h1 class="page-title"><i class="fas fa-check-circle"></i> تأكيد الطلب</h1>
+
+    <form method="post" action="{% url 'orders:create_order' %}">
+        {% csrf_token %}
+        <div class="checkout-grid">
+            <div class="card">
+                <h3 class="card-title"><i class="fas fa-user"></i> معلومات التوصيل</h3>
+
+                <div class="form-group">
+                    <label class="form-label">رقم الهاتف</label>
+                    <input type="tel" name="phone_number" class="form-input" placeholder="+20 1XX XXX XXXX"
+                        value="{{ user.phone }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">عنوان التوصيل</label>
+                    <textarea name="address" class="form-textarea" placeholder="أدخل عنوان التوصيل الكامل"
+                        required>{{ user.address }}</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">ملاحظات (اختياري)</label>
+                    <textarea name="notes" class="form-textarea" placeholder="أي ملاحظات إضافية للطلب"></textarea>
+                </div>
+            </div>
+
+            <div>
+                <div class="card">
+                    <h3 class="card-title"><i class="fas fa-shopping-bag"></i> ملخص الطلب</h3>
+
+                    {% for item in cart_items %}
+                    <div class="cart-item">
+                        {% if item.product.image %}
+                        <img src="{{ item.product.image.url }}" class="item-image">
+                        {% else %}
+                        <div class="item-image" style="display: flex; align-items: center; justify-content: center;"><i
+                                class="fas fa-box"></i></div>
+                        {% endif %}
+                        <div>
+                            <div class="item-name">{{ item.product.name }}</div>
+                            <div class="item-meta">
+                                {% if item.unit_type == 'carton' %}
+                                {{ item.get_quantity_in_cartons|floatformat:0 }} كرتون × {{ item.get_pcs_carton }} قطعة
+                                = {{ item.quantity }} قطعة
+                                {% else %}
+                                {{ item.quantity }} قطعة
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+
+                    <div class="summary-row">
+                        <span>عدد المنتجات:</span>
+                        <span>{{ cart_items|length }}</span>
+                    </div>
+
+                    <div class="summary-row total">
+                        <span>إجمالي القطع:</span>
+                        <span style="color: #FFC400;">{{ total_quantity|default:0 }}</span>
+                    </div>
+
+                    <button type="submit" class="btn-confirm">
+                        <i class="fas fa-paper-plane"></i>
+                        تأكيد الطلب
+                    </button>
+
+                    <a href="{% url 'cart:cart_view' %}" class="btn-back" style="width: 100%; justify-content: center;">
+                        <i class="fas fa-arrow-right"></i>
+                        العودة للسلة
+                    </a>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

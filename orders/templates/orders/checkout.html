@@ -1,0 +1,142 @@
+﻿{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إتمام الطلب - الوسام</title>
+    <link href="{% static 'css/base.css' %}" rel="stylesheet">
+    <link href="{% static 'css/layout.css' %}" rel="stylesheet">
+    <link href="{% static 'css/components.css' %}" rel="stylesheet">
+    <link href="{% static 'css/pages.css' %}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="theme-light">
+    <!-- NAVIGATION -->
+    <nav class="navbar">
+        <div class="container nav-container">
+            <div class="nav-left">
+                <a href="{% url 'home' %}" class="logo">
+                    <span>الوسام</span>
+                </a>
+            </div>
+
+            <ul class="nav-menu" id="nav-menu">
+                <li><a href="{% url 'home' %}" class="nav-link">الرئيسية</a></li>
+                <li><a href="alwesam_category.html" class="nav-link">المنتجات</a></li>
+                <li><a href="{% url 'cart:cart_view' %}" class="nav-link active">الطلبات</a></li>
+                <li><a href="alwesam_admin.html" class="nav-link">لوحة التحكم</a></li>
+            </ul>
+
+            <div class="nav-actions mr-2">
+                <button class="action-btn" onclick="toggleTheme()">
+                    <i class="fas fa-moon" id="theme-icon"></i>
+                </button>
+                <div class="lang-selector">
+                    <button class="lang-btn" title="تبديل اللغة">
+                        <i class="fas fa-globe"></i>
+                    </button>
+                    <div class="lang-dropdown">
+                        <button class="lang-option active" disabled>
+                            <i class="fas fa-check-circle"></i> العربية
+                        </button>
+                        <button class="lang-option" disabled>
+                            <i class="fas fa-circle"></i> English
+                        </button>
+                    </div>
+                </div>
+                <a href="{% url 'cart:cart_view' %}" class="btn-primary">
+                    <i class="fas fa-shopping-cart ml-2"></i>
+                    <span class="badge-counter">3</span>
+                </a>
+                <div class="mobile-toggle" onclick="toggleMenu()">
+                    <i class="fas fa-bars"></i>
+                </div>
+                <a href="alwesam_login.html" class="btn-primary btn-login">
+                    <i class="fas fa-sign-in-alt ml-2"></i> <span>تسجيل الدخول</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container section-padding">
+        <div class="grid-layout" style="grid-template-columns: 1fr 1.2fr; gap: 2rem;">
+
+            <!-- Items Summary -->
+            <div>
+                <h2 class="section-title mb-1 text-lg">ملخص الطلب</h2>
+                <div class="modern-card p-2">
+                    <div class="cart-item border-none p-0 mb-1">
+                        <div>
+                            <h3 class="font-bold">دريل ديوالت 18 فولت</h3>
+                            <div class="text-secondary text-sm">الكمية: 5 كرتون</div>
+                        </div>
+                        <div class="font-bold">5000 ر.س</div>
+                    </div>
+                    <div class="cart-item border-none p-0 mb-1">
+                        <div>
+                            <h3 class="font-bold">صاروخ ماكيتا</h3>
+                            <div class="text-secondary text-sm">الكمية: 2 كرتون</div>
+                        </div>
+                        <div class="font-bold">1200 ر.س</div>
+                    </div>
+
+                    <div class="flex-between py-2 border-top">
+                        <span class="text-secondary">المجموع الفرعي</span>
+                        <span class="font-bold">6200 ر.س</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Shipping Form -->
+            <div>
+                <h2 class="section-title mb-1 text-lg">معلومات الشحن</h2>
+                <div class="modern-card">
+                    <form action="{% url 'orders:checkout' %}" method="post">
+                    {% csrf_token %}
+                        <div class="input-group">
+                            <label class="input-label">الاسم الكامل</label>
+                            <input type="text" class="form-input" placeholder="اسم المستلم" required>
+                        </div>
+
+                        <div class="input-group">
+                            <label class="input-label">العنوان</label>
+                            <input type="text" class="form-input" placeholder="المدينة، الحي، اسم الشارع" required>
+                        </div>
+
+                        <div class="input-group">
+                            <label class="input-label">رقم الهاتف</label>
+                            <input type="tel" class="form-input" placeholder="05xxxxxxxx" required>
+                        </div>
+
+                        <div class="input-group">
+                            <label class="input-label">ملاحظات التوصيل</label>
+                            <textarea class="form-input" rows="3" placeholder="أي تعليمات إضافية..."></textarea>
+                        </div>
+
+                        <div class="mb-2">
+                            <label class="input-label">طريقة الدفع</label>
+                            <div class="flex-center gap-1">
+                                <label class="filter-chip active w-full flex-center justify-center">
+                                    <input type="radio" name="payment" checked hidden> عند الاستلام
+                                </label>
+                                <label class="filter-chip w-full flex-center justify-center">
+                                    <input type="radio" name="payment" hidden> حوالة بنكية
+                                </label>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-primary w-full justify-center">
+                            تأكيد الطلب (6200 ر.س)
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+</body>
+
+</html>

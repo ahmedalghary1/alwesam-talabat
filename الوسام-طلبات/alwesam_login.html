@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الدخول - الوسام</title>
+    <link href="css/base.css" rel="stylesheet">
+    <link href="css/layout.css" rel="stylesheet">
+    <link href="css/components.css" rel="stylesheet">
+    <link href="css/pages.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Login page styles moved to style.css in next step if generic classes aren't enough, 
+         but we will use generic classes and add specific ones to style.css -->
+</head>
+
+<body class="theme-light">
+    <!-- NAVIGATION -->
+    <nav class="navbar">
+        <div class="container nav-container">
+            <div class="nav-left">
+                <a href="alwesam_home.html" class="logo">
+                    <div class="logo-icon"><img src="./ELWSAM.png" alt="" width="110%" height="110%"></div>
+                    <span>الوسام</span>
+                </a>
+            </div>
+
+            <ul class="nav-menu" id="nav-menu">
+                <li><a href="alwesam_home.html" class="nav-link">الرئيسية</a></li>
+                <li><a href="alwesam_category.html" class="nav-link">المنتجات</a></li>
+                <li><a href="alwesam_cart.html" class="nav-link">الطلبات</a></li>
+                <li><a href="alwesam_admin.html" class="nav-link">لوحة التحكم</a></li>
+            </ul>
+
+            <div class="nav-actions mr-2">
+                <button class="action-btn" onclick="toggleTheme()">
+                    <i class="fas fa-moon" id="theme-icon"></i>
+                </button>
+                <div class="lang-selector">
+                    <button class="lang-btn" title="تبديل اللغة">
+                        <i class="fas fa-globe"></i>
+                    </button>
+                    <div class="lang-dropdown">
+                        <button class="lang-option active" disabled>
+                            <i class="fas fa-check-circle"></i> العربية
+                        </button>
+                        <button class="lang-option" disabled>
+                            <i class="fas fa-circle"></i> English
+                        </button>
+                    </div>
+                </div>
+                <a href="alwesam_cart.html" class="btn-primary">
+                    <i class="fas fa-shopping-cart ml-2"></i>
+                    <span class="badge-counter">3</span>
+                </a>
+                <div class="mobile-toggle" onclick="toggleMenu()">
+                    <i class="fas fa-bars"></i>
+                </div>
+                <a href="alwesam_login.html" class="btn-primary btn-login">
+                    <i class="fas fa-sign-in-alt ml-2"></i> <span>تسجيل الدخول</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="login-page">
+        <div class="login-card animate-slide-up">
+            <div class="text-center mb-2">
+                <div class="logo-icon mx-auto mb-1 icon-lg">
+                    <i class="fas fa-bolt"></i>
+                </div>
+                <h1 class="text-xl font-bold mb-05">مرحباً بك</h1>
+                <p class="text-secondary">سجل دخولك للوصول إلى حساب الجملة</p>
+            </div>
+
+            <form action="alwesam_home.html">
+                <div class="input-group">
+                    <label class="input-label">البريد الإلكتروني</label>
+                    <input type="email" class="form-input" placeholder="أدخل بريدك الإلكتروني" required>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label">كلمة المرور</label>
+                    <input type="password" class="form-input" placeholder="أدخل كلمة المرور" required>
+                </div>
+
+                <div class="flex-between mb-2 text-sm">
+                    <label class="flex-center gap-05 cursor-pointer">
+                        <input type="checkbox" class="accent-yellow"> تذكرني
+                    </label>
+                    <a href="#" class="text-secondary">نسيت كلمة المرور؟</a>
+                </div>
+
+                <button type="submit" class="btn-primary w-full justify-center mb-2">
+                    تسجيل الدخول
+                </button>
+
+                <div class="text-center text-sm text-secondary">
+                    ليس لديك حساب؟ <a href="#" class="text-primary font-bold">سجل الآن</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

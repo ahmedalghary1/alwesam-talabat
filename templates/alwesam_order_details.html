@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تفاصيل الطلب - الوسام</title>
+    <link href="css/base.css" rel="stylesheet">
+    <link href="css/layout.css" rel="stylesheet">
+    <link href="css/components.css" rel="stylesheet">
+    <link href="css/pages.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="theme-light">
+    <!-- NAVIGATION -->
+    <nav class="navbar">
+        <div class="container nav-container">
+            <div class="nav-left">
+                <a href="alwesam_home.html" class="logo">
+                    <div class="logo-icon"><img src="./ELWSAM.png" alt="" width="110%" height="110%"></div>
+                    <span>الوسام</span>
+                </a>
+            </div>
+
+            <ul class="nav-menu" id="nav-menu">
+                <li><a href="alwesam_home.html" class="nav-link">الرئيسية</a></li>
+                <li><a href="alwesam_category.html" class="nav-link">المنتجات</a></li>
+                <li><a href="alwesam_cart.html" class="nav-link active">الطلبات</a></li>
+                <li><a href="alwesam_admin.html" class="nav-link">لوحة التحكم</a></li>
+            </ul>
+
+            <div class="nav-actions">
+                <button class="action-btn" onclick="toggleTheme()"><i class="fas fa-moon" id="theme-icon"></i></button>
+                <div class="lang-selector">
+                    <button class="lang-btn" title="تبديل اللغة">
+                        <i class="fas fa-globe"></i>
+                    </button>
+                    <!-- Dropdown -->
+                    <div class="lang-dropdown">
+                        <button class="lang-option active" disabled>
+                            <i class="fas fa-check-circle"></i> العربية
+                        </button>
+                        <button class="lang-option" disabled>
+                            <i class="fas fa-circle"></i> English
+                        </button>
+                    </div>
+                </div>
+                <!-- Cart -->
+                <a href="alwesam_cart.html" class="action-btn">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="badge">3</span>
+                </a>
+                <div class="mobile-toggle" onclick="toggleMenu()"><i class="fas fa-bars"></i></div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- HEADER -->
+    <header class="page-header">
+        <div class="container text-center">
+            <h1 class="text-3xl font-black mb-1">تفاصيل الطلب #10234</h1>
+            <p class="text-secondary">تاريخ الطلب: 15 أكتوبر 2023</p>
+        </div>
+    </header>
+
+    <!-- ORDER DETAILS CONTENT -->
+    <main class="container py-3">
+        <div class="glass-panel p-2 rounded-lg mb-2">
+            <!-- Order Status Step Bar (Simplified for UI) -->
+            <div class="flex-between mb-2">
+                <div class="flex-center gap-1">
+                    <span class="status-badge status-pending text-lg">قيد التجهيز</span>
+                </div>
+                <button class="btn-secondary" onclick="window.print()">
+                    <i class="fas fa-print ml-2"></i> طباعة الفاتورة
+                </button>
+            </div>
+
+            <!-- Items Table -->
+            <div class="table-responsive mb-2">
+                <table class="w-full text-right" style="border-collapse: collapse;">
+                    <thead>
+                        <tr class="text-secondary border-b">
+                            <th class="pb-1">المنتج</th>
+                            <th class="pb-1">الكمية</th>
+                            <th class="pb-1">السعر</th>
+                            <th class="pb-1">الإجمالي</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b">
+                            <td class="py-1">
+                                <div class="flex-center" style="justify-content: flex-start; gap: 1rem;">
+                                    <div class="cart-item-img"
+                                        style="width: 60px; height: 60px; background: #ddd; border-radius: 8px;"></div>
+                                    <div>
+                                        <div class="font-bold">دريل كهربائي ديوالت</div>
+                                        <div class="text-sm text-secondary">موديل DCD771</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-1">1</td>
+                            <td class="py-1">450 ر.ل</td>
+                            <td class="py-1 font-bold">450 ر.س</td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="py-1">
+                                <div class="flex-center" style="justify-content: flex-start; gap: 1rem;">
+                                    <div class="cart-item-img"
+                                        style="width: 60px; height: 60px; background: #ddd; border-radius: 8px;"></div>
+                                    <div>
+                                        <div class="font-bold">مجموعة مفكات</div>
+                                        <div class="text-sm text-secondary">احترافية 10 قطع</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-1">2</td>
+                            <td class="py-1">75 ر.س</td>
+                            <td class="py-1 font-bold">150 ر.س</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Total Calculation -->
+            <div class="flex-end" style="justify-content: flex-end;">
+                <div class="w-full" style="max-width: 300px;">
+                    <div class="flex-between py-05 text-secondary">
+                        <span>المجموع الفرعي</span>
+                        <span>600 ر.س</span>
+                    </div>
+                    <div class="flex-between py-05 text-secondary">
+                        <span>الضريبة (15%)</span>
+                        <span>90 ر.س</span>
+                    </div>
+                    <div class="flex-between py-05 font-black text-xl border-t mt-1 pt-1">
+                        <span>الإجمالي</span>
+                        <span class="text-primary">690 ر.س</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Addresses -->
+        <div class="grid-2-col gap-2"
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+            <div class="modern-card">
+                <h3 class="card-title mb-1"><i class="fas fa-map-marker-alt ml-2 text-accent"></i> عنوان التوصيل</h3>
+                <p>أحمد محمد</p>
+                <p class="text-secondary">الرياض، حي الملز</p>
+                <p class="text-secondary">شارع صلاح الدين، مبنى 45</p>
+                <p class="text-secondary">0501234567</p>
+            </div>
+            <div class="modern-card">
+                <h3 class="card-title mb-1"><i class="fas fa-credit-card ml-2 text-accent"></i> طريقة الدفع</h3>
+                <p class="font-bold">بطاقة مدى</p>
+                <p class="text-secondary">**** **** **** 1234</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-copyright">
+                <p>© 2024 متجر الوسام. جميع الحقوق محفوظة.</p>
+            </div>
+        </div>
+    </footer>
+    <script src="script.js"></script>
+</body>
+
+</html>

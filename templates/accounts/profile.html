@@ -1,0 +1,235 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}حسابي - الوسام{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+    }
+
+    .profile-header {
+        text-align: center;
+        padding: 2.5rem;
+        background: var(--card-bg);
+        border: 2px solid var(--border-color);
+        border-radius: 20px;
+        margin-bottom: 2rem;
+    }
+
+    .profile-avatar {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: #FFC400;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        color: #1a1a1a;
+        font-size: 2.5rem;
+        box-shadow: 0 10px 30px rgba(255, 196, 0, 0.3);
+    }
+
+    .profile-name {
+        font-size: 1.75rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+    }
+
+    .profile-email {
+        color: var(--text-secondary);
+    }
+
+    .profile-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .profile-card {
+        background: var(--card-bg);
+        border: 2px solid var(--border-color);
+        border-radius: 16px;
+        padding: 1.5rem;
+    }
+
+    .profile-card-title {
+        font-size: 1.125rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .profile-card-title i {
+        color: #FFC400;
+    }
+
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .info-item:last-of-type {
+        border-bottom: none;
+    }
+
+    .info-label {
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .info-value {
+        color: var(--text-secondary);
+    }
+
+    .btn-yellow {
+        background: #FFC400;
+        color: #1a1a1a;
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 700;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        width: 100%;
+        justify-content: center;
+        margin-top: 1rem;
+    }
+
+    .btn-yellow:hover {
+        background: #e6b000;
+        transform: translateY(-2px);
+    }
+
+    .btn-outline {
+        background: transparent;
+        color: #FFC400;
+        border: 2px solid #FFC400;
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        width: 100%;
+        justify-content: center;
+        margin-top: 0.5rem;
+    }
+
+    .btn-outline:hover {
+        background: #FFC400;
+        color: #1a1a1a;
+    }
+
+    .btn-danger {
+        background: #ef4444;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        border: none;
+    }
+
+    .btn-danger:hover {
+        background: #dc2626;
+    }
+
+    .profile-actions {
+        text-align: center;
+        margin-top: 2rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <div class="profile-header">
+        <div class="profile-avatar">
+            <i class="fas fa-user"></i>
+        </div>
+        <h1 class="profile-name">{{ user.username }}</h1>
+        <p class="profile-email">{{ user.email }}</p>
+    </div>
+
+    <div class="profile-grid">
+        <div class="profile-card">
+            <h3 class="profile-card-title">
+                <i class="fas fa-user-circle"></i>
+                معلومات الحساب
+            </h3>
+
+            <div class="info-item">
+                <span class="info-label">اسم المستخدم:</span>
+                <span class="info-value">{{ user.username }}</span>
+            </div>
+
+            <div class="info-item">
+                <span class="info-label">البريد الإلكتروني:</span>
+                <span class="info-value">{{ user.email }}</span>
+            </div>
+
+            <div class="info-item">
+                <span class="info-label">رقم الهاتف:</span>
+                <span class="info-value">{{ user.phone|default:"غير محدد" }}</span>
+            </div>
+
+            <div class="info-item">
+                <span class="info-label">العنوان:</span>
+                <span class="info-value">{{ user.address|default:"غير محدد" }}</span>
+            </div>
+
+            <a href="{% url 'accounts:update_profile' %}" class="btn-yellow">
+                <i class="fas fa-edit"></i>
+                تعديل المعلومات
+            </a>
+        </div>
+
+        <div class="profile-card">
+            <h3 class="profile-card-title">
+                <i class="fas fa-shopping-bag"></i>
+                الطلبات
+            </h3>
+
+            <p style="color: var(--text-secondary); text-align: center; padding: 2rem 0;">
+                يمكنك متابعة جميع طلباتك من هنا
+            </p>
+
+            <a href="{% url 'orders:order_list' %}" class="btn-yellow">
+                <i class="fas fa-list"></i>
+                عرض الطلبات
+            </a>
+
+            <a href="{% url 'products:all_categories' %}" class="btn-outline">
+                <i class="fas fa-shopping-cart"></i>
+                تسوق الآن
+            </a>
+        </div>
+    </div>
+
+    <div class="profile-actions">
+        <a href="{% url 'accounts:logout' %}" class="btn-danger">
+            <i class="fas fa-sign-out-alt"></i>
+            تسجيل الخروج
+        </a>
+    </div>
+</div>
+{% endblock %}

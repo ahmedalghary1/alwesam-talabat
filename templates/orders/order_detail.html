@@ -1,0 +1,666 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load cart_filters %}
+
+{% block title %}تفاصيل الطلب #{{ order.id }} - الوسام{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Order Details Page Styles */
+    .order-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+    }
+
+    /* Header Section */
+    .order-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+    }
+
+    .order-title-section h1 {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .order-title-section h1 span {
+        color: #FFC400;
+    }
+
+    .order-meta {
+        display: flex;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+    }
+
+    .order-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .order-meta-item i {
+        color: #FFC400;
+    }
+
+    .btn-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        background: transparent;
+        border: 2px solid var(--border-color);
+        border-radius: 12px;
+        color: var(--text-primary);
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .btn-back:hover {
+        border-color: #FFC400;
+        color: #FFC400;
+        transform: translateX(-5px);
+    }
+
+    /* Status Badge */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 1rem;
+    }
+
+    .status-pending {
+        background: linear-gradient(135deg, #f59e0b20, #f59e0b10);
+        color: #f59e0b;
+        border: 2px solid #f59e0b40;
+    }
+
+    .status-confirmed {
+        background: linear-gradient(135deg, #3b82f620, #3b82f610);
+        color: #3b82f6;
+        border: 2px solid #3b82f640;
+    }
+
+    .status-shipped {
+        background: linear-gradient(135deg, #8b5cf620, #8b5cf610);
+        color: #8b5cf6;
+        border: 2px solid #8b5cf640;
+    }
+
+    .status-delivered {
+        background: linear-gradient(135deg, #10b98120, #10b98110);
+        color: #10b981;
+        border: 2px solid #10b98140;
+    }
+
+    .status-cancelled {
+        background: linear-gradient(135deg, #ef444420, #ef444410);
+        color: #ef4444;
+        border: 2px solid #ef444440;
+    }
+
+    /* Main Layout */
+    .order-layout {
+        display: grid;
+        grid-template-columns: 1fr 380px;
+        gap: 2rem;
+    }
+
+    @media (max-width: 968px) {
+        .order-layout {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Cards */
+    .order-card {
+        background: var(--card-bg);
+        border: 2px solid var(--border-color);
+        border-radius: 20px;
+        overflow: hidden;
+    }
+
+    .card-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1.25rem 1.5rem;
+        background: linear-gradient(135deg, var(--bg-secondary), transparent);
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    .card-header i {
+        color: #FFC400;
+        font-size: 1.25rem;
+    }
+
+    .card-header h3 {
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: var(--text-primary);
+    }
+
+    .card-body {
+        padding: 1.5rem;
+    }
+
+    /* Product Items */
+    .product-item {
+        display: flex;
+        gap: 1.25rem;
+        padding: 1.25rem;
+        border-radius: 16px;
+        background: var(--bg-secondary);
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .product-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .product-item:hover {
+        transform: translateX(-5px);
+        box-shadow: 0 5px 20px rgba(255, 196, 0, 0.1);
+    }
+
+    .product-image {
+        width: 100px;
+        height: 100px;
+        min-width: 100px;
+        border-radius: 12px;
+        overflow: hidden;
+        background: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .product-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        padding: 0.5rem;
+        background: #ffffff;
+    }
+
+    /* Dark theme support */
+    body.theme-dark .product-image,
+    body.theme-dark .product-image img {
+        background: #2a2a2a;
+    }
+
+    .product-image-placeholder {
+        color: var(--text-secondary);
+        font-size: 2rem;
+    }
+
+    .product-details {
+        flex: 1;
+    }
+
+    .product-name {
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .variant-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.375rem 0.75rem;
+        background: linear-gradient(135deg, #FFC40020, #FFC40010);
+        color: #FFC400;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+    }
+
+    .product-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 0.375rem;
+    }
+
+    .product-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+    }
+
+    .product-meta-item i {
+        width: 16px;
+        color: #FFC400;
+        font-size: 0.8rem;
+    }
+
+    .product-meta-item strong {
+        color: var(--text-primary);
+    }
+
+    /* Info Items */
+    .info-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.875rem 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .info-item:last-child {
+        border-bottom: none;
+    }
+
+    .info-icon {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #FFC40020, #FFC40010);
+        border-radius: 10px;
+        color: #FFC400;
+    }
+
+    .info-content label {
+        display: block;
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        margin-bottom: 0.125rem;
+    }
+
+    .info-content span {
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    /* Notes Section */
+    .notes-content {
+        padding: 1rem;
+        background: var(--bg-secondary);
+        border-radius: 12px;
+        color: var(--text-secondary);
+        line-height: 1.6;
+    }
+
+    /* Cancel Button */
+    .btn-cancel-order {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        width: 100%;
+        padding: 1rem;
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-cancel-order:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(239, 68, 68, 0.4);
+    }
+
+    /* Status Timeline */
+    .status-timeline {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        padding: 1rem 0;
+    }
+
+    .timeline-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        position: relative;
+        padding-bottom: 1.5rem;
+    }
+
+    .timeline-item:last-child {
+        padding-bottom: 0;
+    }
+
+    .timeline-item:not(:last-child)::before {
+        content: '';
+        position: absolute;
+        left: 15px;
+        top: 35px;
+        width: 2px;
+        height: calc(100% - 25px);
+        background: var(--border-color);
+    }
+
+    .timeline-icon {
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg-secondary);
+        color: var(--text-secondary);
+        border: 2px solid var(--border-color);
+        font-size: 0.85rem;
+        z-index: 1;
+    }
+
+    .timeline-item.completed .timeline-icon {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        border-color: #10b981;
+    }
+
+    .timeline-item.current .timeline-icon {
+        background: linear-gradient(135deg, #FFC400, #e6b000);
+        color: #1a1a1a;
+        border-color: #FFC400;
+        animation: pulse-gold 2s infinite;
+    }
+
+    @keyframes pulse-gold {
+
+        0%,
+        100% {
+            box-shadow: 0 0 0 0 rgba(255, 196, 0, 0.4);
+        }
+
+        50% {
+            box-shadow: 0 0 0 10px rgba(255, 196, 0, 0);
+        }
+    }
+
+    .timeline-content h4 {
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 0.25rem;
+    }
+
+    .timeline-content p {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+    }
+
+    /* Summary Card */
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .summary-row:last-child {
+        border-bottom: none;
+        padding-top: 1rem;
+        margin-top: 0.5rem;
+        border-top: 2px solid #FFC400;
+    }
+
+    .summary-label {
+        color: var(--text-secondary);
+    }
+
+    .summary-value {
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    .summary-row:last-child .summary-value {
+        color: #FFC400;
+        font-size: 1.25rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+        .order-header {
+            flex-direction: column;
+        }
+
+        .order-title-section h1 {
+            font-size: 1.5rem;
+        }
+
+        .product-item {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .product-image {
+            margin: 0 auto;
+        }
+
+        .product-meta {
+            align-items: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="order-container">
+    <!-- Header -->
+    <div class="order-header">
+        <div class="order-title-section">
+            <h1>
+                <i class="fas fa-receipt"></i>
+                طلب <span>#{{ order.id }}</span>
+            </h1>
+            <div class="order-meta">
+                <div class="order-meta-item">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>{{ order.created_at|date:"d/m/Y" }}</span>
+                </div>
+                <div class="order-meta-item">
+                    <i class="fas fa-clock"></i>
+                    <span>{{ order.created_at|date:"H:i" }}</span>
+                </div>
+                <div class="order-meta-item">
+                    <span class="status-badge status-{{ order.status }}">
+                        {% if order.status == 'pending' %}
+                        <i class="fas fa-hourglass-half"></i> معلق
+                        {% elif order.status == 'confirmed' %}
+                        <i class="fas fa-check-circle"></i> مؤكد
+                        {% elif order.status == 'shipped' %}
+                        <i class="fas fa-truck"></i> تم الشحن
+                        {% elif order.status == 'delivered' %}
+                        <i class="fas fa-check-double"></i> تم التسليم
+                        {% elif order.status == 'cancelled' %}
+                        <i class="fas fa-times-circle"></i> ملغي
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+        <a href="{% url 'orders:order_list' %}" class="btn-back">
+            <i class="fas fa-arrow-right"></i>
+            العودة للطلبات
+        </a>
+    </div>
+
+    <!-- Main Layout -->
+    <div class="order-layout">
+        <!-- Products Section -->
+        <div class="order-card">
+            <div class="card-header">
+                <i class="fas fa-shopping-bag"></i>
+                <h3>المنتجات ({{ order.items.count }} منتج)</h3>
+            </div>
+            <div class="card-body">
+                {% for item in order.items.all %}
+                <div class="product-item">
+                    <div class="product-image">
+                        {% if item.product.image %}
+                        <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" loading="lazy">
+                        {% else %}
+                        <i class="fas fa-box product-image-placeholder"></i>
+                        {% endif %}
+                    </div>
+                    <div class="product-details">
+                        <h4 class="product-name">{{ item.product.name }}</h4>
+                        {% if item.variant_info %}
+                        <div class="variant-badge">
+                            <i class="fas fa-tag"></i>
+                            {{ item.variant_info }}
+                        </div>
+                        {% endif %}
+
+                        <!-- Unit Type Badge (NEW) -->
+                        {% if item.unit_type == 'piece' %}
+                        <div class="variant-badge"
+                            style="background: linear-gradient(135deg, #22c55e20, #22c55e10); color: #22c55e;">
+                            <i class="fas fa-cube"></i> طلب بالقطعة
+                        </div>
+                        {% else %}
+                        <div class="variant-badge">
+                            <i class="fas fa-box"></i> طلب بالكرتونة
+                        </div>
+                        {% endif %}
+
+                        <div class="product-meta">
+                            <div class="product-meta-item">
+                                <i class="fas fa-layer-group"></i>
+                                {% if item.unit_type == 'carton' %}
+                                <span><strong>{{ item.get_quantity_in_cartons|floatformat:0 }}</strong> كرتون</span>
+                                {% else %}
+                                <span><strong>{{ item.quantity }}</strong> قطعة</span>
+                                {% endif %}
+                            </div>
+                            <div class="product-meta-item">
+                                <i class="fas fa-box-open"></i>
+                                <span>{{ item.get_pcs_carton }} قطعة/كرتون</span>
+                            </div>
+                            <div class="product-meta-item">
+                                <i class="fas fa-calculator"></i>
+                                <span>إجمالي: <strong>{{ item.quantity }}</strong> قطعة</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="sidebar-section">
+            <!-- Order Summary -->
+            <div class="order-card" style="margin-bottom: 1.5rem;">
+                <div class="card-header">
+                    <i class="fas fa-calculator"></i>
+                    <h3>ملخص الطلب</h3>
+                </div>
+                <div class="card-body">
+                    <div class="summary-row">
+                        <span class="summary-label">عدد المنتجات</span>
+                        <span class="summary-value">{{ order.items.count }}</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="summary-label">إجمالي القطع</span>
+                        <span class="summary-value">
+                            {% with total=0 %}
+                            {% for item in order.items.all %}
+                            {{ item.quantity|add:total }}
+                            {% endfor %}
+                            {% endwith %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Info -->
+            <div class="order-card" style="margin-bottom: 1.5rem;">
+                <div class="card-header">
+                    <i class="fas fa-user"></i>
+                    <h3>معلومات الاتصال</h3>
+                </div>
+                <div class="card-body" style="padding: 0.5rem 1.5rem;">
+                    <div class="info-item">
+                        <div class="info-icon">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="info-content">
+                            <label>الاسم</label>
+                            <span>{{ order.user.get_full_name|default:order.user.username }}</span>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-icon">
+                            <i class="fas fa-phone"></i>
+                        </div>
+                        <div class="info-content">
+                            <label>رقم الهاتف</label>
+                            <span>{{ order.phone_number }}</span>
+                        </div>
+                    </div>
+                    {% if order.address %}
+                    <div class="info-item">
+                        <div class="info-icon">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <div class="info-content">
+                            <label>العنوان</label>
+                            <span>{{ order.address }}</span>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Notes -->
+            {% if order.notes %}
+            <div class="order-card" style="margin-bottom: 1.5rem;">
+                <div class="card-header">
+                    <i class="fas fa-sticky-note"></i>
+                    <h3>ملاحظات</h3>
+                </div>
+                <div class="card-body">
+                    <div class="notes-content">
+                        {{ order.notes }}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Cancel Order -->
+            {% if order.status == 'pending' %}
+            <form method="post" action="{% url 'orders:cancel_order' order.id %}"
+                onsubmit="return confirm('هل أنت متأكد من إلغاء هذا الطلب؟')">
+                {% csrf_token %}
+                <button type="submit" class="btn-cancel-order">
+                    <i class="fas fa-times-circle"></i>
+                    إلغاء الطلب
+                </button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

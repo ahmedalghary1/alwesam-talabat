@@ -1,0 +1,950 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ product.name }} - الوسام{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/product_detail.css' %}">
+<style>
+    /* CRITICAL FIX: Horizontal Scrolling Thumbnails */
+    /* Parent container constraint */
+    .gallery-container,
+    .product-gallery,
+    .main-image-frame {
+        max-width: 100% !important;
+        overflow: hidden !important;
+    }
+
+    /* Thumbnails scroll container */
+    .thumbs-scroll {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        gap: 10px !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        scroll-behavior: smooth !important;
+        -webkit-overflow-scrolling: touch !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        padding: 10px 0 !important;
+    }
+
+    /* Individual thumbnail buttons */
+    .thumb-btn {
+        flex-shrink: 0 !important;
+        flex-grow: 0 !important;
+        width: 80px !important;
+        height: 80px !important;
+        min-width: 80px !important;
+        max-width: 80px !important;
+        box-sizing: border-box !important;
+    }
+
+    @media (max-width: 768px) {
+        .thumb-btn {
+            width: 70px !important;
+            height: 70px !important;
+            min-width: 70px !important;
+            max-width: 70px !important;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .thumb-btn {
+            width: 60px !important;
+            height: 60px !important;
+            min-width: 60px !important;
+            max-width: 60px !important;
+        }
+    }
+
+    /* Premium Variant Selection Styling - Dark Theme Compatible */
+    .variant-section {
+        margin: 25px 0;
+        padding: 20px;
+        background: var(--bg-secondary);
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+    }
+
+    .variant-section h4 {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 700;
+        font-size: 16px;
+        color: var(--text-primary);
+        margin-bottom: 15px;
+    }
+
+    .variant-section h4 i {
+        color: #FFC400;
+        font-size: 18px;
+    }
+
+    /* Variant Options Grid */
+    .variant-section .variant-options {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 12px;
+    }
+
+    .variant-section .variant-btn {
+        background: var(--card-bg);
+        padding: 15px;
+        border-radius: 10px;
+        border: 2px solid var(--border-color);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+        position: relative;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .variant-section .variant-btn:hover {
+        border-color: #FFC400;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 196, 0, 0.2);
+    }
+
+    .variant-section .variant-btn.active {
+        border-color: #FFC400;
+        background: var(--yellow-gradient);
+        box-shadow: 0 4px 15px rgba(255, 196, 0, 0.3);
+    }
+
+    /* Dark theme specific active state */
+    .theme-dark .variant-section .variant-btn.active {
+        background: linear-gradient(135deg, rgba(255, 196, 0, 0.15) 0%, rgba(255, 196, 0, 0.05) 100%);
+    }
+
+    .variant-section .variant-btn.active::before {
+        content: "\f00c";
+        font-family: "Font Awesome 5 Free";
+        font-weight: 900;
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        width: 22px;
+        height: 22px;
+        background: #FFC400;
+        color: #292222;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+    }
+
+    .variant-section .variant-btn.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .variant-section .variant-options {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    /* Color Circle Display */
+    .color-circle {
+        display: inline-block;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        border: 2px solid var(--border-color);
+        margin-left: 8px;
+        vertical-align: middle;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+        transition: all 0.3s ease;
+    }
+
+    .theme-dark .color-circle {
+        box-shadow: 0 2px 6px rgba(255, 255, 255, 0.1);
+    }
+
+    /* Size Badges */
+    .sizes-container {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .size-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        transition: all 0.3s ease;
+    }
+
+    .theme-dark .size-badge {
+        background: rgba(255, 196, 0, 0.1);
+        border-color: rgba(255, 196, 0, 0.3);
+    }
+
+    /* Update variant btn to support color and sizes */
+    .variant-section .variant-btn {
+        background: var(--card-bg);
+        padding: 15px;
+        border-radius: 10px;
+        border: 2px solid var(--border-color);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: left;
+        position: relative;
+        font-weight: 600;
+        color: var(--text-primary);
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: flex-start;
+        min-height: 60px;
+    }
+
+    .variant-btn-content {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .variant-section .variant-options {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .color-circle {
+            width: 18px;
+            height: 18px;
+        }
+
+        .size-badge {
+            font-size: 0.7rem;
+            padding: 3px 8px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .variant-section .variant-options {
+            grid-template-columns: 1fr;
+        }
+
+        .variant-section .variant-btn {
+            padding: 12px;
+        }
+
+        .color-circle {
+            width: 16px;
+            height: 16px;
+            margin-left: 6px;
+        }
+
+        .size-badge {
+            font-size: 0.65rem;
+            padding: 2px 6px;
+        }
+
+        .sizes-container {
+            gap: 4px;
+            margin-top: 8px;
+            padding-top: 8px;
+        }
+    }
+
+    /* New Interactive Color and Size Selection Styles */
+    .variant-selection-section {
+        margin-top: 1.5rem;
+    }
+
+    .variant-selection-section h4 {
+        margin-bottom: 1rem;
+        color: var(--text-primary);
+        font-size: 1.1rem;
+    }
+
+    .color-selection {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 1.5rem;
+    }
+
+    .color-option {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        border: 3px solid transparent;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+    .color-option:hover {
+        transform: scale(1.1);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .color-option.selected {
+        border-color: #FFC400;
+        box-shadow: 0 0 15px rgba(255, 196, 0, 0.6);
+        transform: scale(1.15);
+    }
+
+    .color-option.disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+
+    .size-selection-wrapper {
+        margin-top: 1.5rem;
+    }
+
+    .size-selection {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .size-option {
+        padding: 12px 24px;
+        border: 2px solid var(--border-color);
+        border-radius: 8px;
+        background: var(--card-bg);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .size-option:hover:not(.disabled) {
+        border-color: #FFC400;
+        background: rgba(255, 196, 0, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .size-option.selected {
+        background: #FFC400;
+        border-color: #FFC400;
+        color: #1a1a1a;
+        box-shadow: 0 4px 8px rgba(255, 196, 0, 0.3);
+    }
+
+    .size-option.disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        background: var(--bg-secondary);
+    }
+
+    @media (max-width: 768px) {
+        .color-option {
+            width: 40px;
+            height: 40px;
+        }
+
+        .size-option {
+            padding: 10px 18px;
+            font-size: 0.9rem;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .color-option {
+            width: 35px;
+            height: 35px;
+        }
+
+        .size-option {
+            padding: 8px 14px;
+            font-size: 0.85rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="product-section">
+
+    <!-- Breadcrumbs -->
+    <div class="breadcrumbs">
+        <a href="{% url 'home:home' %}" class="breadcrumb-item"><i class="fas fa-home"></i> الرئيسية</a>
+        <i class="fas fa-chevron-left"></i>
+        <a href="{% url 'products:all_categories' %}" class="breadcrumb-item">الأقسام</a>
+        {% if product.category %}
+        <i class="fas fa-chevron-left"></i>
+        <a href="{% url 'products:category_products' product.category.slug %}" class="breadcrumb-item">
+            {{ product.category.name }}
+        </a>
+        {% endif %}
+        <i class="fas fa-chevron-left"></i>
+        <span class="breadcrumb-item active">{{ product.name }}</span>
+    </div>
+
+    <div class="product-layout">
+
+        <!-- Gallery -->
+        <div class="gallery-container">
+            <div class="main-image-frame">
+                {% if product.image %}
+                <img id="main-product-img" src="{{ product.image.url }}" alt="{{ product.name }}" class="product-img">
+                {% else %}
+                <div class="product-placeholder"><i class="fas fa-box"></i></div>
+                {% endif %}
+            </div>
+
+            {% if product.image or product_images %}
+            <div class="thumbs-scroll">
+                {% if product.image %}
+                <button class="thumb-btn active" onclick="switchImage('{{ product.image.url }}', this)">
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}">
+                </button>
+                {% endif %}
+                {% for img in product_images %}
+                <button class="thumb-btn" onclick="switchImage('{{ img.image.url }}', this)">
+                    <img src="{{ img.image.url }}" alt="{{ product.name }}">
+                </button>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Info -->
+        <div class="product-info-col">
+            {% if product.is_available %}
+            <span class="stock-badge available"><i class="fas fa-check-circle"></i> متوفر</span>
+            {% else %}
+            <span class="stock-badge unavailable"><i class="fas fa-times-circle"></i> غير متوفر</span>
+            {% endif %}
+            <h1 class="page-title">{{ product.name }}</h1>
+
+            <div class="specs-panel">
+                <div class="spec-row">
+                    <span><i class="fas fa-box"></i> القطع في الكرتون</span>
+                    <strong id="pcs-carton-display">{{ product.pcs_carton }}</strong>
+                </div>
+                <div class="spec-row">
+                    <span><i class="fas fa-cubes"></i> عدد الكراتين</span>
+                    <strong id="quantity-display">1</strong>
+                </div>
+                <div class="spec-row">
+                    <span><i class="fas fa-calculator"></i> إجمالي القطع</span>
+                    <strong id="total-pieces-display">{{ product.pcs_carton }}</strong>
+                </div>
+            </div>
+
+            {% if product.description %}
+            <div class="product-description">
+                <h3 class="section-title"><i class="fas fa-info-circle"></i> وصف المنتج</h3>
+                <p>{{ product.description|linebreaks }}</p>
+            </div>
+            {% endif %}
+
+            {% if variants %}
+            <!-- Color and Size Selection Section -->
+            <div class="variant-selection-section">
+                <h4><i class="fas fa-palette"></i> اختر اللون</h4>
+                <div class="color-selection" id="color-selection">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+
+                <!-- Size Selection Section (Hidden initially) -->
+                <div class="size-selection-wrapper" id="size-selection-wrapper" style="display: none;">
+                    <h4><i class="fas fa-ruler"></i> اختر المقاس</h4>
+                    <div class="size-selection" id="size-selection">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Hidden input to store selected variant ID -->
+                <input type="hidden" id="selected-variant-id" value="">
+            </div>
+            {% endif %}
+
+            <!-- Unit Type Selector -->
+            <div class="variant-section">
+                <h4><i class="fas fa-balance-scale"></i> وحدة الطلب</h4>
+                <div class="variant-options">
+                    <button type="button" class="variant-btn active" data-unit="carton" onclick="selectUnit('carton')">
+                        <i class="fas fa-box"></i> كرتونة
+                    </button>
+                    <button type="button" class="variant-btn" data-unit="piece" onclick="selectUnit('piece')">
+                        <i class="fas fa-cube"></i> قطعة
+                    </button>
+                </div>
+            </div>
+
+            <div class="action-row">
+                <div class="quantity-selector">
+                    <button class="qty-btn" onclick="decreaseQty()" {% if not product.is_available %}disabled{% endif %}>-</button>
+                    <span id="quantity-value">1</span>
+                    <button class="qty-btn" onclick="increaseQty()" {% if not product.is_available %}disabled{% endif %}>+</button>
+                </div>
+                <button class="btn-add-to-cart" id="add-to-cart-btn" {% if not product.is_available %}disabled
+                    style="opacity: 0.5; cursor: not-allowed; background: #ccc;" {% endif %}>
+                    <i class="fas fa-shopping-cart"></i>
+                    {% if product.is_available %}
+                    إضافة للسلة
+                    {% else %}
+                    غير متوفر للطلب
+                    {% endif %}
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Related Products -->
+    {% if related_products %}
+    <section class="related-section">
+        <h2 class="section-title"><i class="fas fa-boxes"></i> منتجات ذات صلة</h2>
+        <div class="related-grid">
+            {% for rp in related_products %}
+            <a href="{% url 'products:product_detail' rp.slug %}" class="related-card">
+                {% if rp.image %}
+                <img src="{{ rp.image.url }}" alt="{{ rp.name }}">
+                {% else %}
+                <div
+                    style="height:200px;display:flex;align-items:center;justify-content:center;background:var(--bg-secondary);">
+                    <i class="fas fa-box" style="font-size:3rem;color:var(--text-secondary);"></i>
+                </div>
+                {% endif %}
+                <div class="related-card-content">
+                    <h4>{{ rp.name }}</h4>
+                    <span class="pcs-badge"><i class="fas fa-box"></i> {{ rp.pcs_carton }} قطعة/كرتون</span>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+</div>
+
+<div class="toast-notification" id="cart-toast">
+    <i class="fas fa-check-circle" id="toast-icon"></i>
+    <span id="toast-message">تم الإضافة للسلة</span>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<parameter name="StartLine">540
+    <script>
+        // ==================== Variant Selection System ====================
+        // All variants data from Django
+        const ALL_VARIANTS = [
+            {% for v in variants %}
+        {
+            id: {{ v.id }},
+            name: '{{v.variant_value|escapejs}}',
+                pcsCarton: {{ v.pcs_carton }},
+            isAvailable: {{ v.is_available | yesno:"true,false" }},
+            colorId: {% if v.color %} {{ v.color.id }} {% else %} null{% endif %},
+            colorName: '{% if v.color %}{{v.color.name|escapejs}}{% endif %}',
+            colorHex: '{% if v.color %}{{v.color.hex_code}}{% endif %}',
+            sizes: [{% for size in v.sizes.all %} {{ size.id }} {% if not forloop.last %}, {% endif %} {% endfor %}],
+            sizeNames: [{% for size in v.sizes.all %}'{{size.name|escapejs}}'{% if not forloop.last %}, {% endif %} {% endfor %}],
+            image: '{% if v.image %}{{v.image.url}}{% endif %}'
+    }
+        {% if not forloop.last %}, {% endif %}
+        {% endfor %}
+    ];
+
+        function organizeVariantsByColor() {
+            const colorMap = {};
+            ALL_VARIANTS.forEach(variant => {
+                const colorKey = variant.colorId || 'no-color';
+                if (!colorMap[colorKey]) {
+                    colorMap[colorKey] = {
+                        colorId: variant.colorId,
+                        colorName: variant.colorName,
+                        colorHex: variant.colorHex,
+                        variants: []
+                    };
+                }
+                colorMap[colorKey].variants.push(variant);
+            });
+            return colorMap;
+        }
+
+        function renderColorSelection() {
+            const colorContainer = document.getElementById('color-selection');
+            if (!colorContainer) return;
+
+            const colorMap = organizeVariantsByColor();
+            colorContainer.innerHTML = '';
+
+            // Only show colors that have available variants
+            Object.values(colorMap).forEach(colorGroup => {
+                // Check if this color has at least one available variant
+                const hasAvailableVariant = colorGroup.variants.some(v => v.isAvailable);
+
+                const colorDiv = document.createElement('div');
+                colorDiv.className = 'color-option';
+                colorDiv.style.backgroundColor = colorGroup.colorHex || '#cccccc';
+                colorDiv.dataset.colorId = colorGroup.colorId || 'no-color';
+
+                // Create a descriptive title showing color name and availability
+                const colorName = colorGroup.colorName || 'بدون لون';
+                const availabilityText = hasAvailableVariant ? 'متوفر' : 'غير متوفر';
+                colorDiv.title = `${colorName} (${availabilityText})`;
+
+                // Disable if no available variants
+                if (!hasAvailableVariant) {
+                    colorDiv.classList.add('disabled');
+                } else {
+                    colorDiv.onclick = () => selectColor(colorGroup.colorId || 'no-color', colorGroup.variants);
+                }
+
+                colorContainer.appendChild(colorDiv);
+            });
+        }
+
+        function selectColor(colorId, variants) {
+            document.querySelectorAll('.color-option').forEach(el => el.classList.remove('selected'));
+            const selectedColor = document.querySelector(`[data-color-id="${colorId}"]`);
+            if (selectedColor) selectedColor.classList.add('selected');
+
+            const sizeWrapper = document.getElementById('size-selection-wrapper');
+            if (variants.length === 1) {
+                sizeWrapper.style.display = 'none';
+                selectVariantById(variants[0].id);
+            } else {
+                sizeWrapper.style.display = 'block';
+                renderSizeSelection(variants);
+
+                // Auto-select first available variant to show image immediately
+                const firstAvailable = variants.find(v => v.isAvailable);
+                if (firstAvailable) {
+                    selectVariantById(firstAvailable.id);
+                    // Also mark it as selected in UI
+                    setTimeout(() => {
+                        const firstSizeBtn = document.querySelector(`[data-variant-id="${firstAvailable.id}"]`);
+                        if (firstSizeBtn) firstSizeBtn.classList.add('selected');
+                    }, 0);
+                }
+            }
+        }
+
+        function renderSizeSelection(variants) {
+            const sizeContainer = document.getElementById('size-selection');
+            if (!sizeContainer) return;
+
+            sizeContainer.innerHTML = '';
+            variants.forEach(variant => {
+                const sizeDiv = document.createElement('div');
+                sizeDiv.className = 'size-option';
+                sizeDiv.dataset.variantId = variant.id;
+
+                const displayName = variant.sizeNames.length > 0
+                    ? variant.sizeNames.join(', ')
+                    : variant.name;
+                sizeDiv.textContent = displayName;
+
+                if (!variant.isAvailable) {
+                    sizeDiv.classList.add('disabled');
+                    sizeDiv.title = 'غير متوفر';
+                }
+
+                sizeDiv.onclick = () => {
+                    if (variant.isAvailable) {
+                        document.querySelectorAll('.size-option').forEach(el => el.classList.remove('selected'));
+                        sizeDiv.classList.add('selected');
+                        selectVariantById(variant.id);
+                    }
+                };
+
+                sizeContainer.appendChild(sizeDiv);
+            });
+        }
+
+        function selectVariantById(variantId) {
+            const variant = ALL_VARIANTS.find(v => v.id === variantId);
+            if (!variant) {
+                console.warn('Variant not found:', variantId);
+                return;
+            }
+
+            console.log('Selected variant:', variant);
+
+            document.getElementById('selected-variant-id').value = variantId;
+            selectedVariantId = variantId;
+            pcsPerCarton = variant.pcsCarton;
+            updateDisplay();
+
+            // Update gallery with variant images
+            const variantImages = variantImagesData[variantId];
+            if (variantImages && variantImages.length > 0) {
+                console.log('Updating gallery with variant images:', variantImages);
+                updateGallery(variantImages);
+            } else if (variant.image && variant.image.length > 0) {
+                // If no variant images data, use the variant's main image
+                console.log('Changing main image to:', variant.image);
+                const mainImg = document.getElementById('main-product-img');
+                if (mainImg) {
+                    mainImg.src = variant.image;
+                }
+            } else {
+                // Fallback to product images
+                console.log('No variant images, using product images');
+                updateGallery(productImages);
+            }
+        }
+
+        // ==================== Product Detail Page ====================
+        // Page state
+        let quantity = 1;
+        let pcsPerCarton = {{ product.pcs_carton }};
+        let selectedVariantId = null;
+        let selectedUnit = 'carton';
+
+        // Product info
+        const PRODUCT_DATA = {
+            id: {{ product.id }},
+            name: "{{ product.name|escapejs }}",
+            image: "{% if product.image %}{{ product.image.url }}{% endif %}",
+            pcsCarton: {{ product.pcs_carton }}
+    }
+
+        // Variant images data
+        const variantImagesData = {
+        {% for v in variants %}
+        '{{ v.id }}': [
+            {% if v.images.all %}
+        {% for vimg in v.images.all %}
+        { url: '{{ vimg.image.url }}', alt: '{{ v.variant_value }}' } {% if not forloop.last %}, {% endif %}
+        {% endfor %}
+        {% elif v.image %}
+        { url: '{{ v.image.url }}', alt: '{{ v.variant_value }}' }
+        {% endif %}
+        ]{% if not forloop.last %}, {% endif %}
+        {% endfor %}
+    };
+
+        // Product images for fallback
+        const productImages = [
+            {% if product.image %}
+        { url: '{{ product.image.url }}', alt: '{{ product.name }}' },
+        {% endif %}
+
+        {% for img in product.additional_images.all %}
+        { url: '{{ img.image.url }}', alt: '{{ product.name }}' } {% if not forloop.last %}, {% endif %}
+        {% endfor %}
+            ];
+
+        // === QUANTITY CONTROLS ===
+        function increaseQty() {
+            const validation = window.validateQuantity ? window.validateQuantity(quantity + 1, selectedUnit) : { isValid: true };
+            if (!validation.isValid) {
+                if (window.showValidationError) {
+                    const qtyDisplay = document.getElementById('quantity-value');
+                    window.showValidationError(validation.error, qtyDisplay);
+                }
+                return;
+            }
+            quantity++;
+            updateDisplay();
+        }
+
+        function decreaseQty() {
+            if (quantity > 1) {
+                quantity--;
+                updateDisplay();
+            }
+        }
+
+        // === UNIT TYPE SELECTION ===
+        function selectUnit(unit) {
+            selectedUnit = unit;
+            document.querySelectorAll('[data-unit]').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.unit === unit);
+            });
+            updateDisplay();
+        }
+
+
+        // === IMAGE GALLERY ===
+        function switchImage(src, btn) {
+            const img = document.getElementById('main-product-img');
+            if (img) {
+                img.style.opacity = '0.5';
+                setTimeout(() => {
+                    img.src = src;
+                    img.style.opacity = '1';
+                }, 150);
+            }
+
+            document.querySelectorAll('.thumb-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
+        function updateGallery(images) {
+            if (!images || images.length === 0) return;
+
+            const mainImg = document.getElementById('main-product-img');
+            const thumbsContainer = document.querySelector('.thumbs-scroll');
+
+            if (mainImg) {
+                mainImg.src = images[0].url;
+                mainImg.alt = images[0].alt || 'صورة المنتج';
+            }
+
+            if (thumbsContainer) {
+                thumbsContainer.innerHTML = '';
+                images.forEach((img, index) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'thumb-btn' + (index === 0 ? ' active' : '');
+                    btn.onclick = () => switchImage(img.url, btn);
+
+                    const imgEl = document.createElement('img');
+                    imgEl.src = img.url;
+                    imgEl.alt = img.alt || `صورة ${index + 1}`;
+
+                    btn.appendChild(imgEl);
+                    thumbsContainer.appendChild(btn);
+                });
+            }
+        }
+
+        // === DISPLAY UPDATE ===
+        function updateDisplay() {
+            const qtyValue = document.getElementById('quantity-value');
+            const qtyDisplay = document.getElementById('quantity-display');
+            const totalPieces = document.getElementById('total-pieces-display');
+            const pcsDisplay = document.getElementById('pcs-carton-display');
+
+            if (qtyValue) qtyValue.textContent = quantity;
+            if (qtyDisplay) qtyDisplay.textContent = quantity;
+            if (pcsDisplay) pcsDisplay.textContent = pcsPerCarton;
+
+            if (totalPieces) {
+                totalPieces.textContent = selectedUnit === 'carton' ? (quantity * pcsPerCarton) : quantity;
+            }
+        }
+
+
+        // === ADD TO CART ===
+        async function handleAddToCart() {
+            const isAuth = document.body.dataset.userAuthenticated === 'true';
+
+            if (window.addToCart) {
+                await window.addToCart(PRODUCT.id, PRODUCT.name, quantity, pcsPerCarton, PRODUCT.image, isAuth, selectedVariantId, selectedUnit);
+                return;
+            }
+
+            if (isAuth) {
+                try {
+                    const formData = new FormData();
+                    formData.append('quantity', quantity);
+                    formData.append('unit_type', selectedUnit);
+                    if (selectedVariantId) formData.append('variant_id', selectedVariantId);
+
+                    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
+
+                    const response = await fetch(`/cart/add/${PRODUCT.id}/`, {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRFToken': csrfToken
+                        },
+                        body: formData
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        showNotification(data.message, 'success');
+                        const badge = document.getElementById('cart-count');
+                        if (badge && data.cart_count !== undefined) {
+                            badge.textContent = data.cart_count;
+                        }
+                    } else {
+                        showNotification(data.message || 'حدث خطأ', 'error');
+                    }
+                } catch (error) {
+                    console.error('Cart error:', error);
+                    showNotification('حدث خطأ في الاتصال', 'error');
+                }
+            } else {
+                let cart = JSON.parse(localStorage.getItem('alwesam_cart') || '[]');
+                const quantityInPieces = selectedUnit === 'carton' ? (quantity * pcsPerCarton) : quantity;
+
+                const idx = cart.findIndex(i =>
+                    i.product_id === PRODUCT.id &&
+                    i.variant_id === selectedVariantId &&
+                    i.unit_type === selectedUnit
+                );
+
+                if (idx !== -1) {
+                    cart[idx].quantity += quantityInPieces;
+                } else {
+                    cart.push({
+                        product_id: PRODUCT.id,
+                        product_name: PRODUCT.name,
+                        quantity: quantityInPieces,
+                        pcs_carton: pcsPerCarton,
+                        image_url: PRODUCT.image,
+                        variant_id: selectedVariantId,
+                        unit_type: selectedUnit,
+                        added_at: new Date().toISOString()
+                    });
+                }
+
+                localStorage.setItem('alwesam_cart', JSON.stringify(cart));
+
+                const total = cart.reduce((s, i) => s + i.quantity, 0);
+                const badge = document.getElementById('cart-count');
+                if (badge) badge.textContent = total;
+
+                showNotification(`تم إضافة ${PRODUCT.name} إلى السلة`, 'success');
+            }
+        }
+
+        function getCookie(name) {
+            if (window.getCookie) return window.getCookie(name);
+            let val = null;
+            if (document.cookie) {
+                document.cookie.split(';').forEach(c => {
+                    c = c.trim();
+                    if (c.startsWith(name + '=')) {
+                        val = decodeURIComponent(c.substring(name.length + 1));
+                    }
+                });
+            }
+            return val;
+        }
+
+        // === EVENT LISTENERS ===
+        document.addEventListener('DOMContentLoaded', function () {
+            updateDisplay();
+
+            // Initialize variant selection
+            if (ALL_VARIANTS.length > 0) {
+                renderColorSelection();
+
+                // Auto-select if only one color
+                const colorMap = organizeVariantsByColor();
+                const colors = Object.keys(colorMap);
+                if (colors.length === 1) {
+                    const firstColor = colorMap[colors[0]];
+                    selectColor(firstColor.colorId || 'no-color', firstColor.variants);
+                }
+            }
+
+            const addBtn = document.getElementById('add-to-cart-btn');
+            if (addBtn) {
+                addBtn.addEventListener('click', handleAddToCart);
+            }
+        });
+    </script>
+    {% endblock %}

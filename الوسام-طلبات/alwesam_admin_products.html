@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة المنتجات - الوسام</title>
+    <link href="css/base.css" rel="stylesheet">
+    <link href="css/layout.css" rel="stylesheet">
+    <link href="css/components.css" rel="stylesheet">
+    <link href="css/admin.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="theme-light">
+    <div class="admin-layout">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="logo mb-2">
+                <div class="logo-icon icon-sm"><i class="fas fa-bolt"></i></div>
+                <span>الوسام</span>
+            </div>
+
+            <nav class="flex-col gap-05">
+                <a href="alwesam_admin.html" class="dashboard-link-inactive">
+                    <i class="fas fa-home ml-2"></i> لوحة التحكم
+                </a>
+                <a href="alwesam_admin_products.html" class="dashboard-link">
+                    <i class="fas fa-box ml-2"></i> المنتجات
+                </a>
+                <a href="alwesam_admin_orders.html" class="dashboard-link-inactive">
+                    <i class="fas fa-shopping-bag ml-2"></i> الطلبات
+                </a>
+                <a href="alwesam_home.html" class="dashboard-link-inactive mt-auto text-red">
+                    <i class="fas fa-sign-out-alt ml-2"></i> خروج
+                </a>
+            </nav>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="container py-2">
+            <header class="flex-between mb-2 pt-1">
+                <h1 class="page-title text-xl">المنتجات</h1>
+                <div class="flex-center gap-1">
+                    <button class="action-btn" onclick="toggleTheme()">
+                        <i class="fas fa-moon" id="theme-icon"></i>
+                    </button>
+                    <a href="alwesam_admin_add_product.html" class="btn-primary">
+                        <i class="fas fa-plus ml-2"></i> إضافة منتج
+                    </a>
+                    <div class="mobile-toggle" onclick="/* Toggle sidebar script */">
+                        <i class="fas fa-bars"></i>
+                    </div>
+                </div>
+            </header>
+
+            <div class="modern-card p-0" style="padding: 0; overflow: hidden;">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>المنتج</th>
+                            <th>SKU</th>
+                            <th>السعر</th>
+                            <th>المخزون</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <div class="flex-center" style="justify-content: flex-start; gap: 0.5rem;">
+                                    <img src="https://via.placeholder.com/40" class="rounded-sm" alt="img">
+                                    <span>دريل ديوالت</span>
+                                </div>
+                            </td>
+                            <td class="text-secondary">DCD796</td>
+                            <td class="font-bold">500 ر.س</td>
+                            <td><span class="status-badge status-success">متوفر (50)</span></td>
+                            <td>
+                                <a href="alwesam_admin_edit_product.html" class="action-btn icon-xs" title="تعديل"><i
+                                        class="fas fa-edit"></i></a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="flex-center" style="justify-content: flex-start; gap: 0.5rem;">
+                                    <img src="https://via.placeholder.com/40" class="rounded-sm" alt="img">
+                                    <span>صاروخ ماكيتا</span>
+                                </div>
+                            </td>
+                            <td class="text-secondary">GA4530</td>
+                            <td class="font-bold">350 ر.س</td>
+                            <td><span class="status-badge status-pending">منخفض (5)</span></td>
+                            <td>
+                                <a href="alwesam_admin_edit_product.html" class="action-btn icon-xs" title="تعديل"><i
+                                        class="fas fa-edit"></i></a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+
+</html>

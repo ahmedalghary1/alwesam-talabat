@@ -1,0 +1,119 @@
+<!-- Admin Sidebar Component -->
+<div class="admin-sidebar">
+    <div class="sidebar-menu">
+        <a href="{% url 'admin_app:dashboard' %}" class="sidebar-link {{ dashboard_active }}">
+            <i class="fas fa-tachometer-alt"></i>
+            <span>لوحة التحكم</span>
+        </a>
+        <a href="{% url 'admin_app:admin_products' %}" class="sidebar-link {{ products_active }}">
+            <i class="fas fa-box"></i>
+            <span>المنتجات</span>
+        </a>
+        <a href="{% url 'admin_app:admin_product_add' %}" class="sidebar-link {{ add_product_active }}">
+            <i class="fas fa-plus-circle"></i>
+            <span>إضافة منتج</span>
+        </a>
+        <a href="{% url 'admin_app:admin_orders' %}" class="sidebar-link {{ orders_active }}">
+            <i class="fas fa-shopping-bag"></i>
+            <span>الطلبات</span>
+        </a>
+        <a href="{% url 'admin_app:pending_users' %}" class="sidebar-link {{ pending_users_active }}">
+            <i class="fas fa-user-clock"></i>
+            <span>طلبات الانضمام</span>
+            {% if pending_count > 0 %}
+            <span class="sidebar-badge">{{ pending_count }}</span>
+            {% endif %}
+        </a>
+        <a href="{% url 'admin_app:all_users' %}" class="sidebar-link {{ all_users_active }}">
+            <i class="fas fa-users"></i>
+            <span>المستخدمين</span>
+        </a>
+        <a href="{% url 'home:home' %}" class="sidebar-link"
+            style="margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+            <i class="fas fa-home"></i>
+            <span>العودة للموقع</span>
+        </a>
+    </div>
+</div>
+
+<style>
+    .admin-layout {
+        display: flex;
+        gap: 2rem;
+        max-width: 1600px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+    }
+
+    .admin-sidebar {
+        width: 250px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 80px;
+        height: fit-content;
+    }
+
+    .sidebar-menu {
+        background: var(--card-bg);
+        border: 2px solid var(--border-color);
+        border-radius: 16px;
+        padding: 1rem;
+    }
+
+    .sidebar-link {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.875rem 1rem;
+        border-radius: 10px;
+        color: var(--text-primary);
+        transition: all 0.3s ease;
+        margin-bottom: 0.5rem;
+        text-decoration: none;
+    }
+
+    .sidebar-link:hover {
+        background: var(--bg-secondary);
+    }
+
+    .sidebar-link.active {
+        background: #FFC400;
+        color: #1a1a1a;
+        font-weight: 700;
+    }
+
+    .sidebar-link i {
+        width: 20px;
+        text-align: center;
+    }
+
+    .sidebar-badge {
+        background: #FFC400;
+        color: #1a1a1a;
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 0.125rem 0.5rem;
+        border-radius: 12px;
+        margin-right: auto;
+    }
+
+    .sidebar-link.active .sidebar-badge {
+        background: #1a1a1a;
+        color: #FFC400;
+    }
+
+    .admin-container {
+        flex: 1;
+    }
+
+    @media (max-width: 768px) {
+        .admin-layout {
+            flex-direction: column;
+        }
+
+        .admin-sidebar {
+            width: 100%;
+            position: static;
+        }
+    }
+</style>

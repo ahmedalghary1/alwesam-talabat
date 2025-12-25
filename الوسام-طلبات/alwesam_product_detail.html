@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تفاصيل المنتج - الوسام</title>
+    <link href="css/base.css" rel="stylesheet">
+    <link href="css/layout.css" rel="stylesheet">
+    <link href="css/components.css" rel="stylesheet">
+    <link href="css/pages.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="theme-light">
+    <!-- NAVIGATION -->
+    <nav class="navbar">
+        <div class="container nav-container">
+            <div class="nav-left">
+                <a href="alwesam_home.html" class="logo">
+                    <div class="logo-icon"><img src="./ELWSAM.png" alt="" width="110%" height="110%"></div>
+                    <span>الوسام</span>
+                </a>
+            </div>
+
+            <ul class="nav-menu" id="nav-menu">
+                <li><a href="alwesam_home.html" class="nav-link">الرئيسية</a></li>
+                <li><a href="alwesam_category.html" class="nav-link active">المنتجات</a></li>
+                <li><a href="alwesam_cart.html" class="nav-link">الطلبات</a></li>
+                <li><a href="alwesam_admin.html" class="nav-link">لوحة التحكم</a></li>
+            </ul>
+
+            <div class="nav-actions mr-2">
+                <button class="action-btn" onclick="toggleTheme()">
+                    <i class="fas fa-moon" id="theme-icon"></i>
+                </button>
+                <div class="lang-selector">
+                    <button class="lang-btn" title="تبديل اللغة">
+                        <i class="fas fa-globe"></i>
+                    </button>
+                    <div class="lang-dropdown">
+                        <button class="lang-option active" disabled>
+                            <i class="fas fa-check-circle"></i> العربية
+                        </button>
+                        <button class="lang-option" disabled>
+                            <i class="fas fa-circle"></i> English
+                        </button>
+                    </div>
+                </div>
+                <a href="alwesam_cart.html" class="btn-primary">
+                    <i class="fas fa-shopping-cart ml-2"></i>
+                    <span class="badge-counter">3</span>
+                </a>
+                <div class="mobile-toggle" onclick="toggleMenu()">
+                    <i class="fas fa-bars"></i>
+                </div>
+                <a href="alwesam_login.html" class="btn-primary btn-login">
+                    <i class="fas fa-sign-in-alt ml-2"></i> <span>تسجيل الدخول</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container section-padding">
+        <div class="product-layout grid-layout">
+
+            <!-- Product Image -->
+            <div class="image-gallery glass-panel animate-fade-in flex-center p-2 rounded-md">
+                <img src="https://via.placeholder.com/500x500/FFC400/000000?text=Product+Image"
+                    class="w-full rounded-sm" alt="Product">
+            </div>
+
+            <!-- Product Info -->
+            <div class="product-info-col animate-slide-up delay-100">
+                <div class="stock-badge mb-1">متوفر</div>
+                <h1 class="page-title mb-05">دريل ديوالت 18 فولت</h1>
+                <div class="sku-text mb-2">رمز المنتج: DCD796N-XJ</div>
+
+                <div class="glass-panel p-2 rounded-md mb-2">
+                    <div class="spec-row">
+                        <span class="text-secondary">التغليف</span>
+                        <span class="font-bold">صندوق</span>
+                    </div>
+                    <div class="spec-row">
+                        <span class="text-secondary">القطع في الكرتون</span>
+                        <span class="font-bold">10 قطع</span>
+                    </div>
+                    <div class="spec-row border-none">
+                        <span class="text-secondary">الجهد الكهربائي</span>
+                        <span class="font-bold">18 فولت</span>
+                    </div>
+                </div>
+
+                <div class="action-row flex gap-1">
+                    <div class="quantity-selector">
+                        <button class="action-btn icon-sm"><i class="fas fa-minus"></i></button>
+                        <span class="qty-val">1</span>
+                        <button class="action-btn icon-sm"><i class="fas fa-plus"></i></button>
+                    </div>
+                    <button class="btn-primary flex-1">
+                        إضافة للطلب
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,455 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}الوسام طلبات{% endblock %}</title>
+    <link rel="icon" href="{% static 'images/ELWSAM.png' %}" type="image/png">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/base_styles.css' %}">
+
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body data-user-authenticated="{% if user.is_authenticated %}true{% else %}false{% endif %}">
+    <!-- CSRF Token for AJAX requests -->
+    {% csrf_token %}
+
+    <!-- NAVIGATION -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <!-- Logo -->
+            <a href="{% url 'home:home' %}" class="logo">
+                <div class="logo-icon">
+                    <img src="{% static 'images/ELWSAM.png' %}" alt="الوسام">
+                </div>
+                <div class="logo-text">
+                    <span class="white">الوسام</span>
+                    <span class="yellow">طلبات</span>
+                </div>
+            </a>
+
+            <!-- Nav Menu -->
+            <ul class="nav-menu" id="nav-menu">
+                <li><a href="{% url 'home:home' %}" class="nav-link {% block nav_home %}{% endblock %}"><i
+                            class="fas fa-home"></i> الرئيسية</a></li>
+                <li><a href="{% url 'products:all_categories' %}"
+                        class="nav-link {% block nav_products %}{% endblock %}"><i class="fas fa-th-large"></i>
+                        المنتجات</a></li>
+                {% if user.is_authenticated %}
+                <li><a href="{% url 'orders:order_list' %}" class="nav-link {% block nav_orders %}{% endblock %}"><i
+                            class="fas fa-box"></i> طلباتي</a></li>
+                {% endif %}
+
+                <!-- Admin Links -->
+                {% if user.is_staff %}
+                <li class="admin-dropdown">
+                    <a href="#" class="nav-link" style="color: var(--brand-yellow);"><i class="fas fa-cog"></i>
+                        الإدارة</a>
+                    <div class="admin-menu">
+                        <a href="{% url 'admin_app:dashboard' %}"><i class="fas fa-tachometer-alt"></i> لوحة التحكم</a>
+                        <a href="{% url 'admin_app:admin_products' %}"><i class="fas fa-box"></i> إدارة المنتجات</a>
+                        <a href="{% url 'admin_app:admin_product_add' %}"><i class="fas fa-plus-circle"></i> إضافة
+                            منتج</a>
+                        <a href="{% url 'admin_app:admin_orders' %}"><i class="fas fa-clipboard-list"></i> متابعة
+                            الطلبات</a>
+                    </div>
+                </li>
+                {% endif %}
+            </ul>
+
+            <!-- Actions -->
+            <div class="nav-actions">
+
+                <!-- Theme Toggle -->
+                <button class="btn-icon" onclick="toggleTheme()" title="تبديل المظهر">
+                    <i class="fas fa-sun" id="theme-icon"></i>
+                </button>
+
+                <!-- Cart -->
+                <a href="{% url 'cart:cart_view' %}" class="btn-icon" title="السلة">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="cart-badge" id="cart-count">{{ cart_count|default:0 }}</span>
+                </a>
+
+                <!-- Mobile Toggle -->
+                <button class="mobile-toggle" onclick="toggleMenu()">
+                    <i class="fas fa-bars"></i>
+                </button>
+
+                <!-- User -->
+                {% if user.is_authenticated %}
+                <a href="{% url 'accounts:profile' %}" class="btn-yellow">
+                    <i class="fas fa-user"></i>
+                    <span>{{ user.username }}</span>
+                </a>
+                {% else %}
+                <a href="{% url 'accounts:login' %}" class="btn-yellow">
+                    <i class="fas fa-sign-in-alt"></i>
+                    <span>دخول</span>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- CUSTOM CONFIRMATION MODAL -->
+    <div id="confirmModal" class="confirm-modal">
+        <div class="confirm-overlay"></div>
+        <div class="confirm-dialog">
+            <div class="confirm-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h3 class="confirm-title">تأكيد الحذف</h3>
+            <p class="confirm-message">هل أنت متأكد من حذف هذا المنتج من السلة؟</p>
+            <div class="confirm-actions">
+                <button class="btn-cancel" onclick="hideConfirmModal()">
+                    <i class="fas fa-times"></i> إلغاء
+                </button>
+                <button class="btn-confirm" onclick="confirmAction()">
+                    <i class="fas fa-trash"></i> نعم، احذف
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .confirm-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 2147483647;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .confirm-modal.active {
+            display: flex;
+        }
+
+        .confirm-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .confirm-dialog {
+            position: relative;
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 2rem;
+            max-width: 450px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s ease;
+            border: 2px solid var(--brand-yellow);
+        }
+
+        .confirm-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1.5rem;
+            background: linear-gradient(135deg, #FFC400, #FFD700);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: #1a1a1a;
+            animation: scaleIn 0.4s ease 0.1s backwards;
+        }
+
+        .confirm-title {
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .confirm-message {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+        }
+
+        .confirm-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .btn-cancel,
+        .btn-confirm {
+            padding: 0.875rem 1.5rem;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-cancel {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 2px solid var(--border-color);
+        }
+
+        .btn-cancel:hover {
+            background: var(--border-color);
+            transform: translateY(-2px);
+        }
+
+        .btn-confirm {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+
+        .btn-confirm:hover {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .confirm-dialog {
+                padding: 1.5rem;
+            }
+
+            .confirm-icon {
+                width: 60px;
+                height: 60px;
+                font-size: 2rem;
+            }
+
+            .confirm-title {
+                font-size: 1.25rem;
+            }
+
+            .confirm-actions {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+
+    <!-- MESSAGES -->
+    {% if messages %}
+    <div class="container" style="padding-top: 1rem;">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">
+            <i class="fas fa-info-circle"></i>
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- MAIN CONTENT -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div>
+                    <div class="logo" style="margin-bottom: 1rem;">
+                        <div class="logo-icon" style="width: 50px; height: 50px;">
+                            <img src="{% static 'images/ELWSAM.png' %}" alt="الوسام">
+                        </div>
+                        <div class="logo-text">
+                            <span class="white">الوسام</span>
+                            <span class="yellow">طلبات</span>
+                        </div>
+                    </div>
+                    <p style="color: #888; font-size: 0.9rem; margin-bottom: 1rem;">
+                        وجهتك الأولى للمنتجات الكهربائية والإلكترونية عالية الجودة بأسعار الجملة.
+                    </p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-whatsapp"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="footer-title">روابط سريعة</h4>
+                    <ul class="footer-links">
+                        <li><a href="{% url 'home:home' %}"><i class="fas fa-chevron-left"></i> الرئيسية</a></li>
+                        <li><a href="{% url 'products:all_categories' %}"><i class="fas fa-chevron-left"></i>
+                                المنتجات</a></li>
+                        <li><a href="{% url 'cart:cart_view' %}"><i class="fas fa-chevron-left"></i> السلة</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="footer-title">تواصل معنا</h4>
+                    <ul class="footer-links">
+                        <li><i class="fas fa-map-marker-alt" style="color: var(--brand-yellow);"></i> شارع مستجد ١٢
+                            والجمال – المطرية – محافظة الدقهلية – جمهورية مصر العربية </li>
+                        <li><i class="fas fa-phone" style="color: var(--brand-yellow);"></i> 01005434244 – 01001252900
+                        </li>
+                        <li><i class="fas fa-envelope" style="color: var(--brand-yellow);"></i> info@elwsam.com</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="footer-copyright">
+                &copy; 2025 <span style="color: var(--brand-white);">الوسام</span> <span
+                    style="color: var(--brand-yellow);">طلبات</span> - جميع الحقوق محفوظة
+            </div>
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT -->
+    <script src="{% static 'js/script.js' %}"></script>
+    <script src="{% static 'js/validation.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+
+    <script>
+        function toggleMenu() {
+            document.getElementById('nav-menu').classList.toggle('active');
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            const icon = document.getElementById('theme-icon');
+
+            if (body.classList.contains('theme-dark')) {
+                body.classList.remove('theme-dark');
+                icon.className = 'fas fa-moon';
+                localStorage.setItem('theme', 'light');
+            } else {
+                body.classList.add('theme-dark');
+                icon.className = 'fas fa-sun';
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            // Apply saved theme (default is light)
+            const savedTheme = localStorage.getItem('theme');
+            const icon = document.getElementById('theme-icon');
+
+            if (savedTheme === 'dark') {
+                document.body.classList.add('theme-dark');
+                if (icon) icon.className = 'fas fa-sun';
+            } else {
+                document.body.classList.remove('theme-dark');
+                if (icon) icon.className = 'fas fa-moon';
+            }
+
+            // Update cart count for non-authenticated users
+            updateCartCount();
+        });
+
+        // ========== CUSTOM CONFIRMATION MODAL ==========
+        let confirmCallback = null;
+
+        function showConfirmModal(message, title = 'تأكيد الحذف', callback) {
+            const modal = document.getElementById('confirmModal');
+            const titleEl = modal.querySelector('.confirm-title');
+            const messageEl = modal.querySelector('.confirm-message');
+
+            if (title) titleEl.textContent = title;
+            if (message) messageEl.textContent = message;
+
+            confirmCallback = callback;
+            modal.classList.add('active');
+
+            // Prevent body scroll
+            document.body.style.overflow = 'hidden';
+        }
+
+        function hideConfirmModal() {
+            const modal = document.getElementById('confirmModal');
+            modal.classList.remove('active');
+            confirmCallback = null;
+
+            // Restore body scroll
+            document.body.style.overflow = '';
+        }
+
+        function confirmAction() {
+            if (confirmCallback) {
+                confirmCallback();
+            }
+            hideConfirmModal();
+        }
+
+        // Close modal on overlay click
+        document.addEventListener('click', function (e) {
+            if (e.target.classList.contains('confirm-overlay')) {
+                hideConfirmModal();
+            }
+        });
+
+        // Close modal on ESC key
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                const modal = document.getElementById('confirmModal');
+                if (modal.classList.contains('active')) {
+                    hideConfirmModal();
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>

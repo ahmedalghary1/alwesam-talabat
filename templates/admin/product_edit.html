@@ -1,0 +1,450 @@
+{% extends 'admin/product_add.html' %}
+
+{% block title %}تعديل منتج - الوسام{% endblock %}
+
+{# DEBUG: Show variants count #}
+{% if variants %}
+<!-- DEBUG: Found {{ variants.count }} variant(s) for this product -->
+{% else %}
+<!-- DEBUG: No variants found -->
+{% endif %}
+
+{% block admin_content %}
+<h1 class="page-title">
+    <i class="fas fa-edit"></i>
+    تعديل منتج: {{ product.name }}
+</h1>
+
+<div class="form-card">
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label class="form-label">
+                <i class="fas fa-box"></i>
+                اسم المنتج *
+            </label>
+            <input type="text" name="name" class="form-input" value="{{ product.name }}" required>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">
+                <i class="fas fa-align-right"></i>
+                الوصف
+            </label>
+            <textarea name="description" class="form-textarea">{{ product.description }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">
+                <i class="fas fa-boxes"></i>
+                عدد القطع في الكرتون *
+            </label>
+            <input type="number" name="pcs_carton" class="form-input" value="{{ product.pcs_carton }}" min="1" required>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">
+                <i class="fas fa-th-large"></i>
+                القسم
+            </label>
+            <select name="category" class="form-select">
+                <option value="">بدون قسم</option>
+                {% for category in categories %}
+                <option value="{{ category.id }}" {% if product.category_id == category.id %}selected{% endif %}>
+                    {{category.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">
+                <i class="fas fa-image"></i>
+                صورة المنتج الرئيسية
+            </label>
+            {% if product.image %}
+            <div style="margin-bottom: 0.5rem;">
+                <img src="{{ product.image.url }}"
+                    style="max-width: 150px; border-radius: 8px; border: 2px solid var(--border-color);">
+            </div>
+            {% endif %}
+            <input type="file" name="image" class="form-input" accept="image/*">
+            <small style="color: var(--text-secondary);">اترك الحقل فارغاً للاحتفاظ بالصورة الحالية</small>
+        </div>
+
+        <!-- Additional Product Images Section -->
+        <div class="form-group"
+            style="border: 2px dashed var(--border-color); padding: 1.5rem; border-radius: 12px; background: var(--bg-secondary);">
+            <label class="form-label">
+                <i class="fas fa-images"></i>
+                الصور الإضافية للمنتج
+            </label>
+
+            <!-- Existing images -->
+            {% if product_images %}
+            <div style="margin-bottom: 1rem;">
+                <label
+                    style="display: block; font-size: 0.875rem; margin-bottom: 0.5rem; color: var(--text-secondary); font-weight: 600;">
+                    <i class="fas fa-images"></i> الصور الحالية
+                </label>
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    {% for pimg in product_images %}
+                    <div style="position: relative; width: 100px; height: 100px;" data-image-id="{{ pimg.id }}">
+                        <img src="{{ pimg.image.url }}" alt="صورة إضافية"
+                            style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px; border: 2px solid #FFC400;">
+                        <button type="button" onclick="deleteProductImage({{ pimg.id }}, this)"
+                            style="position: absolute; top: -8px; right: -8px; background: #ef4444; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"
+                            title="حذف الصورة">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <input type="hidden" name="delete_product_images[]" value="" class="delete-image-input">
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Add new images -->
+            <div style="margin-top: 1rem;">
+                <label
+                    style="display: block; font-size: 0.875rem; margin-bottom: 0.5rem; color: var(--text-secondary); font-weight: 600;">
+                    <i class="fas fa-plus-circle"></i> إضافة صور جديدة
+                </label>
+                <input type="file" name="new_product_images[]" class="product-images-input" accept="image/*" multiple
+                    style="padding: 0.625rem; border: 2px dashed var(--border-color); border-radius: 8px; width: 100%; cursor: pointer;">
+                <small style="color: var(--text-secondary); display: block; margin-top: 0.25rem; font-size: 0.75rem;">
+                    يمكنك اختيار صور متعددة
+                </small>
+                <div class="product-images-preview"
+                    style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem;"></div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">
+                <i class="fas fa-check-circle"></i>
+                المنتج متوفر؟
+            </label>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <input type="checkbox" name="is_available" id="product-available" {% if product.is_available %}checked{%endif %} style="width: 20px; height: 20px; cursor: pointer;">
+                <label for="product-available" style="margin: 0; cursor: pointer;">نعم، المنتج متوفر للطلب</label>
+            </div>
+        </div>
+
+        <!-- Product Variants Section -->
+        <div class="form-group"
+            style="border: 2px dashed var(--border-color); padding: 1.5rem; border-radius: 12px; background: var(--bg-secondary);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <label class="form-label" style="margin-bottom: 0;">
+                    <i class="fas fa-tags"></i>
+                    أنماط المنتج (اختياري)
+                </label>
+                <button type="button" onclick="addVariant()" class="btn-add-variant"
+                    style="padding: 0.5rem 1rem; background: #FFC400; color: #1a1a1a; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-plus"></i>
+                    إضافة نمط
+                </button>
+            </div>
+            <div id="variants-container"></div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn-submit">
+                <i class="fas fa-save"></i>
+                حفظ التعديلات
+            </button>
+            <a href="{% url 'admin_app:admin_products' %}" class="btn-cancel">
+                <i class="fas fa-times"></i>
+                إلغاء
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let variantCounter = 0;
+
+    // Load existing variants on page load
+    document.addEventListener('DOMContentLoaded', function () {
+        console.log('=== VARIANT LOADING DEBUG ===');
+        console.log('DOMContentLoaded event fired');
+        console.log('Variants container:', document.getElementById('variants-container'));
+
+        {% for variant in variants %}
+        console.log('=== Loading variant #{{ forloop.counter }} ===');
+        console.log('Variant name:', '{{ variant.name }}');
+        console.log('Variant ID:', {{ variant.id }});
+    console.log('Is available:', {{ variant.is_available | yesno:"true,false"| lower }});
+
+    addVariant({
+        id: {{ variant.id }},
+        name: '{{ variant.name|escapejs }}',
+        code: '{{ variant.code|default:""}}',
+        variant_type: '{{ variant.variant_type }}',
+        variant_value: '{{ variant.variant_value|escapejs }}',
+        pcs_carton: {{ variant.pcs_carton }},
+        is_available: {{ variant.is_available | yesno:"true,false"| lower }},
+        image_url: '{% if variant.image %}{{ variant.image.url }}{% endif %}',
+        color_id: {% if variant.color %}{{ variant.color.id }}{% else %}null{% endif %},
+        sizes: [{% for size in variant.sizes.all %}{{ size.id }} {% if not forloop.last %}, {% endif %} {% endfor %}]
+    });
+    {% empty %}
+    console.log('No variants found for this product (empty tag triggered)');
+    {% endfor %}
+
+    console.log('=== END VARIANT LOADING ===');
+    });
+
+    // Override parent's addVariant function for editing
+    function addVariant(data = {}) {
+        variantCounter++;
+        const container = document.getElementById('variants-container');
+        const variantRow = document.createElement('div');
+        variantRow.className = 'variant-row';
+        variantRow.id = `variant-${variantCounter}`;
+        variantRow.style.cssText = 'background: var(--card-bg); padding: 1rem; border-radius: 10px; margin-bottom: 1rem; border: 2px solid var(--border-color);';
+
+        variantRow.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                <h4 style="color: var(--text-primary); font-weight: 600; margin: 0;">نمط #${variantCounter}</h4>
+                <button type="button" onclick="removeVariant(${variantCounter})" style="background: #ef4444; color: white; border: none; padding: 0.375rem 0.75rem; border-radius: 6px; cursor: pointer; font-size: 0.875rem;">
+                    <i class="fas fa-trash"></i> حذف
+                </button>
+            </div>
+            
+            <input type="hidden" name="variant_id[]" value="${data.id || ''}">
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div>
+                    <label style="display: block; font-size: 0.875rem; margin-bottom: 0.25rem; color: var(--text-secondary);">اسم النمط *</label>
+                    <input type="text" name="variant_name[]" class="form-input" style="padding: 0.625rem; font-size: 0.875rem;" value="${data.name || ''}" required>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.875rem; margin-bottom: 0.25rem; color: var(--text-secondary);">الكود/SKU</label>
+                    <input type="text" name="variant_code[]" class="form-input" style="padding: 0.625rem; font-size: 0.875rem;" value="${data.code || ''}">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.875rem; margin-bottom: 0.25rem; color: var(--text-secondary);">قيمة النمط *</label>
+                    <input type="text" name="variant_value[]" class="form-input" style="padding: 0.625rem; font-size: 0.875rem;" placeholder="مثال: أحمر, كبير, 1 كجم" value="${data.variant_value || ''}" required>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.875rem; margin-bottom: 0.25rem; color: var(--text-secondary);">عدد القطع/كرتون *</label>
+                    <input type="number" name="variant_pcs_carton[]" class="form-input" style="padding: 0.625rem; font-size: 0.875rem;" value="${data.pcs_carton || 24}" min="1" required>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.875rem; margin-bottom: 0.25rem; color: var(--text-secondary);">
+                        <i class="fas fa-palette"></i> اللون (اختياري)
+                    </label>
+                    <select name="variant_color[]" class="form-select" style="padding: 0.625rem; font-size: 0.875rem;">
+                        <option value="">بدون لون</option>
+                        {% for color in colors %}
+                            <option value="{{ color.id }}" ${data.color_id == {{ color.id }} ?'selected' : ''}> {{ color.name }}</option >
+        {% endfor %}
+                    </select >
+                </div >
+                    <div style="flex: 1;">
+                        <label style="display: block; font-size: 0.875rem; margin-bottom: 0.25rem; color: var(--text-secondary);">متوفر؟</label>
+                        <input type="checkbox" name="variant_available[]" ${data.is_available !== false ? 'checked' : ''} style="width: 20px; height: 20px; cursor: pointer;">
+                    </div>
+                <div style="grid-column: 1 / -1;">
+                    <label style="display: block; font-size: 0.875rem; margin-bottom: 0.5rem; color: var(--text-secondary);">
+                        <i class="fas fa-ruler"></i> الأطوال المتاحة (اختياري)
+                    </label>
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        {% for size in sizes %}
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--text-primary);">
+                            <input type="checkbox" name="variant_${variantCounter - 1}_sizes[]" value="{{ size.id }}" ${data.sizes && data.sizes.includes({{ size.id }}) ? 'checked' : ''}>
+                            <span>{{ size.name }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                <!-- Variant Images Section -->
+                <div style="grid-column: 1 / -1; margin-top: 1rem; padding-top: 1rem; border-top: 2px dashed var(--border-color);">
+                    ${data.id ? `
+                        <!-- Container for existing images -->
+                        <div id="variant-${variantCounter}-existing-images"></div>
+                        <div style="margin-top: 1rem;" class="variant-group">
+                            <label style="display: block; font-size: 0.875rem; margin-bottom: 0.5rem; color: var(--text-secondary); font-weight: 600;">
+                                <i class="fas fa-plus-circle"></i> إضافة صور جديدة
+                            </label>
+                            <input type="file" name="variant_${variantCounter - 1}_new_images[]" class="variant-images-input" accept="image/*" multiple style="padding: 0.625rem; border: 2px dashed var(--border-color); border-radius: 8px; width: 100%; cursor: pointer;">
+                            <small style="color: var(--text-secondary); display: block; margin-top: 0.25rem; font-size: 0.75rem;">يمكنك اختيار صور متعددة</small>
+                            <div class="variant-images-preview" style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem;"></div>
+                        </div>
+                    ` : `
+                        <div class="variant-group">
+                            <label style="display: block; font-size: 0.875rem; margin-bottom: 0.5rem; color: var(--text-secondary); font-weight: 600;"><i class="fas fa-images"></i> صور النمط (متعددة)</label>
+                            <input type="file" name="variant_${variantCounter - 1}_new_images[]" class="variant-images-input" accept="image/*" multiple style="padding: 0.625rem; border: 2px dashed var(--border-color); border-radius: 8px; width: 100%; cursor: pointer;">
+                            <small style="color: var(--text-secondary); display: block; margin-top: 0.25rem; font-size: 0.75rem;">يمكنك اختيار صور متعددة</small>
+                            <div class="variant-images-preview" style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem;"></div>
+                        </div>
+                    `}
+                </div>
+                ${
+        data.image_url ? `
+                    <div style="grid-column: 1 / -1;">
+                        <div style="margin-bottom: 0.5rem;"><img src="${data.image_url}" style="max-width: 100px; border-radius: 6px;"></div>
+                        <label style="display: block; font-size: 0.875rem; margin-bottom: 0.25rem; color: var(--text-secondary);">تغيير صورة النمط الرئيسية</label>
+                        <input type="file" name="variant_image[]" class="form-input" style="padding: 0.625rem; font-size: 0.875rem;" accept="image/*">
+                    </div>
+                ` : ''
+    }
+            </div >
+        `;
+
+        container.appendChild(variantRow);
+        if (data.id) { loadVariantImages(data.id, variantCounter); }
+    }
+
+    function loadVariantImages(variantId, counter) {
+        const imagesContainer = document.getElementById(`variant-${counter}-existing-images`);
+        if (!imagesContainer) return;
+        {% for variant in variants %}
+        if ({{ variant.id }} == variantId) {
+        imagesContainer.innerHTML = `{% if variant.images.all %}
+                <label style="display: block; font-size: 0.875rem; margin-bottom: 0.5rem; color: var(--text-secondary); font-weight: 600;"><i class="fas fa-images"></i> صور النمط الحالية</label>
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
+                    {% for vimg in variant.images.all %}
+                    <div style="position: relative; width: 100px; height: 100px;" data-image-id="{{ vimg.id }}">
+                        <img src="{{ vimg.image.url }}" alt="صورة" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px; border: 2px solid #FFC400;">
+                        <button type="button" onclick="deleteVariantImage({{ vimg.id }}, this)" style="position: absolute; top: -8px; right: -8px; background: #ef4444; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);" title="حذف الصورة"><i class="fas fa-times"></i></button>
+                        <input type="hidden" name="delete_variant_images[]" value="" class="delete-image-input">
+                    </div>
+                    {% endfor %}
+                </div>{% endif %}`;
+    }
+    {% endfor %}
+    }
+
+    // Remove variant
+    function removeVariant(id) {
+        const row = document.getElementById(`variant-${id}`);
+        if (row) {
+            row.remove();
+            updateVariantNumbers();
+        }
+    }
+
+    // Update variant numbers after removal
+    function updateVariantNumbers() {
+        const rows = document.querySelectorAll('.variant-row');
+        rows.forEach((row, index) => {
+            const header = row.querySelector('h4');
+            if (header) {
+                header.textContent = `نمط #${index + 1}`;
+            }
+        });
+    }
+
+    // Delete variant image
+    function deleteVariantImage(imageId, button) {
+        if (confirm('هل أنت متأكد من حذف هذه الصورة؟')) {
+            const container = button.closest('[data-image-id]');
+            const deleteInput = container.querySelector('.delete-image-input');
+
+            // Mark for deletion
+            deleteInput.value = imageId;
+
+            // Hide visually
+            container.style.opacity = '0.3';
+            container.style.pointerEvents = 'none';
+
+            // Show restore button
+            button.innerHTML = '<i class="fas fa-undo"></i>';
+            button.style.background = '#10b981';
+            button.title = 'استعادة';
+            button.onclick = () => restoreVariantImage(imageId, button, container);
+        }
+    }
+
+    function restoreVariantImage(imageId, button, container) {
+        const deleteInput = container.querySelector('.delete-image-input');
+        deleteInput.value = '';
+
+        container.style.opacity = '1';
+        container.style.pointerEvents = 'auto';
+
+        button.innerHTML = '<i class="fas fa-times"></i>';
+        button.style.background = '#ef4444';
+        button.title = 'حذف الصورة';
+        button.onclick = () => deleteVariantImage(imageId, button);
+    }
+
+    // Delete product image
+    function deleteProductImage(imageId, button) {
+        if (confirm('هل أنت متأكد من حذف هذه الصورة؟')) {
+            const container = button.closest('[data-image-id]');
+            const deleteInput = container.querySelector('.delete-image-input');
+
+            // Mark for deletion
+            deleteInput.value = imageId;
+
+            // Hide visually
+            container.style.opacity = '0.3';
+            container.style.pointerEvents = 'none';
+
+            // Show restore button
+            button.innerHTML = '<i class="fas fa-undo"></i>';
+            button.style.background = '#10b981';
+            button.title = 'استعادة';
+            button.onclick = () => restoreProductImage(imageId, button, container);
+        }
+    }
+
+    function restoreProductImage(imageId, button, container) {
+        const deleteInput = container.querySelector('.delete-image-input');
+        deleteInput.value = '';
+
+        container.style.opacity = '1';
+        container.style.pointerEvents = 'auto';
+
+        button.innerHTML = '<i class="fas fa-times"></i>';
+        button.style.background = '#ef4444';
+        button.title = 'حذف الصورة';
+        button.onclick = () => deleteProductImage(imageId, button);
+    }
+
+    // Preview new variant images and product images
+    document.addEventListener('change', function (e) {
+        if (e.target && e.target.classList.contains('variant-images-input')) {
+            const previewContainer = e.target.closest('.variant-group').querySelector('.variant-images-preview');
+            if (!previewContainer) return;
+
+            previewContainer.innerHTML = '';
+
+            Array.from(e.target.files).forEach((file) => {
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    const img = document.createElement('img');
+                    img.src = event.target.result;
+                    img.style.cssText = 'width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 2px solid #FFC400;';
+                    previewContainer.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Preview new product images
+        if (e.target && e.target.classList.contains('product-images-input')) {
+            const previewContainer = document.querySelector('.product-images-preview');
+            if (!previewContainer) return;
+
+            previewContainer.innerHTML = '';
+
+            Array.from(e.target.files).forEach((file) => {
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    const img = document.createElement('img');
+                    img.src = event.target.result;
+                    img.style.cssText = 'width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 2px solid #FFC400;';
+                    previewContainer.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,325 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ category.name }} - الوسام{% endblock %}
+{% block nav_products %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Page Header */
+    .page-header {
+        text-align: center;
+        padding: 3rem 1rem;
+        background: var(--bg-secondary);
+        border-bottom: 1px solid var(--border-color);
+        margin-bottom: 2rem;
+    }
+
+    .page-title {
+        font-size: clamp(2rem, 5vw, 2.5rem);
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        color: var(--text-primary);
+    }
+
+    .page-title .yellow {
+        color: #FFC400;
+    }
+
+    .page-subtitle {
+        color: var(--text-secondary);
+        font-size: 1.125rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .breadcrumbs {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+
+    .breadcrumb-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        color: var(--text-secondary);
+        transition: color 0.3s ease;
+    }
+
+    .breadcrumb-item:hover {
+        color: #FFC400;
+    }
+
+    .breadcrumb-item.active {
+        color: #FFC400;
+        font-weight: 600;
+    }
+
+    .breadcrumb-separator {
+        color: var(--border-color);
+    }
+
+    /* Products Section */
+    .products-section {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 1rem 3rem;
+    }
+
+    .products-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 2rem;
+    }
+
+    .product-card {
+        background: var(--card-bg);
+        border: 2px solid var(--border-color);
+        border-radius: 20px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        color: inherit;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    .product-card:hover {
+        border-color: #FFC400;
+        transform: translateY(-8px);
+        box-shadow: 0 15px 40px rgba(255, 196, 0, 0.2);
+    }
+
+    .product-image-container {
+        position: relative;
+        width: 100%;
+        height: 180px;
+        max-height: 180px;
+        background: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+    .product-image {
+        max-width: 100%;
+        max-height: 100%;
+        width: auto;
+        height: auto;
+        object-fit: contain;
+        object-position: center;
+        padding: 0.5rem;
+        transition: transform 0.3s ease;
+    }
+
+    .product-card:hover .product-image {
+        transform: scale(1.05);
+    }
+
+    .product-placeholder {
+        font-size: 4rem;
+        color: var(--text-secondary);
+        opacity: 0.3;
+    }
+
+    .product-info {
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        flex: 1;
+    }
+
+    .product-name {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        line-height: 1.4;
+        margin: 0;
+    }
+
+    .product-meta {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-color);
+        margin-top: auto;
+    }
+
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+    }
+
+    .meta-item i {
+        color: #FFC400;
+    }
+
+    .meta-value {
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    .stock-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: rgba(34, 197, 94, 0.1);
+        color: #22c55e;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 0.875rem;
+        width: fit-content;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 1rem;
+        grid-column: 1 / -1;
+    }
+
+    .empty-icon {
+        font-size: 5rem;
+        color: #FFC400;
+        margin-bottom: 1.5rem;
+        opacity: 0.3;
+    }
+
+    .empty-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: var(--text-primary);
+    }
+
+    .empty-desc {
+        color: var(--text-secondary);
+        margin-bottom: 2rem;
+    }
+
+    .btn-yellow {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        background: #FFC400;
+        color: #1a1a1a;
+        padding: 1rem 2rem;
+        border-radius: 50px;
+        font-weight: 700;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .btn-yellow:hover {
+        background: #e6b000;
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(255, 196, 0, 0.3);
+    }
+
+    /* Dark Theme Support */
+    body.theme-dark .product-image-container {
+        background: #2a2a2a;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .products-grid {
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .product-image-container {
+            height: 120px;
+            max-height: 120px;
+        }
+
+        .page-header {
+            padding: 2rem 1rem;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .products-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title"><span class="yellow">{{ category.name }}</span></h1>
+    {% if category.description %}
+    <p class="page-subtitle">{{ category.description }}</p>
+    {% endif %}
+    <div class="breadcrumbs">
+        <a href="{% url 'home:home' %}" class="breadcrumb-item">
+            <i class="fas fa-home"></i> الرئيسية
+        </a>
+        <i class="fas fa-chevron-left breadcrumb-separator"></i>
+        <a href="{% url 'products:all_categories' %}" class="breadcrumb-item">الأقسام</a>
+        <i class="fas fa-chevron-left breadcrumb-separator"></i>
+        <span class="breadcrumb-item active">{{ category.name }}</span>
+    </div>
+</div>
+
+<section class="products-section">
+    <div class="products-grid">
+        {% for product in products %}
+        <a href="{% url 'products:product_detail' product.slug %}" class="product-card">
+            <div class="product-image-container">
+                {% if product.image %}
+                <img src="{{ product.image.url }}" alt="{{ product.name }}" class="product-image" loading="lazy">
+                {% else %}
+                <div class="product-placeholder">
+                    <i class="fas fa-box"></i>
+                </div>
+                {% endif %}
+            </div>
+            <div class="product-info">
+                <div class="stock-badge">
+                    {% if product.is_available %}
+                    <i class="fas fa-check-circle"></i>
+                    <span>متوفر</span>
+                    {% else %}
+                    <i class="fas fa-times-circle"></i>
+                    <span>غير متوفر</span>
+                    {% endif %}
+                </div>
+                <h3 class="product-name">{{ product.name }}</h3>
+                <div class="product-meta">
+                    <div class="meta-item">
+                        <i class="fas fa-box"></i>
+                        <span class="meta-value">{{ product.pcs_carton }}</span>
+                        <span>قطعة/كرتون</span>
+                    </div>
+                </div>
+            </div>
+        </a>
+        {% empty %}
+        <div class="empty-state">
+            <div class="empty-icon"><i class="fas fa-box-open"></i></div>
+            <h3 class="empty-title">لا توجد منتجات في هذا القسم</h3>
+            <p class="empty-desc">نعمل على إضافة المزيد من المنتجات قريباً</p>
+            <a href="{% url 'products:all_categories' %}" class="btn-yellow">
+                <i class="fas fa-arrow-right"></i>
+                <span>تصفح الأقسام الأخرى</span>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

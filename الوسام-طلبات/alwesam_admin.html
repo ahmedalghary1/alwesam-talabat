@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم - الوسام</title>
+    <link href="css/base.css" rel="stylesheet">
+    <link href="css/layout.css" rel="stylesheet">
+    <link href="css/components.css" rel="stylesheet">
+    <link href="css/pages.css" rel="stylesheet">
+    <link href="css/admin.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="theme-light">
+    <!-- NAVIGATION -->
+    <nav class="navbar">
+        <div class="container nav-container">
+            <div class="nav-left">
+                <a href="alwesam_home.html" class="logo">
+                    <div class="logo-icon"><img src="./ELWSAM.png" alt="" width="110%" height="110%"></div>
+                    <span>الوسام</span>
+                </a>
+            </div>
+
+            <ul class="nav-menu" id="nav-menu">
+                <li><a href="alwesam_home.html" class="nav-link">الرئيسية</a></li>
+                <li><a href="alwesam_category.html" class="nav-link">المنتجات</a></li>
+                <li><a href="alwesam_cart.html" class="nav-link">الطلبات</a></li>
+                <li><a href="alwesam_admin.html" class="nav-link active">لوحة التحكم</a></li>
+            </ul>
+
+            <div class="nav-actions">
+                <button class="action-btn" onclick="toggleTheme()"><i class="fas fa-moon" id="theme-icon"></i></button>
+                <div class="lang-selector">
+                    <button class="lang-btn" title="تبديل اللغة">
+                        <i class="fas fa-globe"></i>
+                    </button>
+                    <div class="lang-dropdown">
+                        <button class="lang-option active" disabled>
+                            <i class="fas fa-check-circle"></i> العربية
+                        </button>
+                        <button class="lang-option" disabled>
+                            <i class="fas fa-circle"></i> English
+                        </button>
+                    </div>
+                </div>
+                <div class="mobile-toggle" onclick="toggleMenu()"><i class="fas fa-bars"></i></div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="admin-layout">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="logo mb-2">
+                <div class="logo-icon icon-sm"><i class="fas fa-bolt"></i></div>
+                <span>الوسام</span>
+            </div>
+
+            <nav class="flex-col gap-05">
+                <a href="alwesam_admin.html" class="dashboard-link">
+                    <i class="fas fa-home ml-2"></i> لوحة التحكم
+                </a>
+                <a href="alwesam_admin_products.html" class="dashboard-link-inactive">
+                    <i class="fas fa-box ml-2"></i> المنتجات
+                </a>
+                <a href="alwesam_admin_orders.html" class="dashboard-link-inactive">
+                    <i class="fas fa-shopping-bag ml-2"></i> الطلبات
+                </a>
+                <a href="alwesam_home.html" class="dashboard-link-inactive mt-auto text-red">
+                    <i class="fas fa-sign-out-alt ml-2"></i> خروج
+                </a>
+            </nav>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="p-2 w-full">
+            <header class="flex-between mb-2">
+                <div class="flex-center gap-1">
+                    <a href="alwesam_home.html" class="action-btn"><i class="fas fa-arrow-right"></i></a>
+                    <h1 class="text-xl">ملخص الأداء</h1>
+                </div>
+                <div class="flex-center gap-1">
+                    <button class="action-btn" onclick="toggleTheme()"><i class="fas fa-moon"
+                            id="theme-icon"></i></button>
+                    <div class="flex-center gap-05">
+                        <img src="https://via.placeholder.com/40" class="avatar-sm" alt="Admin">
+                        <span class="font-bold">المشرف</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- STATS GRID -->
+            <div class="card-grid pt-0 mb-2" style="padding-top: 0;">
+                <div class="stat-card animate-slide-up">
+                    <div class="card-icon icon-md m-0"><i class="fas fa-shopping-bag"></i></div>
+                    <div>
+                        <div class="text-secondary text-sm">إجمالي الطلبات</div>
+                        <div class="text-xl">1,284</div>
+                    </div>
+                </div>
+                <div class="stat-card animate-slide-up delay-100">
+                    <div class="card-icon icon-md m-0"><i class="fas fa-users"></i></div>
+                    <div>
+                        <div class="text-secondary text-sm">عملاء جدد</div>
+                        <div class="text-xl">342</div>
+                    </div>
+                </div>
+                <div class="stat-card animate-slide-up delay-200">
+                    <div class="card-icon icon-md m-0"><i class="fas fa-box"></i></div>
+                    <div>
+                        <div class="text-secondary text-sm">المنتجات</div>
+                        <div class="text-xl">5,103</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RECENT ORDERS -->
+            <div class="modern-card animate-slide-up delay-300">
+                <div class="flex-between mb-2">
+                    <h3>أحدث الطلبات</h3>
+                    <button class="action-btn"><i class="fas fa-ellipsis-v"></i></button>
+                </div>
+                <div class="empty-state">
+                    لا توجد طلبات حديثة.
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

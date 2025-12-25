@@ -1,0 +1,124 @@
+﻿{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>طلباتي - الوسام</title>
+    <link href="{% static 'css/base.css' %}" rel="stylesheet">
+    <link href="{% static 'css/layout.css' %}" rel="stylesheet">
+    <link href="{% static 'css/components.css' %}" rel="stylesheet">
+    <link href="{% static 'css/pages.css' %}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="theme-light">
+    <!-- NAVIGATION -->
+    <nav class="navbar">
+        <div class="container nav-container">
+            <div class="nav-left">
+                <a href="{% url 'home' %}" class="logo">
+                    <span>الوسام</span>
+                </a>
+            </div>
+
+            <ul class="nav-menu" id="nav-menu">
+                <li><a href="{% url 'home' %}" class="nav-link">الرئيسية</a></li>
+                <li><a href="alwesam_category.html" class="nav-link">المنتجات</a></li>
+                <li><a href="{% url 'cart:cart_view' %}" class="nav-link active">الطلبات</a></li>
+                <li><a href="alwesam_admin.html" class="nav-link">لوحة التحكم</a></li>
+            </ul>
+
+            <div class="nav-actions mr-2">
+                <button class="action-btn" onclick="toggleTheme()">
+                    <i class="fas fa-moon" id="theme-icon"></i>
+                </button>
+                <div class="lang-selector">
+                    <button class="lang-btn" title="تبديل اللغة">
+                        <i class="fas fa-globe"></i>
+                    </button>
+                    <div class="lang-dropdown">
+                        <button class="lang-option active" disabled>
+                            <i class="fas fa-check-circle"></i> العربية
+                        </button>
+                        <button class="lang-option" disabled>
+                            <i class="fas fa-circle"></i> English
+                        </button>
+                    </div>
+                </div>
+                <a href="{% url 'cart:cart_view' %}" class="btn-primary">
+                    <i class="fas fa-shopping-cart ml-2"></i>
+                    <span class="badge-counter">3</span>
+                </a>
+                <div class="mobile-toggle" onclick="toggleMenu()">
+                    <i class="fas fa-bars"></i>
+                </div>
+                <a href="{% url 'login' %}" class="btn-primary btn-login">
+                    <i class="fas fa-sign-in-alt ml-2"></i> <span>تسجيل الدخول</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container pt-1 pb-6 mb-2">
+        <!-- Cart Items -->
+        <div class="flex-col gap-1">
+
+            <!-- Item 1 -->
+            <div class="cart-item glass-panel animate-slide-up">
+
+                <div>
+                    <div class="text-secondary text-sm mb-05">SKU: DCD796N</div>
+                    <h3 class="font-bold mb-05">دريل ديوالت 18 فولت</h3>
+                    <div class="text-highlight font-bold">5 كراتين</div>
+                </div>
+
+                <div class="flex-col items-end gap-05">
+                    <button class="action-btn text-red border-none"><i class="fas fa-trash"></i></button>
+                    <div class="qty-badge">
+                        <button class="action-btn icon-xs"><i class="fas fa-minus"></i></button>
+                        <span class="font-bold text-sm">5</span>
+                        <button class="action-btn icon-xs"><i class="fas fa-plus"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Item 2 -->
+            <div class="cart-item glass-panel animate-slide-up delay-100">
+
+                <div>
+                    <div class="text-secondary text-sm mb-05">SKU: GA4530R</div>
+                    <h3 class="font-bold mb-05">صاروخ ماكيتا</h3>
+                    <div class="text-highlight font-bold">2 كرتون</div>
+                </div>
+
+                <div class="flex-col items-end gap-05">
+                    <button class="action-btn text-red border-none"><i class="fas fa-trash"></i></button>
+                    <div class="qty-badge">
+                        <button class="action-btn icon-xs"><i class="fas fa-minus"></i></button>
+                        <span class="font-bold text-sm">2</span>
+                        <button class="action-btn icon-xs"><i class="fas fa-plus"></i></button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- CHECKOUT BAR -->
+    <div class="checkout-bar">
+        <div class="container flex-between">
+            <div>
+                <div class="text-secondary text-sm">إجمالي الكراتين</div>
+                <div class="font-bold text-lg">7 كراتين</div>
+            </div>
+            <button class="btn-primary">
+                إتمام الطلب <i class="fas fa-arrow-left mr-2"></i>
+            </button>
+        </div>
+    </div>
+
+</body>
+
+</html>

@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}إنشاء حساب - الوسام{% endblock %}
+
+{% block extra_css %}
+<style>
+    .auth-container {
+        min-height: calc(100vh - 200px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 1rem;
+    }
+
+    .auth-card {
+        background: var(--card-bg);
+        border: 2px solid var(--border-color);
+        border-radius: 20px;
+        padding: 2.5rem;
+        max-width: 550px;
+        width: 100%;
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+    }
+
+    .auth-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .auth-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: #FFC400;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        color: #1a1a1a;
+        font-size: 2rem;
+        box-shadow: 0 10px 30px rgba(255, 196, 0, 0.3);
+    }
+
+    .auth-title {
+        font-size: 2rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+    }
+
+    .auth-subtitle {
+        color: var(--text-secondary);
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+
+    .form-label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: var(--text-primary);
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 0.875rem 1rem;
+        font-size: 1rem;
+        border-radius: 10px;
+        border: 2px solid var(--border-color);
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        transition: all 0.3s ease;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: #FFC400;
+        box-shadow: 0 0 0 3px rgba(255, 196, 0, 0.1);
+    }
+
+    textarea.form-input {
+        resize: vertical;
+        min-height: 80px;
+    }
+
+    .btn-submit {
+        width: 100%;
+        padding: 1rem;
+        background: #FFC400;
+        color: #1a1a1a;
+        border: none;
+        border-radius: 10px;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .btn-submit:hover {
+        background: #e6b000;
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(255, 196, 0, 0.3);
+    }
+
+    .auth-footer {
+        text-align: center;
+        padding-top: 1.5rem;
+        margin-top: 1.5rem;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .text-accent {
+        color: #FFC400;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .text-accent:hover {
+        text-decoration: underline;
+    }
+
+    @media (max-width: 600px) {
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <div class="auth-icon">
+                <i class="fas fa-user-plus"></i>
+            </div>
+            <h1 class="auth-title">إنشاء حساب جديد</h1>
+            <p class="auth-subtitle">انضم إلى الوسام وابدأ التسوق</p>
+        </div>
+
+        <div
+            style="background: rgba(255, 196, 0, 0.1); border: 1px solid rgba(255, 196, 0, 0.3); border-radius: 10px; padding: 1rem; margin-bottom: 1.5rem; text-align: center;">
+            <p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem;">
+                <i class="fas fa-info-circle" style="color: #FFC400; margin-left: 0.5rem;"></i>
+                سيتم مراجعة حسابك من قبل المسؤول قبل التفعيل
+            </p>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fas fa-user" style="color: #FFC400;"></i>
+                        اسم المستخدم
+                    </label>
+                    <input type="text" name="username" class="form-input" placeholder="اسم مستخدم فريد" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fas fa-envelope" style="color: #FFC400;"></i>
+                        البريد الإلكتروني
+                    </label>
+                    <input type="email" name="email" class="form-input" placeholder="example@email.com" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">
+                    <i class="fas fa-phone" style="color: #FFC400;"></i>
+                    رقم الهاتف
+                </label>
+                <input type="tel" name="phone" class="form-input" placeholder="+20 106 269 2455" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">
+                    <i class="fas fa-map-marker-alt" style="color: #FFC400;"></i>
+                    العنوان
+                </label>
+                <textarea name="address" class="form-input" placeholder="أدخل عنوانك الكامل" required></textarea>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fas fa-lock" style="color: #FFC400;"></i>
+                        كلمة المرور
+                    </label>
+                    <input type="password" name="password1" class="form-input" placeholder="••••••••" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fas fa-lock" style="color: #FFC400;"></i>
+                        تأكيد كلمة المرور
+                    </label>
+                    <input type="password" name="password2" class="form-input" placeholder="••••••••" required>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-submit">
+                <i class="fas fa-user-plus"></i>
+                إنشاء الحساب
+            </button>
+        </form>
+
+        <div class="auth-footer">
+            <p>لديك حساب بالفعل؟
+                <a href="{% url 'accounts:login' %}" class="text-accent">سجل الدخول</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

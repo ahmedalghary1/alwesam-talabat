@@ -1,0 +1,257 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}تفاصيل الطلب #{{ order.id }} - الوسام{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+    }
+
+    .page-title {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .page-title i {
+        color: #FFC400;
+    }
+
+    .order-card {
+        background: var(--card-bg);
+        border: 2px solid var(--border-color);
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .order-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .order-info h2 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: var(--text-primary);
+    }
+
+    .order-meta {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+    }
+
+    .status-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        font-size: 0.875rem;
+        font-weight: 700;
+    }
+
+    .status-pending {
+        background: rgba(255, 196, 0, 0.1);
+        color: #FFC400;
+    }
+
+    .status-processing {
+        background: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
+    }
+
+    .status-completed {
+        background: rgba(34, 197, 94, 0.1);
+        color: #22c55e;
+    }
+
+    .status-cancelled {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        color: var(--text-primary);
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .info-item {
+        padding: 1rem;
+        background: var(--bg-secondary);
+        border-radius: 10px;
+    }
+
+    .info-label {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .info-value {
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .items-list {
+        margin-bottom: 2rem;
+    }
+
+    .order-item {
+        display: flex;
+        gap: 1rem;
+        padding: 1rem;
+        background: var(--bg-secondary);
+        border-radius: 10px;
+        margin-bottom: 0.75rem;
+    }
+
+    .item-name {
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .item-meta {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+    }
+
+    .status-form {
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .form-select {
+        width: 100%;
+        padding: 0.875rem 1rem;
+        font-size: 1rem;
+        border-radius: 10px;
+        border: 2px solid var(--border-color);
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+    }
+
+    .btn-update {
+        background: #FFC400;
+        color: #1a1a1a;
+        padding: 0.875rem 2rem;
+        border-radius: 10px;
+        font-weight: 700;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-update:hover {
+        background: #e6b000;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <h1 class="page-title">
+        <i class="fas fa-file-invoice"></i>
+        تفاصيل الطلب #{{ order.id }}
+    </h1>
+
+    <div class="order-card">
+        <div class="order-header">
+            <div class="order-info">
+                <h2>طلب #{{ order.id }}</h2>
+                <p class="order-meta">{{ order.created_at|date:"d/m/Y - H:i" }}</p>
+            </div>
+            <span class="status-badge status-{{ order.status }}">
+                {% if order.status == 'pending' %}
+                قيد الانتظار
+                {% elif order.status == 'processing' %}
+                قيد المعالجة
+                {% elif order.status == 'completed' %}
+                مكتمل
+                {% else %}
+                ملغى
+                {% endif %}
+            </span>
+        </div>
+
+        <h3 class="section-title">معلومات العميل</h3>
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-label">الاسم</div>
+                <div class="info-value">{{ order.user.username }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">البريد الإلكتروني</div>
+                <div class="info-value">{{ order.user.email }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">رقم الهاتف</div>
+                <div class="info-value">{{ order.phone_number|default:"غير متوفر" }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">العنوان</div>
+                <div class="info-value">{{ order.address|default:"غير متوفر" }}</div>
+            </div>
+        </div>
+
+        <h3 class="section-title">المنتجات المطلوبة</h3>
+        <div class="items-list">
+            {% for item in order.items.all %}
+            <div class="order-item">
+                <div style="flex: 1;">
+                    <div class="item-name">{{ item.product.name }}</div>
+                    {% if item.variant_info %}
+                    <div style="font-size: 0.85rem; color: #FFC400; margin-bottom: 0.25rem;">
+                        <i class="fas fa-tag"></i> {{ item.variant_info }}
+                    </div>
+                    {% endif %}
+                    <div class="item-meta">
+                        {% if item.unit_type == 'piece' %}
+                        <i class="fas fa-cube"></i> طلب بالقطعة: <strong>{{ item.quantity }} قطعة</strong> ({{ item.get_pcs_carton }} قطعة/كرتون)
+                        {% else %}
+                        <i class="fas fa-box"></i> طلب بالكرتونة: <strong>{{ item.get_quantity_in_cartons|floatformat:0 }} كرتون</strong> × {{ item.get_pcs_carton }} قطعة = <strong>{{ item.quantity }} قطعة
+                            إجمالي</strong>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <form method="post" class="status-form">
+            <h3 class="section-title">تحديث حالة الطلب</h3>
+            {% csrf_token %}
+            <select name="status" class="form-select">
+                <option value="pending" {% if order.status == 'pending' %}selected{% endif %}>قيد الانتظار</option>
+                <option value="processing" {% if order.status == 'processing' %}selected{% endif %}>قيد المعالجة</option>
+                <option value="completed" {% if order.status == 'completed' %}selected{% endif %}>مكتمل</option>
+                <option value="cancelled" {% if order.status == 'cancelled' %}selected{% endif %}>ملغى</option>
+            </select>
+            <button type="submit" class="btn-update">
+                <i class="fas fa-check"></i>
+                تحديث الحالة
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

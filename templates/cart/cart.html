@@ -1,0 +1,925 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load cart_filters %}
+
+{% block title %}السلة - الوسام{% endblock %}
+
+{% block extra_css %}
+<style>
+    .cart-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+    }
+
+    .page-title {
+        font-size: 2rem;
+        font-weight: 800;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .page-title i {
+        color: #FFC400;
+    }
+
+    .cart-grid {
+        display: grid;
+        grid-template-columns: 1fr 350px;
+        gap: 2rem;
+    }
+
+    .cart-items {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .cart-item {
+        background: var(--card-bg);
+        border: 2px solid var(--border-color);
+        border-radius: 16px;
+        padding: 1.5rem;
+        display: flex;
+        gap: 1.5rem;
+        align-items: center;
+    }
+
+    .cart-item:hover {
+        border-color: #FFC400;
+    }
+
+    .item-image {
+        width: 100px;
+        height: 100px;
+        border-radius: 12px;
+        object-fit: cover;
+        background: var(--bg-secondary);
+    }
+
+    .item-placeholder {
+        width: 100px;
+        height: 100px;
+        border-radius: 12px;
+        background: var(--bg-secondary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-secondary);
+        font-size: 2rem;
+    }
+
+    .item-details {
+        flex: 1;
+    }
+
+    .item-name {
+        font-size: 1.125rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .item-meta {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+    }
+
+    .item-meta span {
+        color: #FFC400;
+        font-weight: 600;
+    }
+
+    .item-variant {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        background: var(--bg-secondary);
+        padding: 0.375rem 0.75rem;
+        border-radius: 6px;
+        width: fit-content;
+        margin-bottom: 0.5rem;
+    }
+
+    .item-variant i {
+        color: #FFC400;
+    }
+
+    .item-actions {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .quantity-control {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: var(--bg-secondary);
+        border-radius: 8px;
+        padding: 0.25rem;
+    }
+
+    .qty-btn {
+        width: 36px;
+        height: 36px;
+        border: none;
+        border-radius: 6px;
+        background: #FFC400;
+        color: #1a1a1a;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .qty-btn:hover {
+        background: #e6b000;
+    }
+
+    .qty-value {
+        font-weight: 700;
+        min-width: 40px;
+        text-align: center;
+    }
+
+    .btn-remove {
+        width: 40px;
+        height: 40px;
+        border: none;
+        border-radius: 8px;
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-remove:hover {
+        background: #ef4444;
+        color: white;
+    }
+
+    /* Summary */
+    .cart-summary {
+        background: var(--card-bg);
+        border: 2px solid var(--border-color);
+        border-radius: 16px;
+        padding: 1.5rem;
+        height: fit-content;
+        position: sticky;
+        top: 100px;
+    }
+
+    .summary-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .summary-title i {
+        color: #FFC400;
+    }
+
+    .summary-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .summary-item:last-of-type {
+        border-bottom: none;
+    }
+
+    .summary-label {
+        color: var(--text-secondary);
+    }
+
+    .summary-value {
+        font-weight: 700;
+    }
+
+    .btn-checkout {
+        width: 100%;
+        padding: 1rem;
+        background: #FFC400;
+        color: #1a1a1a;
+        border: none;
+        border-radius: 10px;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .btn-checkout:hover {
+        background: #e6b000;
+        transform: translateY(-2px);
+    }
+
+    .btn-continue {
+        width: 100%;
+        padding: 0.75rem;
+        background: transparent;
+        color: #FFC400;
+        border: 2px solid #FFC400;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 0.75rem;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+
+    .btn-continue:hover {
+        background: #FFC400;
+        color: #1a1a1a;
+    }
+
+    /* Empty Cart */
+    .empty-cart {
+        text-align: center;
+        padding: 4rem 1rem;
+        grid-column: 1 / -1;
+    }
+
+    .empty-icon {
+        font-size: 5rem;
+        color: #FFC400;
+        margin-bottom: 1.5rem;
+        opacity: 0.3;
+    }
+
+    @media (max-width: 768px) {
+        .cart-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .cart-item {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .item-details {
+            width: 100%;
+            text-align: center;
+        }
+
+        .item-meta {
+            display: block !important;
+            text-align: center;
+            font-size: 0.85rem;
+        }
+
+        .item-actions {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cart-container">
+    <h1 class="page-title">
+        <i class="fas fa-shopping-cart"></i>
+        سلة التسوق
+    </h1>
+
+    {% if user.is_authenticated %}
+    <!-- Authenticated User - Server-side Cart -->
+    {% if cart_items %}
+    <div class="cart-grid">
+        <div class="cart-items">
+            {% for item in cart_items %}
+            <div class="cart-item" data-item-id="{{ item.id }}" data-unit-type="{{ item.unit_type }}"
+                data-pcs-carton="{{ item.get_pcs_carton }}">
+                {% if item.product.image %}
+                <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="item-image">
+                {% else %}
+                <div class="item-placeholder">
+                    <i class="fas fa-box"></i>
+                </div>
+                {% endif %}
+
+                <div class="item-details">
+                    <h3 class="item-name">{{ item.product.name }}</h3>
+                    {% if item.variant %}
+                    <p class="item-variant">
+                        <i class="fas fa-tag"></i>
+                        <span>{{ item.variant.get_variant_type_display }}: {{ item.variant.variant_value }}</span>
+                    </p>
+                    {% endif %}
+
+                    <!-- Unit Type Badge (NEW) -->
+                    <div style="margin-bottom: 0.5rem;">
+                        {% if item.unit_type == 'piece' %}
+                        <span
+                            style="display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.25rem 0.6rem; background: rgba(34, 197, 94, 0.1); color: #22c55e; border-radius: 6px; font-size: 0.75rem; font-weight: 600;">
+                            <i class="fas fa-cube"></i> طلب بالقطعة
+                        </span>
+                        {% else %}
+                        <span
+                            style="display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.25rem 0.6rem; background: rgba(255, 196, 0, 0.1); color: #FFC400; border-radius: 6px; font-size: 0.75rem; font-weight: 600;">
+                            <i class="fas fa-box"></i> طلب بالكرتونة
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <p class="item-meta">
+                        {% if item.unit_type == 'carton' %}
+                        <i class="fas fa-box"></i>
+                        <strong style="color: #FFC400; font-size: 1.1rem;">{{ item.get_quantity_in_cartons|floatformat:0 }}</strong> كرتون
+                        <span style="color: var(--text-secondary); font-size: 0.9rem;">
+                            ({{ item.get_pcs_carton }} قطعة/كرتون = {{ item.quantity }} قطعة إجمالي)
+                        </span>
+                        {% else %}
+                        <i class="fas fa-cube"></i>
+                        <strong style="color: #22c55e; font-size: 1.1rem;">{{ item.quantity }}</strong> قطعة
+                        <span style="color: var(--text-secondary); font-size: 0.9rem;">
+                            ({{ item.get_pcs_carton }} قطعة/كرتون)
+                        </span>
+                        {% endif %}
+                    </p>
+                </div>
+
+                <div class="item-actions">
+                    <div class="quantity-control">
+                        <button class="qty-btn" onclick="updateQuantity({{ item.id }}, -1)">-</button>
+                        <span class="qty-value"
+                            style="min-width: 40px; text-align: center; display: inline-block; font-weight: 700; color: var(--text-primary);">
+                            {% if item.unit_type == 'carton' %}
+                            {{ item.get_quantity_in_cartons|floatformat:0 }}
+                            {% else %}
+                            {{ item.quantity }}
+                            {% endif %}
+                        </span>
+                        <button class="qty-btn" onclick="updateQuantity({{ item.id }}, 1)">+</button>
+                    </div>
+                    <button class="btn-remove" onclick="removeFromCart({{ item.id }}, this)" title="إزالة"
+                        ontouchstart="">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="cart-summary">
+            <h3 class="summary-title">
+                <i class="fas fa-receipt"></i>
+                ملخص الطلب
+            </h3>
+
+            <div class="summary-item">
+                <span class="summary-label">عدد المنتجات:</span>
+                <span class="summary-value">{{ cart_items|length }}</span>
+            </div>
+
+            {% if total_cartons > 0 %}
+            <div class="summary-item">
+                <span class="summary-label">إجمالي الكراتين:</span>
+                <span class="summary-value" id="total-cartons">{{ total_cartons }}</span>
+            </div>
+            {% endif %}
+
+            <div class="summary-item">
+                <span class="summary-label">إجمالي القطع:</span>
+                <span class="summary-value" id="total-pieces">{{ total_pieces }}</span>
+            </div>
+
+            <a href="{% url 'cart:checkout' %}" class="btn-checkout">
+                <i class="fas fa-check-circle"></i>
+                إتمام الطلب
+            </a>
+
+            <a href="{% url 'products:all_categories' %}" class="btn-continue">
+                <i class="fas fa-shopping-bag"></i>
+                متابعة التسوق
+            </a>
+        </div>
+    </div>
+    {% else %}
+    <div class="empty-cart">
+        <div class="empty-icon">
+            <i class="fas fa-shopping-cart"></i>
+        </div>
+        <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem;">سلة التسوق فارغة</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">لم تقم بإضافة أي منتجات بعد</p>
+        <a href="{% url 'products:all_categories' %}" class="btn-checkout" style="max-width: 300px; margin: 0 auto;">
+            <i class="fas fa-shopping-bag"></i>
+            ابدأ التسوق الآن
+        </a>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <!-- Non-Authenticated User - LocalStorage Cart -->
+    <div id="local-cart-container">
+        <div class="empty-cart" id="local-empty-cart" style="display: none;">
+            <div class="empty-icon">
+                <i class="fas fa-shopping-cart"></i>
+            </div>
+            <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem;">سلة التسوق فارغة</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">لم تقم بإضافة أي منتجات بعد</p>
+            <a href="{% url 'products:all_categories' %}" class="btn-checkout"
+                style="max-width: 300px; margin: 0 auto;">
+                <i class="fas fa-shopping-bag"></i>
+                ابدأ التسوق الآن
+            </a>
+        </div>
+
+        <div class="cart-grid" id="local-cart-grid" style="display: none;">
+            <div class="cart-items" id="local-cart-items">
+                <!-- Items rendered by JavaScript -->
+            </div>
+
+            <div class="cart-summary">
+                <h3 class="summary-title">
+                    <i class="fas fa-receipt"></i>
+                    ملخص الطلب
+                </h3>
+
+                <div class="summary-item">
+                    <span class="summary-label">عدد المنتجات:</span>
+                    <span class="summary-value" id="local-product-count">0</span>
+                </div>
+
+                <div class="summary-item" id="local-cartons-container" style="display: none;">
+                    <span class="summary-label">إجمالي الكراتين:</span>
+                    <span class="summary-value" id="local-total-cartons">0</span>
+                </div>
+
+                <div class="summary-item">
+                    <span class="summary-label">إجمالي القطع:</span>
+                    <span class="summary-value" id="local-total-pieces">0</span>
+                </div>
+
+                <div class="login-notice"
+                    style="background: linear-gradient(135deg, #FFC40020, #FFC40010); padding: 1rem; border-radius: 12px; margin-bottom: 1rem; text-align: center;">
+                    <i class="fas fa-info-circle" style="color: #FFC400; margin-bottom: 0.5rem; font-size: 1.5rem;"></i>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.75rem;">يجب تسجيل الدخول
+                        لإتمام الطلب</p>
+                    <a href="{% url 'accounts:login' %}" class="btn-checkout"
+                        style="font-size: 0.9rem; padding: 0.75rem 1.5rem;">
+                        <i class="fas fa-sign-in-alt"></i>
+                        تسجيل الدخول
+                    </a>
+                </div>
+
+                <a href="{% url 'products:all_categories' %}" class="btn-continue">
+                    <i class="fas fa-shopping-bag"></i>
+                    متابعة التسوق
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const isAuthenticated = {% if user.is_authenticated %}true{% else %} false{% endif %};
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+
+    // Update totals in summary
+    function updateSummaryTotals() {
+        const items = document.querySelectorAll('.cart-item');
+        let totalPieces = 0;
+        let totalCartons = 0;
+        let hasCartons = false;
+
+        items.forEach(item => {
+            const unitType = item.dataset.unitType;
+            const pcsCarton = parseInt(item.dataset.pcsCarton) || 24;
+            const qtyElement = item.querySelector('.qty-value');
+            const qty = parseInt(qtyElement.textContent) || 0;
+
+            if (unitType === 'carton') {
+                totalCartons += qty;
+                totalPieces += qty * pcsCarton;
+                hasCartons = true;
+            } else {
+                totalPieces += qty;
+            }
+        });
+
+        const piecesEl = document.getElementById('total-pieces');
+        const cartonsEl = document.getElementById('total-cartons');
+
+        if (piecesEl) piecesEl.textContent = totalPieces;
+        if (cartonsEl) cartonsEl.textContent = totalCartons;
+
+        // Hide/show cartons container if it exists in a specific wrapper
+        const cartonsWrapper = cartonsEl ? cartonsEl.closest('.summary-item') : null;
+        if (cartonsWrapper) {
+            cartonsWrapper.style.display = totalCartons > 0 ? 'flex' : 'none';
+        }
+    }
+
+
+    async function updateQuantity(itemId, change) {
+        if (!isAuthenticated) {
+            showNotification('يرجى تسجيل الدخول أولاً', 'error');
+            return;
+        }
+
+        const itemElement = document.querySelector(`[data-item-id="${itemId}"]`);
+        if (!itemElement) {
+            console.error('Item element not found');
+            return;
+        }
+
+        // Get unit type and pcs_carton from data attributes
+        const unitType = itemElement.dataset.unitType || 'carton';
+        const pcsCarton = parseInt(itemElement.dataset.pcsCarton) || 24;
+
+        const qtyElement = itemElement.querySelector('.qty-value');
+        const currentQty = parseInt(qtyElement.textContent);
+        const newQty = currentQty + change;
+
+        if (newQty < 1) {
+            removeFromCart(itemId);
+            return;
+        }
+
+        try {
+            const formData = new FormData();
+            // Send the new quantity value based on current unit type
+            // The server already knows the unit_type from the cart item
+            formData.append('quantity', newQty);
+
+            const response = await fetch(`/cart/update/${itemId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': csrfToken || getCookie('csrftoken')
+                },
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Update quantity display in the DOM
+                qtyElement.textContent = newQty;
+
+                // Update item metadata display (pieces info)
+                const metaEl = itemElement.querySelector('.item-meta');
+                if (metaEl) {
+                    if (unitType === 'carton') {
+                        metaEl.innerHTML = `
+                            <i class="fas fa-box"></i>
+                            <strong style="color: #FFC400; font-size: 1.1rem;">${newQty}</strong> كرتون
+                            <span style="color: var(--text-secondary); font-size: 0.9rem;">
+                                (${pcsCarton} قطعة/كرتون = ${newQty * pcsCarton} قطعة إجمالي)
+                            </span>`;
+                    } else {
+                        metaEl.innerHTML = `
+                            <i class="fas fa-cube"></i>
+                            <strong style="color: #22c55e; font-size: 1.1rem;">${newQty}</strong> قطعة
+                            <span style="color: var(--text-secondary); font-size: 0.9rem;">
+                                (${pcsCarton} قطعة/كرتون)
+                            </span>`;
+                    }
+                }
+
+                // Update global summary totals
+                updateSummaryTotals();
+
+                // Update cart badge
+                updateAllCartBadges(data.cart_count);
+
+                showNotification('تم تحديث الكمية', 'success');
+            } else {
+                showNotification('حدث خطأ أثناء تحديث الكمية', 'error');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showNotification('حدث خطأ أثناء تحديث الكمية', 'error');
+        }
+    }
+
+    async function removeFromCart(itemId, buttonElement) {
+        if (!isAuthenticated) {
+            showNotification('يرجى تسجيل الدخول أولاً', 'error');
+            return;
+        }
+
+        const button = buttonElement;
+
+        showConfirmModal(
+            'سيتم حذف هذا المنتج من سلة التسوق نهائياً',
+            'تأكيد الحذف',
+            async function () {
+                try {
+                    const response = await fetch(`/cart/remove/${itemId}/`, {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRFToken': csrfToken || getCookie('csrftoken')
+                        }
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        // Remove item from DOM with animation
+                        const itemElement = document.querySelector(`[data-item-id="${itemId}"]`);
+                        if (itemElement) {
+                            itemElement.style.transition = 'all 0.3s ease';
+                            itemElement.style.opacity = '0';
+                            itemElement.style.transform = 'translateX(-20px)';
+
+                            setTimeout(() => {
+                                itemElement.remove();
+
+                                // Check if cart is empty
+                                const remainingItems = document.querySelectorAll('.cart-item');
+                                if (remainingItems.length === 0) {
+                                    location.reload();
+                                }
+                            }, 300);
+                        }
+
+                        // Update cart count
+                        updateAllCartBadges(data.cart_count);
+
+                        showNotification(data.message, 'success');
+                    } else {
+                        showNotification('⚠️ عذراً! لم نتمكن من حذف المنتج. يرجى المحاولة مرة أخرى', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    showNotification('⚠️ حدث خطأ غير متوقع! يرجى تحديث الصفحة والمحاولة مرة أخرى', 'error');
+                }
+            }
+        );
+    }
+
+    function updateAllCartBadges(count) {
+        const badges = document.querySelectorAll('#cart-count, .cart-badge, .badge-counter');
+        badges.forEach(badge => {
+            badge.textContent = count || 0;
+        });
+    }
+
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        notification.textContent = message;
+        notification.style.cssText = `
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            padding: 15px 20px;
+            background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
+            color: #fff;
+            border-radius: 10px;
+            z-index: 9999;
+            animation: slideInRight 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            font-weight: 600;
+        `;
+
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            notification.style.animation = 'slideOutRight 0.3s ease';
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
+
+    // Add CSS animations
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        @keyframes slideOutRight {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+
+    // ==================== LOCAL STORAGE CART ====================
+    // Render localStorage cart for non-authenticated users
+    function renderLocalCart() {
+        const container = document.getElementById('local-cart-container');
+        if (!container) return; // Only for non-authenticated users
+
+        const cartItems = JSON.parse(localStorage.getItem('alwesam_cart') || '[]');
+        const gridEl = document.getElementById('local-cart-grid');
+        const emptyEl = document.getElementById('local-empty-cart');
+        const itemsEl = document.getElementById('local-cart-items');
+
+        if (cartItems.length === 0) {
+            if (gridEl) gridEl.style.display = 'none';
+            if (emptyEl) emptyEl.style.display = 'block';
+            return;
+        }
+
+        if (gridEl) gridEl.style.display = 'grid';
+        if (emptyEl) emptyEl.style.display = 'none';
+
+        // Render items
+        if (itemsEl) {
+            itemsEl.innerHTML = cartItems.map((item, index) => {
+                const unitType = item.unit_type || 'carton';
+                const pcsCarton = item.pcs_carton || 24;
+                const quantityInPieces = item.quantity;
+
+                // Calculate display quantity based on unit type
+                let displayQuantity, badgeHtml, metaHtml;
+
+                if (unitType === 'piece') {
+                    displayQuantity = quantityInPieces;
+                    badgeHtml = `<span style="display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.25rem 0.6rem; background: rgba(34, 197, 94, 0.1); color: #22c55e; border-radius: 6px; font-size: 0.75rem; font-weight: 600; margin-bottom: 0.5rem;">
+                        <i class="fas fa-cube"></i> طلب بالقطعة
+                    </span>`;
+                    metaHtml = `<i class="fas fa-cube"></i>
+                        <strong style="color: #22c55e; font-size: 1.1rem;">${quantityInPieces}</strong> قطعة
+                        <span style="color: var(--text-secondary); font-size: 0.9rem;">
+                            (${pcsCarton} قطعة/كرتون)
+                        </span>`;
+                } else {
+                    const quantityInCartons = Math.floor(quantityInPieces / pcsCarton);
+                    displayQuantity = quantityInCartons;
+                    badgeHtml = `<span style="display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.25rem 0.6rem; background: rgba(255, 196, 0, 0.1); color: #FFC400; border-radius: 6px; font-size: 0.75rem; font-weight: 600; margin-bottom: 0.5rem;">
+                        <i class="fas fa-box"></i> طلب بالكرتونة
+                    </span>`;
+                    metaHtml = `<i class="fas fa-box"></i>
+                        <strong style="color: #FFC400; font-size: 1.1rem;">${quantityInCartons}</strong> كرتون
+                        <span style="color: var(--text-secondary); font-size: 0.9rem;">
+                            (${pcsCarton} قطعة/كرتون = ${quantityInPieces} قطعة إجمالي)
+                        </span>`;
+                }
+
+                return `
+                    <div class="cart-item" data-local-index="${index}" data-unit-type="${unitType}" data-pcs-carton="${pcsCarton}">
+                        ${item.image_url ?
+                        `<img src="${item.image_url}" alt="${item.product_name}" class="item-image">` :
+                        `<div class="item-placeholder"><i class="fas fa-box"></i></div>`
+                    }
+                        <div class="item-details">
+                            <h3 class="item-name">${item.product_name}</h3>
+                            ${badgeHtml}
+                            <p class="item-meta">${metaHtml}</p>
+                        </div>
+                        <div class="item-actions">
+                            <div class="quantity-control">
+                                <button class="qty-btn" onclick="updateLocalQuantity(${index}, -1)">-</button>
+                                <span class="qty-value">${displayQuantity}</span>
+                                <button class="qty-btn" onclick="updateLocalQuantity(${index}, 1)">+</button>
+                            </div>
+                            <button class="btn-remove" onclick="removeLocalItem(${index}, this)" title="إزالة" ontouchstart="">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Update summary
+        const productCount = document.getElementById('local-product-count');
+        const cartonsEl = document.getElementById('local-total-cartons');
+        const piecesEl = document.getElementById('local-total-pieces');
+        const cartonsContainer = document.getElementById('local-cartons-container');
+
+        if (productCount) productCount.textContent = cartItems.length;
+
+        let totalPieces = 0;
+        let totalCartons = 0;
+
+        cartItems.forEach(item => {
+            const unitType = item.unit_type || 'carton';
+            const pcsCarton = item.pcs_carton || 24;
+            if (unitType === 'carton') {
+                totalCartons += Math.floor(item.quantity / pcsCarton);
+            }
+            totalPieces += item.quantity;
+        });
+
+        if (piecesEl) piecesEl.textContent = totalPieces;
+        if (cartonsEl) cartonsEl.textContent = totalCartons;
+        if (cartonsContainer) {
+            cartonsContainer.style.display = totalCartons > 0 ? 'flex' : 'none';
+        }
+    }
+
+    // Migrate old localStorage data (add unit_type if missing)
+    function migrateLocalStorageCart() {
+        const cartKey = 'alwesam_cart';
+        let cart = JSON.parse(localStorage.getItem(cartKey) || '[]');
+        let updated = false;
+
+        cart = cart.map(item => {
+            // If item doesn't have unit_type, add it with default 'carton'
+            if (!item.hasOwnProperty('unit_type')) {
+                item.unit_type = 'carton';
+                updated = true;
+            }
+            return item;
+        });
+
+        if (updated) {
+            localStorage.setItem(cartKey, JSON.stringify(cart));
+            console.log('✅ localStorage cart migrated: added unit_type to old items');
+        }
+    }
+
+    // Update local cart quantity
+    function updateLocalQuantity(index, change) {
+        let cart = JSON.parse(localStorage.getItem('alwesam_cart') || '[]');
+
+        if (cart[index]) {
+            const unitType = cart[index].unit_type || 'carton';
+            const pcsCarton = cart[index].pcs_carton || 24;
+
+            // Calculate new quantity based on unit type
+            if (unitType === 'piece') {
+                // For pieces, increment/decrement by 1 piece
+                cart[index].quantity += change;
+            } else {
+                // For cartons, increment/decrement by carton size
+                cart[index].quantity += (change * pcsCarton);
+            }
+
+            if (cart[index].quantity <= 0) {
+                cart.splice(index, 1);
+            }
+
+            localStorage.setItem('alwesam_cart', JSON.stringify(cart));
+            renderLocalCart();
+
+            // Update badge
+            const total = cart.reduce((sum, item) => sum + item.quantity, 0);
+            updateAllCartBadges(total);
+
+            showNotification('تم تحديث السلة', 'success');
+        }
+    }
+
+    // Remove item from local cart
+    function removeLocalItem(index) {
+        showConfirmModal(
+            'سيتم حذف هذا المنتج من سلة التسوق نهائياً',
+            'تأكيد الحذف',
+            function () {
+                let cart = JSON.parse(localStorage.getItem('alwesam_cart') || '[]');
+                cart.splice(index, 1);
+                localStorage.setItem('alwesam_cart', JSON.stringify(cart));
+
+                renderLocalCart();
+
+                // Update badge
+                const total = cart.reduce((sum, item) => sum + item.quantity, 0);
+                updateAllCartBadges(total);
+
+                showNotification('تم حذف المنتج من السلة', 'success');
+            }
+        );
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function () {
+        // Migrate old localStorage data first
+        migrateLocalStorageCart();
+
+        // Render local cart for non-authenticated users
+        if (!isAuthenticated) {
+            renderLocalCart();
+        }
+    });
+</script>
+{% endblock %}

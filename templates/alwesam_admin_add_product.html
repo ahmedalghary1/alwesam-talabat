@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إضافة منتج - الوسام</title>
+    <link href="css/base.css" rel="stylesheet">
+    <link href="css/layout.css" rel="stylesheet">
+    <link href="css/components.css" rel="stylesheet">
+    <link href="css/admin.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="theme-light">
+    <div class="admin-layout">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="logo mb-2">
+                <div class="logo-icon icon-sm"><i class="fas fa-bolt"></i></div>
+                <span>الوسام</span>
+            </div>
+
+            <nav class="flex-col gap-05">
+                <a href="alwesam_admin.html" class="dashboard-link-inactive">
+                    <i class="fas fa-home ml-2"></i> لوحة التحكم
+                </a>
+                <a href="alwesam_admin_products.html" class="dashboard-link">
+                    <i class="fas fa-box ml-2"></i> المنتجات
+                </a>
+                <a href="alwesam_admin_orders.html" class="dashboard-link-inactive">
+                    <i class="fas fa-shopping-bag ml-2"></i> الطلبات
+                </a>
+                <a href="alwesam_home.html" class="dashboard-link-inactive mt-auto text-red">
+                    <i class="fas fa-sign-out-alt ml-2"></i> خروج
+                </a>
+            </nav>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="container py-2">
+            <header class="flex-between mb-2 pt-1">
+                <div class="flex-center gap-1">
+                    <a href="alwesam_admin_products.html" class="action-btn"><i class="fas fa-arrow-right"></i></a>
+                    <h1 class="page-title text-xl">إضافة منتج جديد</h1>
+                </div>
+                <div class="flex-center gap-1">
+                    <button class="action-btn" onclick="toggleTheme()">
+                        <i class="fas fa-moon" id="theme-icon"></i>
+                    </button>
+                    <div class="mobile-toggle" onclick="/* Toggle sidebar script */">
+                        <i class="fas fa-bars"></i>
+                    </div>
+                </div>
+            </header>
+
+            <div class="modern-card">
+                <form class="grid-2-col gap-2"
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+
+                    <div class="form-group">
+                        <label class="form-label">اسم المنتج</label>
+                        <input type="text" class="form-input" placeholder="مثال: دريل كهربائي">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">رمز المنتج (SKU)</label>
+                        <input type="text" class="form-input" placeholder="مثال: DCD791">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">السعر (ر.س)</label>
+                        <input type="number" class="form-input" placeholder="0.00">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">كمية المخزون</label>
+                        <input type="number" class="form-input" placeholder="0">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">القسم</label>
+                        <select class="form-input">
+                            <option>اختر القسم...</option>
+                            <option>الإضاءة</option>
+                            <option>العدد والأدوات</option>
+                            <option>الكابلات</option>
+                            <option>المفاتيح</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">صورة المنتج</label>
+                        <div class="form-input flex-center" style="border-style: dashed; cursor: pointer;">
+                            <i class="fas fa-cloud-upload-alt ml-2 text-lg"></i>
+                            <span>اختر صورة أو اسحبها هنا</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label class="form-label">وصف المنتج</label>
+                        <textarea class="form-input" rows="4" placeholder="اكتب وصفاً تفصيلياً للمنتج..."></textarea>
+                    </div>
+
+                    <div class="flex-end gap-1 mt-1"
+                        style="grid-column: 1 / -1; justify-content: flex-end; display: flex;">
+                        <a href="alwesam_admin_products.html" class="btn-secondary"
+                            style="background: transparent; border: 1px solid var(--border-color); padding: 0.5rem 1.5rem; border-radius: var(--radius-md);">إلغاء</a>
+                        <button type="button" class="btn-primary">حفظ المنتج</button>
+                    </div>
+
+                </form>
+            </div>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+
+</html>
