@@ -4,7 +4,7 @@ from products.models import Category
 
 def home(request):
     """الصفحة الرئيسية - عرض الأقسام"""
-    categories = Category.objects.all()[:10]  # أول 10 أقسام
+    categories = Category.objects.all() # أول 10 أقسام
     return render(request, 'home/home.html', {
         'categories': categories
     })

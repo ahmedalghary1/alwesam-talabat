@@ -61,12 +61,13 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'accounts.middleware.CheckUserActiveMiddleware',  # Check if user is active (must be after MessageMiddleware)
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    
 ]
 
 # Debug toolbar middleware
 if DEBUG:
     MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']
-    INTERNAL_IPS = ['127.0.0.1', 'localhost']
+    INTERNAL_IPS = ['*']
 
 ROOT_URLCONF = 'project.urls'
 

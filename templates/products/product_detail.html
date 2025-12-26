@@ -213,11 +213,11 @@
         font-weight: 600;
         color: var(--text-primary);
         display: flex;
-        flex-direction: row;
-        /* Normal direction to put text on right, icon on left */
+        flex-direction: row-reverse;
+        /* Icon on left, text on right in RTL */
         align-items: center;
         justify-content: flex-end;
-        /* Justify to the right for Arabic */
+        /* Align content to the right (end) in RTL */
         gap: 8px;
         min-height: 60px;
     }
@@ -595,7 +595,7 @@
             <div class="variant-section">
                 <h4><i class="fas fa-balance-scale"></i> وحدة الطلب</h4>
                 <div class="variant-options">
-                    <button type="button" class="variant-btn active" data-unit="carton" onclick="selectUnit('carton')">
+                    <button type="button" class="variant-btn" data-unit="carton" onclick="selectUnit('carton')">
                         كرتونة <i class="fas fa-box"></i>
                     </button>
                     <button type="button" class="variant-btn" data-unit="piece" onclick="selectUnit('piece')">
@@ -923,7 +923,7 @@
         let selectedColorId = null;
         let selectedColorName = null;
         let selectedSizeName = null;
-        let selectedUnit = 'carton';
+        let selectedUnit = null;
 
         // Product info
         const PRODUCT_DATA = {
@@ -982,10 +982,18 @@
 
         // === UNIT TYPE SELECTION ===
         function selectUnit(unit) {
-            selectedUnit = unit;
-            document.querySelectorAll('[data-unit]').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.unit === unit);
-            });
+            // Toggle: if clicking the same unit, deselect it
+            if (selectedUnit === unit) {
+                selectedUnit = null;
+                document.querySelectorAll('[data-unit]').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+            } else {
+                selectedUnit = unit;
+                document.querySelectorAll('[data-unit]').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.unit === unit);
+                });
+            }
             updateDisplay();
         }
 
@@ -1059,6 +1067,44 @@
 
         // === ADD TO CART ===
         async function handleAddToCart() {
+            // Validate unit selection
+            if (!selectedUnit) {
+                // Show error toast
+                const toast = document.getElementById('cart-toast');
+                const toastIcon = document.getElementById('toast-icon');
+                const toastMessage = document.getElementById('toast-message');
+
+                if (toast && toastIcon && toastMessage) {
+                    toastIcon.className = 'fas fa-exclamation-circle';
+                    toastMessage.textContent = '⚠️ يرجى اختيار وحدة الطلب (كرتونة أو قطعة)';
+                    toast.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
+                    toast.classList.add('active');
+
+                    setTimeout(() => {
+                        toast.classList.remove('active');
+                        // Reset to success styles
+                        setTimeout(() => {
+                            toastIcon.className = 'fas fa-check-circle';
+                            toastMessage.textContent = 'تم الإضافة للسلة';
+                            toast.style.background = '';
+                        }, 300);
+                    }, 3000);
+                }
+
+                // Highlight unit selection section
+                const unitSection = document.querySelector('.variant-section');
+                if (unitSection) {
+                    unitSection.style.border = '2px solid #ef4444';
+                    unitSection.style.borderRadius = '10px';
+                    unitSection.style.padding = '1rem';
+                    setTimeout(() => {
+                        unitSection.style.border = '';
+                        unitSection.style.padding = '';
+                    }, 3000);
+                }
+                return;
+            }
+
             const isAuth = document.body.dataset.userAuthenticated === 'true';
 
             console.log('=== handleAddToCart Debug ===');
