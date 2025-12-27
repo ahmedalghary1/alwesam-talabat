@@ -6,6 +6,11 @@
 
 {% block extra_css %}
 <style>
+    main {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+    }
+
     /* Hero Slider */
     .hero-slider {
         position: relative;
@@ -13,6 +18,7 @@
         height: clamp(350px, 50vh, 600px);
         overflow: hidden;
         background: var(--bg-primary);
+        margin-top: 0;
     }
 
     .slider-container {
@@ -39,20 +45,7 @@
         justify-content: center;
     }
 
-    .slide::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: linear-gradient(135deg, rgba(255, 196, 0, 0.15), rgba(0, 0, 0, 0.3));
-        z-index: 1;
-    }
 
-    body.theme-dark .slide::before {
-        background: linear-gradient(135deg, rgba(255, 196, 0, 0.1), rgba(0, 0, 0, 0.6));
-    }
 
     .slide-content {
         position: relative;
@@ -156,8 +149,8 @@
     }
 
     .dot {
-        width: clamp(10px, 1.2vw, 14px);
-        height: clamp(10px, 1.2vw, 14px);
+        width: clamp(6px, 0.8vw, 8px);
+        height: clamp(6px, 0.8vw, 8px);
         border-radius: 50%;
         background: rgba(255, 255, 255, 0.5);
         border: 2px solid rgba(255, 255, 255, 0.8);
@@ -176,18 +169,7 @@
         transform: scale(1.2);
     }
 
-    /* Slide Backgrounds */
-    .slide-1 {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    }
 
-    .slide-2 {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    }
-
-    .slide-3 {
-        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-    }
 
     /* Hero Section */
     .hero {
@@ -733,29 +715,15 @@
 
 {% block content %}
 <!-- Hero Slider -->
-<section class="hero-slider ">
+<section class="hero-slider">
     <div class="slider-container">
-        <div class="slider-slides ">
+        <div class="slider-slides">
             <!-- Slide 1 -->
             <div class="slide slide-1">
-                <div class="slide-content">
-
-                </div>
+                <img src="{% static 'images/slide1.jpeg' %}" alt="Hero Slider 1"
+                    style="width: 100%; height: 100%; object-fit: contain;">
             </div>
 
-            <!-- Slide 2 -->
-            <div class="slide slide-2">
-                <div class="slide-content">
-
-                </div>
-            </div>
-
-            <!-- Slide 3 -->
-            <div class="slide slide-3">
-                <div class="slide-content">
-
-                </div>
-            </div>
         </div>
 
 
@@ -879,7 +847,7 @@
 
         // Move slides
         const slidesContainer = document.querySelector('.slider-slides');
-        slidesContainer.style.transform = `translateX(${currentSlideIndex * 100}%)`;
+        slidesContainer.style.transform = `translateX(-${currentSlideIndex * 100}%)`;
 
         // Update dots
         dots.forEach((dot, i) => {
