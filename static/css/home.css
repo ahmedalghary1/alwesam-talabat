@@ -4,15 +4,16 @@
     position: relative;
     min-height: 85vh;
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     justify-content: center;
     text-align: center;
     overflow: hidden;
     background-image: url('../images/cart-bg.jpg');
     /* Adjusted path to parent dir since this is in css/ */
     background-size: cover;
-    background-position: center;
+    background-position: top center;
     background-attachment: fixed;
+    padding-top: 0;
 }
 
 .hero-overlay {
@@ -30,6 +31,7 @@
     z-index: 2;
     max-width: 900px;
     padding: 2rem;
+    padding-bottom: 3rem;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -67,14 +69,96 @@
 }
 
 @media (max-width: 768px) {
+    .hero-section {
+        min-height: 65vh;
+        background-image: url('../images/slide-phone1.png');
+        background-attachment: scroll;
+        /* Better performance on mobile */
+        background-size: cover;
+        background-position: center top;
+        background-repeat: no-repeat;
+    }
+
     .hero-content {
-        padding: 1.5rem;
+        padding: 2rem 1.25rem;
+        padding-bottom: 3rem;
+        gap: 1.25rem;
+    }
+
+    .hero-title {
+        font-size: clamp(2rem, 8vw, 3rem);
+        margin-bottom: 1rem;
+        line-height: 1.15;
+    }
+
+    .hero-text {
+        font-size: clamp(1rem, 3.5vw, 1.35rem);
+        margin-bottom: 1.75rem;
+        line-height: 1.6;
+    }
+
+    .btn-hero {
+        width: 100%;
+        max-width: 300px;
+        padding: 1rem 1.75rem;
+        font-size: 1.05rem;
     }
 }
 
 @media (max-width: 480px) {
+    .hero-section {
+        min-height: 60vh;
+        background-image: url('../images/slide-phone1.png');
+        background-size: cover;
+        background-position: center top;
+    }
+
     .hero-content {
-        padding: 1rem;
+        padding: 1.5rem 1rem;
+        padding-bottom: 2.5rem;
+        gap: 1.125rem;
+    }
+
+    .hero-title {
+        font-size: clamp(1.85rem, 7.5vw, 2.5rem);
+        margin-bottom: 0.875rem;
+        line-height: 1.2;
+    }
+
+    .hero-text {
+        font-size: clamp(1rem, 3.5vw, 1.2rem);
+        margin-bottom: 1.5rem;
+        line-height: 1.55;
+    }
+
+    .badge-pill {
+        font-size: 0.85rem;
+        padding: 0.5rem 1rem;
+    }
+
+    .btn-hero {
+        max-width: 100%;
+        padding: 0.95rem 1.5rem;
+    }
+}
+
+/* إضافة breakpoint جديد للشاشات المتوسطة */
+@media (max-width: 390px) {
+    .hero-section {
+        min-height: 58vh;
+    }
+
+    .hero-content {
+        padding: 1.25rem 0.875rem;
+        padding-bottom: 2.25rem;
         gap: 1rem;
+    }
+
+    .hero-title {
+        font-size: clamp(1.75rem, 7vw, 2.25rem);
+    }
+
+    .hero-text {
+        font-size: clamp(0.95rem, 3.2vw, 1.15rem);
     }
 }

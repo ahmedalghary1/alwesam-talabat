@@ -6,19 +6,48 @@
 
 {% block extra_css %}
 <style>
+    /* Smooth scrolling للتنقل السلس بين الأقسام */
+    html {
+        scroll-behavior: smooth;
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+    }
+
+    body {
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow-x: hidden;
+    }
+
     main {
         margin-top: 0 !important;
         padding-top: 0 !important;
     }
 
-    /* Hero Slider */
+    /* Hero Slider - يحتوي على الصورة والمحتوى */
     .hero-slider {
         position: relative;
-        width: 100%;
-        height: clamp(350px, 50vh, 600px);
+        width: 100vw;
+        min-height: 100vh;
+        /* يملأ الشاشة بالكامل */
         overflow: hidden;
         background: var(--bg-primary);
-        margin-top: 0;
+        margin: 0 !important;
+        padding: 0 !important;
+        display: flex;
+        flex-direction: column;
+        left: 0;
+        right: 0;
+    }
+
+    /* hero-content داخل slider */
+    .hero-slider .hero-content {
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
     }
 
     .slider-container {
@@ -26,6 +55,7 @@
         width: 100%;
         height: 100%;
     }
+
 
     .slider-slides {
         display: flex;
@@ -38,12 +68,53 @@
         min-width: 100%;
         height: 100%;
         position: relative;
-        background-size: cover;
+        background-size: contain;
         background-position: center;
         display: flex;
         align-items: center;
         justify-content: center;
+        border-radius: 0 !important;
     }
+
+    .slide picture {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0 !important;
+        overflow: hidden;
+    }
+
+    .slide img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+        border-radius: 0 !important;
+        display: block;
+        /* تأثير التكبير - يبدأ من الحجم الطبيعي */
+        animation: zoomInOnly 3s ease-out forwards;
+    }
+
+    /* تأثير التكبير فقط - بدون رجوع */
+    @keyframes zoomInOnly {
+        0% {
+            transform: scale(1);
+        }
+
+        100% {
+            transform: scale(1.15);
+            /* تكبير بنسبة 15% والبقاء */
+        }
+    }
+
+    /* عرض جميع الصور - 3 صور فقط */
+    .slide-2,
+    .slide-3 {
+        display: flex !important;
+    }
+
 
 
 
@@ -149,13 +220,16 @@
     }
 
     .dot {
-        width: clamp(6px, 0.8vw, 8px);
-        height: clamp(6px, 0.8vw, 8px);
+        width: clamp(6px, 1vw, 8px);
+        /* تصغير من 10-12px */
+        height: clamp(6px, 1vw, 8px);
         border-radius: 50%;
         background: rgba(255, 255, 255, 0.5);
         border: 2px solid rgba(255, 255, 255, 0.8);
         cursor: pointer;
         transition: all 0.3s ease;
+        padding: 0;
+        /* إزالة أي padding */
     }
 
     .dot.active {
@@ -171,13 +245,33 @@
 
 
 
-    /* Hero Section */
+
+
+
+
+    /* Hero Section - متجاوب لجميع الأحجام */
     .hero {
-        padding: 3rem 1rem 4rem;
+        min-height: 70vh;
+        /* على الهاتف */
+        padding: 0.5rem;
+        /* مسافات صغيرة جداً */
+        margin: 0;
         text-align: center;
         background: var(--bg-primary);
         position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
+
+    /* Tablet */
+    @media (min-width: 768px) {
+        .hero {
+            min-height: 65vh;
+            padding: 1rem;
+        }
+    }
+
 
 
     .hero-content {
@@ -187,14 +281,16 @@
     }
 
     .hero-brand {
-        font-size: clamp(3.5rem, 12vw, 7rem);
-        font-weight: 900;
-        line-height: 1;
-        margin-bottom: 1.5rem;
+        color: var(--text-primary);
+        font-size: 3rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        /* تقليل من 1rem */
+        letter-spacing: -0.5px;
+        line-height: 1.1;
         display: flex;
         justify-content: center;
         align-items: center;
-        gap: 0.5rem;
         flex-wrap: nowrap;
     }
 
@@ -208,7 +304,10 @@
 
     .hero-tagline {
         font-size: clamp(1.125rem, 3vw, 1.5rem);
-        margin-bottom: 2.5rem;
+        margin-bottom: 0.5rem;
+        margin-top: 1rem;
+
+        /* تقليل من 1rem */
         line-height: 1.8;
         max-width: 600px;
         margin-left: auto;
@@ -237,46 +336,53 @@
 
     /* Scroll Arrow */
     .scroll-arrow {
-        position: absolute;
-        bottom: 2rem;
-        left: 50%;
-        transform: translateX(-50%);
+        position: relative;
+        margin-top: 2rem;
+        /* مسافة بين السهم والنص */
+        display: inline-block;
         font-size: 2rem;
         color: var(--text-primary);
-        opacity: 0.7;
+        opacity: 0;
         cursor: pointer;
         transition: all 0.3s ease;
-        animation: bounce 2s infinite;
-        z-index: 10;
+        animation: fadeInUp 1s ease 0.5s forwards, bounceGentle 2s ease 1.5s infinite;
+        /* يظهر تدريجياً ثم bounce بسيط */
+        z-index: 1;
     }
 
     .scroll-arrow:hover {
         opacity: 1;
-        transform: translateX(-50%) scale(1.2);
+        transform: scale(1.2);
     }
 
     .scroll-arrow.hidden {
         opacity: 0;
         visibility: hidden;
-        transform: translateX(-50%) translateY(-20px);
     }
 
-    @keyframes bounce {
+    /* Gentle bounce animation */
+    @keyframes bounceGentle {
 
         0%,
-        20%,
-        50%,
-        80%,
         100% {
-            transform: translateX(-50%) translateY(0);
+            transform: translateY(0);
         }
 
-        40% {
-            transform: translateX(-50%) translateY(-10px);
+        50% {
+            transform: translateY(-8px);
+        }
+    }
+
+    /* Fade in from bottom */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
         }
 
-        60% {
-            transform: translateX(-50%) translateY(-5px);
+        to {
+            opacity: 0.7;
+            transform: translateY(0);
         }
     }
 
@@ -288,9 +394,18 @@
         background: var(--bg-primary);
     }
 
+    /* Section Header - يظهر عند scroll فقط */
     .section-header {
         text-align: center;
         margin-bottom: 3rem;
+        opacity: 0;
+        transform: translateY(-30px);
+        transition: all 0.6s ease-out;
+    }
+
+    .section-header.visible {
+        opacity: 1;
+        transform: translateY(0);
     }
 
     .section-title {
@@ -315,7 +430,8 @@
     /* Categories Grid */
     .categories-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        grid-template-columns: repeat(4, 1fr);
+        /* 4 أعمدة على الشاشات الكبيرة */
         gap: 1.5rem;
     }
 
@@ -487,7 +603,8 @@
     .section-animate {
         opacity: 0;
         transform: translateY(40px);
-        transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        /* تسريع أكثر إلى 0.3s */
     }
 
     .section-animate.visible {
@@ -498,7 +615,7 @@
     .card-animate {
         opacity: 0;
         transform: translateY(30px) scale(0.95);
-        transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: all 0.5s ease-out;
     }
 
     .card-animate.visible {
@@ -506,45 +623,58 @@
         transform: translateY(0) scale(1);
     }
 
-    /* Stagger animation for cards */
-    .card-animate:nth-child(1) {
-        transition-delay: 0.1s;
-    }
-
-    .card-animate:nth-child(2) {
+    /* كل كرت يبدأ بتأخير مختلف - بعد ظهور العنوان */
+    .card-animate.visible:nth-child(1) {
         transition-delay: 0.2s;
     }
 
-    .card-animate:nth-child(3) {
+    .card-animate.visible:nth-child(2) {
         transition-delay: 0.3s;
     }
 
-    .card-animate:nth-child(4) {
+    .card-animate.visible:nth-child(3) {
         transition-delay: 0.4s;
     }
 
-    .card-animate:nth-child(5) {
+    .card-animate.visible:nth-child(4) {
         transition-delay: 0.5s;
     }
 
-    .card-animate:nth-child(6) {
+    .card-animate.visible:nth-child(5) {
         transition-delay: 0.6s;
     }
 
-    .card-animate:nth-child(7) {
+    .card-animate.visible:nth-child(6) {
         transition-delay: 0.7s;
     }
 
-    .card-animate:nth-child(8) {
+    .card-animate.visible:nth-child(7) {
         transition-delay: 0.8s;
     }
 
-    .card-animate:nth-child(9) {
+    .card-animate.visible:nth-child(8) {
         transition-delay: 0.9s;
     }
 
-    .card-animate:nth-child(10) {
+    .card-animate.visible:nth-child(9) {
         transition-delay: 1s;
+    }
+
+    .card-animate.visible:nth-child(10) {
+        transition-delay: 1.1s;
+    }
+
+    /* تعريف أنيميشن fadeInUp */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px) scale(0.95);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
     }
 
     /* Animations */
@@ -572,29 +702,102 @@
         }
     }
 
+    @media (min-width: 1024px) {
+        .hero-slider {
+            min-height: 70vh;
+            /* قم بتغيير هذه القيمة لتصغير أو تكبير الصورة */
+            /* يمكنك استخدام: 60vh, 65vh, 70vh, 75vh, 80vh حسب الحاجة */
+        }
+
+        .slider-container {
+            width: 100vw;
+            position: relative;
+            left: 50%;
+            right: 50%;
+            margin-left: -50vw;
+            margin-right: -50vw;
+            margin-bottom: 2rem;
+        }
+
+        .slide picture {
+            width: 100%;
+            height: 100%;
+        }
+
+        .slide img {
+            /* عرض الصورة كاملة بدون قص على الكمبيوتر */
+            width: 100%;
+            height: auto;
+            /* ارتفاع تلقائي للحفاظ على التناسب */
+            max-height: 55vh;
+            /* حد أقصى للارتفاع */
+            object-fit: cover;
+            /* عرض الصورة كاملة بدون قص */
+            object-position: center;
+        }
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
-        /* Slider optimizations handled by clamp() in main styles */
+
+        /* Slider optimizations */
+        .hero-slider {
+            height: clamp(180px, 28vh, 300px);
+            /* ارتفاع أصغر على التابلت */
+            margin-top: 0;
+        }
+
+
+        .slide-title {
+            font-size: clamp(1.75rem, 5vw, 2.5rem);
+            margin-bottom: 1rem;
+        }
+
+        .slide-description {
+            font-size: clamp(0.95rem, 2vw, 1.1rem);
+            margin-bottom: 1.5rem;
+        }
+
+        .slide-cta {
+            padding: 0.75rem 1.75rem;
+            font-size: 1rem;
+        }
+
+        .slider-nav {
+            width: clamp(36px, 4.5vw, 44px);
+            height: clamp(36px, 4.5vw, 44px);
+        }
+
+        .slider-dots {
+            bottom: clamp(0.75rem, 2vh, 1.5rem);
+        }
+
+        /* تحسين السهم على الشاشات المتوسطة - يبقى ظاهر */
+        .scroll-arrow {
+            font-size: 1.5rem;
+            bottom: 1.5rem;
+        }
 
         .hero {
             padding: 2rem 1rem 1.5rem;
         }
 
         .hero-content {
-            padding: 1rem;
+            padding: .5rem;
         }
 
         .hero-brand {
             font-size: clamp(2rem, 12vw, 3rem);
-            margin-bottom: 1rem;
             line-height: 1.2;
         }
 
         .hero-tagline {
+            margin-top: 1.5rem;
             font-size: 0.9rem;
             line-height: 1.8;
             margin-bottom: 1.5rem;
             padding: 0;
+            line-height: 20px;
         }
 
         .hero-tagline br {
@@ -621,8 +824,9 @@
         }
 
         .categories-grid {
-            grid-template-columns: 1fr;
-            gap: 1.25rem;
+            grid-template-columns: repeat(2, 1fr);
+            /* عمودين على الهاتف */
+            gap: 1rem;
         }
 
         .category-card {
@@ -683,19 +887,97 @@
 
     /* Extra small screens */
     @media (max-width: 480px) {
+        .hero-slider {
+            min-height: 55vh;
+        }
+
+        .slider-container {
+            height: 100%;
+            /* توازن أفضل */
+            padding: 0;
+            /* إزالة المسافة من الأعلى */
+        }
+
+
+
+        .hero-brand {
+            margin-top: 2rem;
+            font-size: clamp(2rem, 8vw, 2.5rem);
+            margin-bottom: 0.25rem;
+        }
+
+        .hero-tagline {
+            font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+            margin-bottom: 0.25rem;
+            line-height: 24px;
+            margin-top: 1rem;
+        }
+
+        /* التأكد من ظهور السهم */
+        .scroll-arrow {
+            font-size: 1.5rem;
+        }
+
+        .slide picture {
+            width: 100%;
+            height: 100%;
+        }
+
+        .slide img {
+            object-fit: cover;
+            /* تملأ الشاشة بالكامل على الهاتف */
+            min-height: 100%;
+            height: 100%;
+            width: 100%;
+            object-position: center;
+        }
+
+
+        .slide-content {
+            padding: 0.75rem;
+        }
+
+        .slide-title {
+            font-size: clamp(1.5rem, 6vw, 2rem);
+        }
+
+        .slide-description {
+            font-size: clamp(0.875rem, 2.5vw, 1rem);
+        }
+
+        .slide-cta {
+            font-size: 0.9rem;
+        }
 
         /* Mobile touch optimization */
         .slider-nav {
-            /* Larger touch targets for mobile */
-            min-width: 44px;
-            min-height: 44px;
+            width: 40px;
+            height: 40px;
+            font-size: 1rem;
+        }
+
+        .slider-nav.prev {
+            left: 0.5rem;
+        }
+
+        .slider-nav.next {
+            right: 0.5rem;
         }
 
         .dot {
-            /* Larger touch targets for dots */
-            min-width: 44px;
-            min-height: 44px;
-            border-width: 1px;
+            width: 8px;
+            height: 8px;
+            border-width: 2px;
+            padding: 0;
+        }
+
+        .dot.active {
+            transform: scale(1.2);
+        }
+
+        .slider-dots {
+            bottom: 0.75rem;
+            gap: 0.375rem;
         }
 
         .hero {
@@ -714,33 +996,35 @@
 {% endblock %}
 
 {% block content %}
-<!-- Hero Slider -->
+<!-- Hero Slider مع المحتوى -->
 <section class="hero-slider">
     <div class="slider-container">
         <div class="slider-slides">
             <!-- Slide 1 -->
             <div class="slide slide-1">
-                <img src="{% static 'images/slide1.jpeg' %}" alt="Hero Slider 1"
-                    style="width: 100%; height: 100%; object-fit: contain;">
+                <img src="{% static 'images/link3.jpg' %}" alt="الوسام طلبات - مستلزمات كهربائية">
+            </div>
+
+            <!-- Slide 2 -->
+            <div class="slide slide-2">
+                <img src="{% static 'images/hero_slide_2.jpg' %}" alt="مستودع الوسام - معدات كهربائية">
+            </div>
+
+            <!-- Slide 3 -->
+            <div class="slide slide-3">
+                <img src="{% static 'images/hero_slide_3.jpg' %}" alt="صالة عرض الوسام - منتجات كهربائية">
             </div>
 
         </div>
-
-
-
         <!-- Dots -->
         <div class="slider-dots">
-            <span class="dot active" data-slide="0"></span>
-            <span class="dot" data-slide="1"></span>
-            <span class="dot" data-slide="2"></span>
+            <!-- سيتم إنشاء النقاط ديناميكياً بواسطة JavaScript -->
         </div>
     </div>
-</section>
 
-<!-- Hero Section -->
-<section class="hero">
+    <!-- المحتوى تحت الصورة مباشرة -->
     <div class="hero-content">
-        <h1 class="hero-brand">
+        <h1 class="hero-brand ">
             <span class="white">الوسام</span>
             <span class="yellow">طلبات</span>
         </h1>
@@ -753,12 +1037,11 @@
         <a href="#categories" class="scroll-arrow">
             <i class="fas fa-chevron-down"></i>
         </a>
-
     </div>
 </section>
 
 <!-- Categories Section -->
-<section class="section section-animate" id="categories">
+<section class="section" id="categories">
     <div class="section-header">
         <h2 class="section-title">تصفح <span class="yellow">منتجاتنا</span></h2>
         <p class="section-subtitle">اختر القسم المناسب لاحتياجاتك</p>
@@ -801,15 +1084,19 @@
 
         <div class="features-grid">
             <div class="feature-card card-animate">
-                <div class="feature-icon"><i class="fas fa-shipping-fast"></i></div>
+                <div class="feature-icon">
+                    <i class="fas fa-shipping-fast"></i>
+                </div>
                 <h3 class="feature-title">توصيل سريع</h3>
-                <p class="feature-desc">نضمن وصول طلباتك في أسرع وقت ممكن مع خدمة توصيل موثوقة</p>
+                <p class="feature-desc">نوصل طلباتك لباب منزلك بأسرع وقت ممكن</p>
             </div>
 
             <div class="feature-card card-animate">
-                <div class="feature-icon"><i class="fas fa-shield-alt"></i></div>
-                <h3 class="feature-title">جودة مضمونة</h3>
-                <p class="feature-desc">جميع منتجاتنا أصلية ومعتمدة من أفضل الشركات العالمية</p>
+                <div class="feature-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <h3 class="feature-title">ضمان الجودة</h3>
+                <p class="feature-desc">جميع منتجاتنا أصلية ومضمونة 100%</p>
             </div>
 
             <div class="feature-card card-animate">
@@ -828,14 +1115,45 @@
 </section>
 
 <script>
-    // Slider functionality
+    // Slider functionality with responsive slide counting
     let currentSlideIndex = 0;
-    const slides = document.querySelectorAll('.slide');
-    const dots = document.querySelectorAll('.dot');
-    const totalSlides = slides.length;
     let autoSlideInterval;
 
+    // Function to get visible slides only
+    function getVisibleSlides() {
+        return Array.from(document.querySelectorAll('.slide')).filter(slide => {
+            const style = window.getComputedStyle(slide);
+            return style.display !== 'none';
+        });
+    }
+
+    // Function to update dots based on visible slides
+    function updateDots() {
+        const dotsContainer = document.querySelector('.slider-dots');
+        const visibleSlides = getVisibleSlides();
+
+        // Clear existing dots
+        dotsContainer.innerHTML = '';
+
+        // Create dots for visible slides only
+        visibleSlides.forEach((slide, index) => {
+            const dot = document.createElement('span');
+            dot.className = index === 0 ? 'dot active' : 'dot';
+            dot.setAttribute('data-slide', index);
+            dot.addEventListener('mouseenter', function () {
+                showSlide(parseInt(this.getAttribute('data-slide')));
+                resetAutoSlide();
+            });
+            dotsContainer.appendChild(dot);
+        });
+    }
+
     function showSlide(index) {
+        const visibleSlides = getVisibleSlides();
+        const totalSlides = visibleSlides.length;
+
+        if (totalSlides === 0) return;
+
         // Wrap around
         if (index >= totalSlides) {
             currentSlideIndex = 0;
@@ -847,12 +1165,40 @@
 
         // Move slides
         const slidesContainer = document.querySelector('.slider-slides');
-        slidesContainer.style.transform = `translateX(-${currentSlideIndex * 100}%)`;
+        const allSlides = document.querySelectorAll('.slide');
+
+        // Find the actual index of the visible slide in all slides
+        let actualIndex = 0;
+        let visibleCount = 0;
+        for (let i = 0; i < allSlides.length; i++) {
+            const style = window.getComputedStyle(allSlides[i]);
+            if (style.display !== 'none') {
+                if (visibleCount === currentSlideIndex) {
+                    actualIndex = i;
+                    break;
+                }
+                visibleCount++;
+            }
+        }
+
+        slidesContainer.style.transform = `translateX(-${actualIndex * 100}%)`;
 
         // Update dots
+        const dots = document.querySelectorAll('.dot');
         dots.forEach((dot, i) => {
             dot.classList.toggle('active', i === currentSlideIndex);
         });
+
+        // إعادة تشغيل تأثير التكبير للصورة الحالية
+        const currentImg = allSlides[actualIndex].querySelector('img');
+        if (currentImg) {
+            // إزالة الـ animation وإعادة إضافته لإعادة التشغيل
+            currentImg.style.animation = 'none';
+            // إجبار المتصفح على إعادة حساب الـ styles
+            void currentImg.offsetWidth;
+            // إعادة تطبيق الـ animation
+            currentImg.style.animation = 'zoomInOnly 3s ease-out forwards';
+        }
     }
 
     function moveSlide(direction) {
@@ -871,11 +1217,36 @@
 
     function resetAutoSlide() {
         clearInterval(autoSlideInterval);
-        autoSlideInterval = setInterval(autoSlide, 5000);
+        autoSlideInterval = setInterval(autoSlide, 3000);  // 3 ثواني
     }
 
-    // Start auto slide
-    autoSlideInterval = setInterval(autoSlide, 5000);
+    // Initialize on page load
+    function initSlider() {
+        updateDots();
+        showSlide(0);
+        autoSlideInterval = setInterval(autoSlide, 3000);  // 3 ثواني
+    }
+
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initSlider);
+    } else {
+        initSlider();
+    }
+
+    // Re-initialize on window resize to handle responsive changes
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+            clearInterval(autoSlideInterval);
+            currentSlideIndex = 0;
+            updateDots();
+            showSlide(0);
+            autoSlideInterval = setInterval(autoSlide, 3000);  // 3 ثواني
+        }, 250);
+    });
+
 
     // Pause on hover
     const sliderContainer = document.querySelector('.hero-slider');
@@ -941,10 +1312,10 @@
         }
     }, { passive: true });
 
-    // Intersection Observer for scroll animations
+    // Intersection Observer for scroll animations - محسّن للهاتف
     const observerOptions = {
-        threshold: 0.15,
-        rootMargin: '0px 0px -50px 0px'
+        threshold: 0.05, // تقليل من 0.15 إلى 0.05 لبدء أسرع
+        rootMargin: '0px 0px -20px 0px' // تقليل من -50px إلى -20px
     };
 
     const observer = new IntersectionObserver((entries) => {
@@ -957,20 +1328,24 @@
         });
     }, observerOptions);
 
-    // Observe all animated elements
-    document.querySelectorAll('.section-animate, .card-animate').forEach(el => {
+    // Observe all animated elements including headers
+    document.querySelectorAll('.section-animate, .card-animate, .section-header').forEach(el => {
         observer.observe(el);
     });
 
-    // Smooth scroll for anchor links
+    // Smooth scroll for anchor links مع offset مناسب
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {
             const href = this.getAttribute('href');
             if (href !== '#' && document.querySelector(href)) {
                 e.preventDefault();
-                document.querySelector(href).scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
+                const target = document.querySelector(href);
+                const navbarHeight = 80; // ارتفاع الـ navbar تقريباً
+                const targetPosition = target.getBoundingClientRect().top + window.pageYOffset - navbarHeight;
+
+                window.scrollTo({
+                    top: targetPosition,
+                    behavior: 'smooth'
                 });
             }
         });

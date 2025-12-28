@@ -14,112 +14,248 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{% static 'css/base_styles.css' %}">
 
-    {% block extra_css %}{% endblock %}
-</head>
-
-<body data-user-authenticated="{% if user.is_authenticated %}true{% else %}false{% endif %}">
-    <!-- CSRF Token for AJAX requests -->
-    {% csrf_token %}
-
-    <!-- NAVIGATION -->
-    <nav class="navbar">
-        <div class="nav-container">
-            <!-- Logo -->
-            <a href="{% url 'home:home' %}" class="logo">
-                <div class="logo-icon">
-                    <img src="{% static 'images/ELWSAM.png' %}" alt="الوسام">
-                </div>
-                <div class="logo-text">
-                    <span class="white">الوسام</span>
-                    <span class="yellow">طلبات</span>
-                </div>
-            </a>
-
-            <!-- Nav Menu -->
-            <ul class="nav-menu" id="nav-menu">
-                <li><a href="{% url 'home:home' %}" class="nav-link {% block nav_home %}{% endblock %}"><i
-                            class="fas fa-home"></i> الرئيسية</a></li>
-                <li><a href="{% url 'products:all_categories' %}"
-                        class="nav-link {% block nav_products %}{% endblock %}"><i class="fas fa-th-large"></i>
-                        المنتجات</a></li>
-                {% if user.is_authenticated %}
-                <li><a href="{% url 'orders:order_list' %}" class="nav-link {% block nav_orders %}{% endblock %}"><i
-                            class="fas fa-box"></i> طلباتي</a></li>
-                {% endif %}
-
-                <!-- Admin Links -->
-                {% if user.is_staff %}
-                <li class="admin-dropdown">
-                    <a href="#" class="nav-link" style="color: var(--brand-yellow);"><i class="fas fa-cog"></i>
-                        الإدارة</a>
-                    <div class="admin-menu">
-                        <a href="{% url 'admin_app:dashboard' %}"><i class="fas fa-tachometer-alt"></i> لوحة التحكم</a>
-                        <a href="{% url 'admin_app:admin_products' %}"><i class="fas fa-box"></i> إدارة المنتجات</a>
-                        <a href="{% url 'admin_app:admin_product_add' %}"><i class="fas fa-plus-circle"></i> إضافة
-                            منتج</a>
-                        <a href="{% url 'admin_app:admin_orders' %}"><i class="fas fa-clipboard-list"></i> متابعة
-                            الطلبات</a>
-                    </div>
-                </li>
-                {% endif %}
-            </ul>
-
-            <!-- Actions -->
-            <div class="nav-actions">
-
-                <!-- Theme Toggle -->
-                <button class="btn-icon" onclick="toggleTheme()" title="تبديل المظهر">
-                    <i class="fas fa-sun" id="theme-icon"></i>
-                </button>
-
-                <!-- Cart -->
-                <a href="{% url 'cart:cart_view' %}" class="btn-icon" title="السلة">
-                    <i class="fas fa-shopping-cart"></i>
-                    <span class="cart-badge" id="cart-count">{{ cart_count|default:0 }}</span>
-                </a>
-
-                <!-- Mobile Toggle -->
-                <button class="mobile-toggle" onclick="toggleMenu()">
-                    <i class="fas fa-bars"></i>
-                </button>
-
-                <!-- User -->
-                {% if user.is_authenticated %}
-                <a href="{% url 'accounts:profile' %}" class="btn-yellow">
-                    <i class="fas fa-user"></i>
-                    <span>{{ user.username }}</span>
-                </a>
-                {% else %}
-                <a href="{% url 'accounts:login' %}" class="btn-yellow">
-                    <i class="fas fa-sign-in-alt"></i>
-                    <span>دخول</span>
-                </a>
-                {% endif %}
-            </div>
-        </div>
-    </nav>
-
-    <!-- CUSTOM CONFIRMATION MODAL -->
-    <div id="confirmModal" class="confirm-modal">
-        <div class="confirm-overlay"></div>
-        <div class="confirm-dialog">
-            <div class="confirm-icon">
-                <i class="fas fa-exclamation-triangle"></i>
-            </div>
-            <h3 class="confirm-title">تأكيد الحذف</h3>
-            <p class="confirm-message">هل أنت متأكد من حذف هذا المنتج من السلة؟</p>
-            <div class="confirm-actions">
-                <button class="btn-cancel" onclick="hideConfirmModal()">
-                    <i class="fas fa-times"></i> إلغاء
-                </button>
-                <button class="btn-confirm" onclick="confirmAction()">
-                    <i class="fas fa-trash"></i> نعم، احذف
-                </button>
-            </div>
-        </div>
-    </div>
+    <!-- إضافة Swiper CSS إذا كنت تستخدمه -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
 
     <style>
+        /* إصلاحات الـ slider للهواتف */
+        .slider-container {
+            position: relative;
+            width: 100%;
+            max-width: 100%;
+            margin: 0 auto;
+            overflow: hidden;
+            border-radius: 0;
+            /* تم إزالة border-radius للحصول على حواف مستقيمة */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            line-height: 0;
+            /* يمنع المسافات البيضاء */
+        }
+
+        .slider-wrapper {
+            position: relative;
+            height: 100%;
+            margin-bottom: 0 !important;
+            /* إزالة المسافة */
+        }
+
+        .slider {
+            display: flex;
+            transition: transform 0.5s ease-in-out;
+            height: 100%;
+        }
+
+        .slider-slide {
+            min-width: 100%;
+            position: relative;
+        }
+
+        .slider-image {
+            width: 100%;
+            height: auto;
+            max-height: 600px;
+            /* ارتفاع مناسب للصورة */
+            object-fit: contain;
+            /* يعرض الصورة كاملة بدون قص */
+            display: block;
+            background-color: #f5f5f5;
+            /* خلفية للمساحات الفارغة */
+            vertical-align: middle;
+            /* يمنع المسافة البيضاء */
+        }
+
+        .slider-dots {
+            position: absolute;
+            bottom: 20px !important;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            z-index: 100;
+            padding: 10px 0;
+        }
+
+        .slider-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.6);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .slider-dot:hover {
+            background: rgba(255, 255, 255, 0.9);
+            transform: scale(1.2);
+        }
+
+        .slider-dot.active {
+            background: var(--brand-yellow);
+            transform: scale(1.2);
+            border-color: white;
+        }
+
+        .slider-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+        }
+
+        .slider-nav:hover {
+            background: var(--brand-yellow);
+            color: #000;
+        }
+
+        .slider-prev {
+            right: 15px;
+        }
+
+        .slider-next {
+            left: 15px;
+        }
+
+        /* تحسينات للهواتف */
+        @media (max-width: 768px) {
+            .slider-container {
+                border-radius: 0;
+                /* إزالة border-radius */
+                height: 350px;
+                /* ارتفاع ثابت للهواتف */
+            }
+
+            .slider-image {
+                object-fit: contain;
+                /* تأكيد عرض الصورة كاملة */
+            }
+
+            .slider-dots {
+                bottom: 15px !important;
+            }
+
+            .slider-dot {
+                width: 10px;
+                height: 10px;
+            }
+
+            .slider-nav {
+                width: 40px;
+                height: 40px;
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .slider-container {
+                border-radius: 0;
+                /* إزالة border-radius */
+            }
+
+            .responsive-img {
+                width: 100%;
+                height: auto;
+                object-fit: contain;
+            }
+
+            .slider-dots {
+                bottom: 10px !important;
+                gap: 8px;
+            }
+
+            .slider-dot {
+                width: 8px;
+                height: 8px;
+            }
+
+            .slider-nav {
+                width: 35px;
+                height: 35px;
+                font-size: 0.9rem;
+            }
+
+            .slider-prev {
+                right: 8px;
+            }
+
+            .slider-next {
+                left: 8px;
+            }
+        }
+
+        /* عرض الصور الطويلة على الهواتف */
+        @media (max-width: 768px) and (orientation: portrait) {
+            .slider-container {}
+
+            .slider-image {
+                object-fit: contain;
+            }
+        }
+
+
+        /* تحسينات إضافية للـ slider */
+        .slider-caption {
+            position: absolute;
+            bottom: 60px;
+            right: 30px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            max-width: 80%;
+        }
+
+        @media (max-width: 768px) {
+            .slider-caption {
+                bottom: 50px;
+                right: 15px;
+                padding: 10px 15px;
+                font-size: 0.9rem;
+            }
+        }
+
+        /* التأكد من عدم وجود مسافات زائدة */
+        .slider-section {
+            padding-top: 0;
+            margin-bottom: 0;
+        }
+
+        /* إذا كنت تستخدم Swiper.js */
+        .swiper {
+            width: 100%;
+            height: 100%;
+        }
+
+        .swiper-slide img {
+            width: 100%;
+            height: auto;
+            object-fit: contain;
+        }
+
+        .swiper-pagination-bullet {
+            background: rgba(255, 255, 255, 0.6);
+        }
+
+        .swiper-pagination-bullet-active {
+            background: var(--brand-yellow);
+        }
+
+
+
+        /* Custom Confirm Modal Styles - نفس الكود السابق */
         .confirm-modal {
             display: none;
             position: fixed;
@@ -287,6 +423,110 @@
         }
     </style>
 
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body data-user-authenticated="{% if user.is_authenticated %}true{% else %}false{% endif %}">
+    <!-- CSRF Token for AJAX requests -->
+    {% csrf_token %}
+
+    <!-- NAVIGATION -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <!-- Logo -->
+            <a href="{% url 'home:home' %}" class="logo">
+                <div class="logo-icon">
+                    <img src="{% static 'images/ELWSAM.png' %}" alt="الوسام" class="responsive-img">
+                </div>
+                <div class="logo-text">
+                    <span class="white">الوسام</span>
+                    <span class="yellow">طلبات</span>
+                </div>
+            </a>
+
+            <!-- Nav Menu -->
+            <ul class="nav-menu" id="nav-menu">
+                <li><a href="{% url 'home:home' %}" class="nav-link {% block nav_home %}{% endblock %}"><i
+                            class="fas fa-home"></i> الرئيسية</a></li>
+                <li><a href="{% url 'products:all_categories' %}"
+                        class="nav-link {% block nav_products %}{% endblock %}"><i class="fas fa-th-large"></i>
+                        المنتجات</a></li>
+                {% if user.is_authenticated %}
+                <li><a href="{% url 'orders:order_list' %}" class="nav-link {% block nav_orders %}{% endblock %}"><i
+                            class="fas fa-box"></i> طلباتي</a></li>
+                {% endif %}
+
+                <!-- Admin Links -->
+                {% if user.is_staff %}
+                <li class="admin-dropdown">
+                    <a href="#" class="nav-link" style="color: var(--brand-yellow);"><i class="fas fa-cog"></i>
+                        الإدارة</a>
+                    <div class="admin-menu">
+                        <a href="{% url 'admin_app:dashboard' %}"><i class="fas fa-tachometer-alt"></i> لوحة التحكم</a>
+                        <a href="{% url 'admin_app:admin_products' %}"><i class="fas fa-box"></i> إدارة المنتجات</a>
+                        <a href="{% url 'admin_app:admin_product_add' %}"><i class="fas fa-plus-circle"></i> إضافة
+                            منتج</a>
+                        <a href="{% url 'admin_app:admin_orders' %}"><i class="fas fa-clipboard-list"></i> متابعة
+                            الطلبات</a>
+                    </div>
+                </li>
+                {% endif %}
+            </ul>
+
+            <!-- Actions -->
+            <div class="nav-actions">
+                <!-- Theme Toggle -->
+                <button class="btn-icon" onclick="toggleTheme()" title="تبديل المظهر">
+                    <i class="fas fa-sun" id="theme-icon"></i>
+                </button>
+
+                <!-- Cart -->
+                <a href="{% url 'cart:cart_view' %}" class="btn-icon" title="السلة">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="cart-badge" id="cart-count">{{ cart_count|default:0 }}</span>
+                </a>
+
+                <!-- Mobile Toggle -->
+                <button class="mobile-toggle" onclick="toggleMenu()">
+                    <i class="fas fa-bars"></i>
+                </button>
+
+                <!-- User -->
+                {% if user.is_authenticated %}
+                <a href="{% url 'accounts:profile' %}" class="btn-yellow">
+                    <i class="fas fa-user"></i>
+                    <span>{{ user.username }}</span>
+                </a>
+                {% else %}
+                <a href="{% url 'accounts:login' %}" class="btn-yellow">
+                    <i class="fas fa-sign-in-alt"></i>
+                    <span>دخول</span>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- CUSTOM CONFIRMATION MODAL -->
+    <div id="confirmModal" class="confirm-modal">
+        <div class="confirm-overlay"></div>
+        <div class="confirm-dialog">
+            <div class="confirm-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h3 class="confirm-title">تأكيد الحذف</h3>
+            <p class="confirm-message">هل أنت متأكد من حذف هذا المنتج من السلة؟</p>
+            <div class="confirm-actions">
+                <button class="btn-cancel" onclick="hideConfirmModal()">
+                    <i class="fas fa-times"></i> إلغاء
+                </button>
+                <button class="btn-confirm" onclick="confirmAction()">
+                    <i class="fas fa-trash"></i> نعم، احذف
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- MESSAGES -->
     {% if messages %}
     <div class="container" style="padding-top: 1rem;">
@@ -301,6 +541,7 @@
 
     <!-- MAIN CONTENT -->
     <main>
+        <!-- يمكنك وضع الـ slider هنا في الصفحة الرئيسية -->
         {% block content %}{% endblock %}
     </main>
 
@@ -322,9 +563,12 @@
                         وجهتك الأولى للمنتجات الكهربائية والإلكترونية عالية الجودة بأسعار الجملة.
                     </p>
                     <div class="social-links">
-                        <a href="https://www.facebook.com/people/Elwsam-Electric/61575621072046/"><i class="fab fa-facebook-f"></i></a>
+                        <a href="https://www.facebook.com/people/Elwsam-Electric/61575621072046/"><i
+                                class="fab fa-facebook-f"></i></a>
                         <a href="https://wa.me/201001252900"><i class="fab fa-whatsapp"></i></a>
-                        <a href="https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Felwsamelectric%2F&is_from_rle"><i class="fab fa-instagram"></i></a>
+                        <a
+                            href="https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Felwsamelectric%2F&is_from_rle"><i
+                                class="fab fa-instagram"></i></a>
                     </div>
                 </div>
 
@@ -360,9 +604,145 @@
     <!-- JAVASCRIPT -->
     <script src="{% static 'js/script.js' %}"></script>
     <script src="{% static 'js/validation.js' %}"></script>
+
+    <!-- Swiper JS إذا كنت تستخدمه -->
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+
     {% block extra_js %}{% endblock %}
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+        crossorigin="anonymous"></script>
+
     <script>
+        // وظيفة الـ slider الأساسية
+        function initSlider() {
+            const slider = document.querySelector('.slider');
+            const slides = document.querySelectorAll('.slider-slide');
+            const dots = document.querySelectorAll('.slider-dot');
+            const prevBtn = document.querySelector('.slider-prev');
+            const nextBtn = document.querySelector('.slider-next');
+
+            if (!slider || slides.length === 0) return;
+
+            let currentSlide = 0;
+            const totalSlides = slides.length;
+
+            function updateSlider() {
+                // تحريك الـ slider
+                slider.style.transform = `translateX(-${currentSlide * 100}%)`;
+
+                // تحديث النقاط
+                dots.forEach((dot, index) => {
+                    dot.classList.toggle('active', index === currentSlide);
+                });
+            }
+
+            // الانتقال للشريحة التالية
+            function nextSlide() {
+                currentSlide = (currentSlide + 1) % totalSlides;
+                updateSlider();
+            }
+
+            // الانتقال للشريحة السابقة
+            function prevSlide() {
+                currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+                updateSlider();
+            }
+
+            // إضافة الأحداث للأزرار
+            if (nextBtn) nextBtn.addEventListener('click', nextSlide);
+            if (prevBtn) prevBtn.addEventListener('click', prevSlide);
+
+            // إضافة الأحداث للنقاط
+            dots.forEach((dot, index) => {
+                dot.addEventListener('click', () => {
+                    currentSlide = index;
+                    updateSlider();
+                });
+            });
+
+            // التحكم بالسحب على الهواتف
+            let startX = 0;
+            let endX = 0;
+
+            slider.addEventListener('touchstart', (e) => {
+                startX = e.touches[0].clientX;
+            });
+
+            slider.addEventListener('touchmove', (e) => {
+                endX = e.touches[0].clientX;
+            });
+
+            slider.addEventListener('touchend', () => {
+                const threshold = 50;
+                const diff = startX - endX;
+
+                if (Math.abs(diff) > threshold) {
+                    if (diff > 0) {
+                        nextSlide(); // سحب لليسار
+                    } else {
+                        prevSlide(); // سحب لليمين
+                    }
+                }
+            });
+
+            // تشغيل السلايدر التلقائي
+            setInterval(nextSlide, 5000);
+        }
+
+        // بدء الـ slider عند تحميل الصفحة
+        document.addEventListener('DOMContentLoaded', function () {
+            // تطبيق الثيم المحفوظ
+            const savedTheme = localStorage.getItem('theme');
+            const icon = document.getElementById('theme-icon');
+
+            if (savedTheme === 'dark') {
+                document.body.classList.add('theme-dark');
+                if (icon) icon.className = 'fas fa-sun';
+            } else {
+                document.body.classList.remove('theme-dark');
+                if (icon) icon.className = 'fas fa-moon';
+            }
+
+            // بدء الـ slider
+            initSlider();
+
+            // تحديث عداد السلة
+            updateCartCount();
+
+            // إعداد Swiper إذا كان موجوداً
+            if (typeof Swiper !== 'undefined') {
+                const swiper = new Swiper('.swiper', {
+                    direction: 'horizontal',
+                    loop: true,
+                    pagination: {
+                        el: '.swiper-pagination',
+                        clickable: true,
+                        dynamicBullets: true,
+                    },
+                    navigation: {
+                        nextEl: '.swiper-button-next',
+                        prevEl: '.swiper-button-prev',
+                    },
+                    autoplay: {
+                        delay: 5000,
+                        disableOnInteraction: false,
+                    },
+                    breakpoints: {
+                        320: {
+                            slidesPerView: 1,
+                            spaceBetween: 0,
+                        },
+                        768: {
+                            slidesPerView: 1,
+                            spaceBetween: 0,
+                        }
+                    }
+                });
+            }
+        });
+
         function toggleMenu() {
             document.getElementById('nav-menu').classList.toggle('active');
         }
@@ -382,23 +762,6 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', function () {
-            // Apply saved theme (default is light)
-            const savedTheme = localStorage.getItem('theme');
-            const icon = document.getElementById('theme-icon');
-
-            if (savedTheme === 'dark') {
-                document.body.classList.add('theme-dark');
-                if (icon) icon.className = 'fas fa-sun';
-            } else {
-                document.body.classList.remove('theme-dark');
-                if (icon) icon.className = 'fas fa-moon';
-            }
-
-            // Update cart count for non-authenticated users
-            updateCartCount();
-        });
-
         // ========== CUSTOM CONFIRMATION MODAL ==========
         let confirmCallback = null;
 
@@ -413,7 +776,7 @@
             confirmCallback = callback;
             modal.classList.add('active');
 
-            // Prevent body scroll
+            // منع التمرير في body
             document.body.style.overflow = 'hidden';
         }
 
@@ -422,7 +785,7 @@
             modal.classList.remove('active');
             confirmCallback = null;
 
-            // Restore body scroll
+            // استعادة التمرير
             document.body.style.overflow = '';
         }
 
@@ -433,14 +796,14 @@
             hideConfirmModal();
         }
 
-        // Close modal on overlay click
+        // إغلاق النافذة عند النقر خارجها
         document.addEventListener('click', function (e) {
             if (e.target.classList.contains('confirm-overlay')) {
                 hideConfirmModal();
             }
         });
 
-        // Close modal on ESC key
+        // إغلاق النافذة عند الضغط على ESC
         document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') {
                 const modal = document.getElementById('confirmModal');
@@ -448,6 +811,19 @@
                     hideConfirmModal();
                 }
             }
+        });
+
+        // تحديث عداد السلة
+        function updateCartCount() {
+            // يمكنك إضافة منطق تحديث عداد السلة هنا
+        }
+
+        // تحسينات للهواتف عند تغيير الاتجاه
+        window.addEventListener('orientationchange', function () {
+            setTimeout(function () {
+                // إعادة حساب أبعاد الـ slider بعد تغيير الاتجاه
+                initSlider();
+            }, 300);
         });
     </script>
 </body>

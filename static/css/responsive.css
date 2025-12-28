@@ -4,6 +4,8 @@
 body {
     font-size: 16px;
     line-height: 1.5;
+    /* Safe area insets for devices with notches */
+    padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
 }
 
 .container {
@@ -139,18 +141,21 @@ body {
 .action-btn {
     min-height: 44px;
     min-width: 44px;
-    padding: 0.625rem 1rem;
-    font-size: 0.875rem;
+    padding: 0.75rem 1.125rem;
+    font-size: 0.9rem;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
     border-radius: 10px;
     transition: all 0.3s ease;
+    touch-action: manipulation;
+    /* Better touch response */
 }
 
 .btn-login {
-    padding: 0.5rem 0.75rem;
+    padding: 0.625rem 0.875rem;
+    min-height: 44px;
 }
 
 .btn-login span {
@@ -175,15 +180,20 @@ body {
 /* Grid Layouts for Mobile */
 .card-grid {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    /* عمودين على الجوال */
     gap: 1rem;
+    width: 100%;
+    padding: 1.5rem 0;
+    /* تقليل padding على الجوال */
 }
 
 .grid-2-cols,
 .grid-3-cols,
 .grid-4-cols {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    /* عمودين على الجوال */
     gap: 1rem;
 }
 
@@ -194,10 +204,92 @@ body {
     border-radius: 12px;
     background: var(--bg-secondary);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
+    min-height: 130px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    text-align: center;
 }
 
 .modern-card:active {
     transform: scale(0.98);
+}
+
+.card-icon {
+    font-size: 2.25rem;
+    margin-bottom: 0.625rem;
+    color: var(--industrial-yellow);
+    flex-shrink: 0;
+}
+
+.card-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 0.4rem;
+    color: var(--text-primary);
+    line-height: 1.25;
+}
+
+.modern-card .text-secondary {
+    font-size: 0.8rem;
+    line-height: 1.35;
+    color: var(--text-secondary);
+}
+
+/* للشاشات الصغيرة جدا - عمود واحد فقط */
+@media (max-width: 360px) {
+
+    .card-grid,
+    .grid-2-cols,
+    .grid-3-cols,
+    .grid-4-cols {
+        grid-template-columns: 1fr;
+        gap: 0.875rem;
+    }
+
+    .modern-card {
+        min-height: 120px;
+        padding: 1rem;
+    }
+
+    .card-icon {
+        font-size: 2.2rem;
+        margin-bottom: 0.625rem;
+    }
+
+    .card-title {
+        font-size: 0.95rem;
+    }
+
+    .modern-card .text-secondary {
+        font-size: 0.775rem;
+    }
+}
+
+/* تحسين للشاشات المتوسطة (بين 360px و 480px) */
+@media (min-width: 361px) and (max-width: 480px) {
+    .card-grid {
+        gap: 1rem;
+    }
+
+    .modern-card {
+        padding: 1rem;
+        min-height: 130px;
+    }
+
+    .card-icon {
+        font-size: 2.25rem;
+        margin-bottom: 0.625rem;
+    }
+
+    .card-title {
+        font-size: 0.95rem;
+    }
+
+    .modern-card .text-secondary {
+        font-size: 0.8rem;
+    }
 }
 
 /* Forms */
@@ -218,24 +310,30 @@ body {
 
 /* Typography */
 .section-title {
-    font-size: 1.75rem;
+    font-size: 1.65rem;
     font-weight: 800;
-    margin-bottom: 1rem;
-    line-height: 1.2;
+    margin-bottom: 0.75rem;
+    line-height: 1.25;
+}
+
+.section-padding {
+    padding-top: 2.5rem;
+    padding-bottom: 2.5rem;
 }
 
 .hero-title {
-    font-size: 2rem;
+    font-size: 2.25rem;
     font-weight: 900;
-    line-height: 1.1;
+    line-height: 1.15;
     text-align: center;
 }
 
 .hero-subtitle {
-    font-size: 1rem;
+    font-size: 1.05rem;
     text-align: center;
     margin-top: 1rem;
     margin-bottom: 1.5rem;
+    line-height: 1.5;
 }
 
 /* Images */
@@ -260,21 +358,21 @@ img {
 
 /* Footer */
 .footer {
-    padding: 2rem 0 1rem;
-    margin-top: 3rem;
+    padding: 2.5rem 0 1.25rem;
+    margin-top: 2.5rem;
 }
 
 .footer-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 2rem;
-    margin-bottom: 2rem;
+    gap: 1.75rem;
+    margin-bottom: 1.75rem;
 }
 
 .footer-title {
-    font-size: 1.125rem;
+    font-size: 1.05rem;
     font-weight: 700;
-    margin-bottom: 1rem;
+    margin-bottom: 0.875rem;
 }
 
 .footer-links {
@@ -283,7 +381,15 @@ img {
 }
 
 .footer-links li {
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.625rem;
+    font-size: 0.925rem;
+    line-height: 1.5;
+}
+
+.footer-copyright {
+    font-size: 0.875rem;
+    padding-top: 1.75rem;
+    text-align: center;
 }
 
 /* Utilities */

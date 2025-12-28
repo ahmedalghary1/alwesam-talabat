@@ -28,7 +28,7 @@ class CustomUser(AbstractUser):
 User = settings.AUTH_USER_MODEL
 
 
-class Profile(models.Model, ImageCompressionMixin):
+class Profile(ImageCompressionMixin, models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile')
     bio = models.TextField(blank=True, verbose_name="نبذة شخصية")
     image = models.ImageField(upload_to='user-image/', blank=True, null=True, verbose_name="صورة الملف الشخصي")
