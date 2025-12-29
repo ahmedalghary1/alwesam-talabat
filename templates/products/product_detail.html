@@ -422,6 +422,35 @@
         opacity: 1;
     }
 
+    /* Tooltip for deselection hint */
+    .color-option.selected::after {
+        content: "انقر مرة أخرى لإلغاء التحديد";
+        position: absolute;
+        top: -45px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.85);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 0.65rem;
+        font-weight: 600;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+        z-index: 10;
+    }
+
+    .theme-dark .color-option.selected::after {
+        background: rgba(255, 255, 255, 0.9);
+        color: #1a1a1a;
+    }
+
+    .color-option.selected:hover::after {
+        opacity: 1;
+    }
+
     .size-selection-wrapper {
         margin-top: 1.5rem;
     }
@@ -706,7 +735,7 @@
             {% for v in variants %}
         {
             id: {{ v.id }},
-            name: '{{v.variant_value|escapejs}}',
+            name: '',
             pcsCarton: {{ v.pcs_carton }},
             isAvailable: {{ v.is_available | yesno:"true,false" }},
             colorId: {% if v.color %} {{ v.color.id }} {% else %} null{% endif %},
@@ -775,8 +804,36 @@
         }
 
         function selectColor(colorId, variants) {
-            document.querySelectorAll('.color-option').forEach(el => el.classList.remove('selected'));
             const selectedColor = document.querySelector(`[data-color-id="${colorId}"]`);
+
+            // Toggle behavior: إذا كان اللون محدد، إلغاء التحديد
+            if (selectedColor && selectedColor.classList.contains('selected')) {
+                // إلغاء التحديد
+                selectedColor.classList.remove('selected');
+                selectedColorId = null;
+                selectedColorName = null;
+                selectedVariantId = null;
+                selectedSizeName = null;
+                document.getElementById('selected-variant-id').value = '';
+
+                // إخفاء قسم المقاسات
+                const sizeWrapper = document.getElementById('size-selection-wrapper');
+                if (sizeWrapper) {
+                    sizeWrapper.style.display = 'none';
+                }
+
+                // مسح المقاسات المحددة
+                document.querySelectorAll('.size-option').forEach(el => el.classList.remove('selected'));
+
+                // إعادة تعيين الصورة للمنتج الأساسي
+                updateGallery(productImages);
+
+                console.log('✓ تم إلغاء تحديد اللون');
+                return;
+            }
+
+            // تحديد اللون الجديد
+            document.querySelectorAll('.color-option').forEach(el => el.classList.remove('selected'));
             if (selectedColor) selectedColor.classList.add('selected');
 
             // Store selected color info
@@ -817,6 +874,8 @@
                     selectVariantById(variants[0].id);
                 }
             }
+
+            console.log('✓ تم تحديد اللون:', selectedColorName);
         }
 
         function renderSizeSelection(variants) {
@@ -928,7 +987,7 @@
         // Product info
         const PRODUCT_DATA = {
             id: {{ product.id }},
-        name: "{{ product.name|escapejs }}",
+            name: "{{ product.name|escapejs }}",
             image: "{% if product.image %}{{ product.image.url }}{% endif %}",
             pcsCarton: {{ product.pcs_carton }}
         }
@@ -939,10 +998,10 @@
         '{{ v.id }}': [
             {% if v.images.all %}
         {% for vimg in v.images.all %}
-        { url: '{{ vimg.image.url }}', alt: '{{ v.variant_value }}' } {% if not forloop.last %}, {% endif %}
+        { url: '{{ vimg.image.url }}', alt: '' } {% if not forloop.last %}, {% endif %}
         {% endfor %}
         {% elif v.image %}
-        { url: '{{ v.image.url }}', alt: '{{ v.variant_value }}' }
+        { url: '{{ v.image.url }}', alt: '' }
         {% endif %}
         ]{% if not forloop.last %}, {% endif %}
         {% endfor %}
@@ -1065,43 +1124,54 @@
         }
 
 
+        // === SHOW VALIDATION ERROR ===
+        function showValidationError(message, targetSelector) {
+            const toast = document.getElementById('cart-toast');
+            const toastIcon = document.getElementById('toast-icon');
+            const toastMessage = document.getElementById('toast-message');
+
+            if (toast && toastIcon && toastMessage) {
+                toastIcon.className = 'fas fa-exclamation-circle';
+                toastMessage.textContent = message;
+                toast.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
+                toast.classList.add('active');
+
+                setTimeout(() => {
+                    toast.classList.remove('active');
+                    setTimeout(() => {
+                        toastIcon.className = 'fas fa-check-circle';
+                        toastMessage.textContent = 'تم الإضافة للسلة';
+                        toast.style.background = '';
+                    }, 300);
+                }, 3000);
+            }
+
+            // تسليط الضوء على القسم المطلوب
+            const targetElement = document.querySelector(targetSelector);
+            if (targetElement) {
+                targetElement.style.border = '2px solid #ef4444';
+                targetElement.style.borderRadius = '12px';
+
+                // Scroll to the element
+                targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                setTimeout(() => {
+                    targetElement.style.border = '';
+                }, 3000);
+            }
+        }
+
         // === ADD TO CART ===
         async function handleAddToCart() {
-            // Validate unit selection
+            // Validation 1: التحقق من اختيار اللون (إذا كان المنتج يحتوي على variants)
+            if (ALL_VARIANTS.length > 0 && !selectedVariantId) {
+                showValidationError('⚠️ يرجى اختيار لون المنتج أولاً', '.variant-selection-section');
+                return;
+            }
+
+            // Validation 2: التحقق من وحدة الطلب
             if (!selectedUnit) {
-                // Show error toast
-                const toast = document.getElementById('cart-toast');
-                const toastIcon = document.getElementById('toast-icon');
-                const toastMessage = document.getElementById('toast-message');
-
-                if (toast && toastIcon && toastMessage) {
-                    toastIcon.className = 'fas fa-exclamation-circle';
-                    toastMessage.textContent = '⚠️ يرجى اختيار وحدة الطلب (كرتونة أو قطعة)';
-                    toast.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
-                    toast.classList.add('active');
-
-                    setTimeout(() => {
-                        toast.classList.remove('active');
-                        // Reset to success styles
-                        setTimeout(() => {
-                            toastIcon.className = 'fas fa-check-circle';
-                            toastMessage.textContent = 'تم الإضافة للسلة';
-                            toast.style.background = '';
-                        }, 300);
-                    }, 3000);
-                }
-
-                // Highlight unit selection section
-                const unitSection = document.querySelector('.variant-section');
-                if (unitSection) {
-                    unitSection.style.border = '2px solid #ef4444';
-                    unitSection.style.borderRadius = '10px';
-                    unitSection.style.padding = '1rem';
-                    setTimeout(() => {
-                        unitSection.style.border = '';
-                        unitSection.style.padding = '';
-                    }, 3000);
-                }
+                showValidationError('⚠️ يرجى اختيار وحدة الطلب (كرتونة أو قطعة)', '.variant-section');
                 return;
             }
 

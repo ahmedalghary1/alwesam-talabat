@@ -53,7 +53,7 @@ class CartItem(models.Model):
     def get_display_name(self):
         """Display name with variant info"""
         if self.variant:
-            return f"{self.product.name} ({self.variant.variant_value})"
+            return f"{self.product.name}"
         return self.product.name
 
     def __str__(self):

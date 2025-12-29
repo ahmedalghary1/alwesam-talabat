@@ -162,9 +162,17 @@
                     <div class="order-date">{{ order.created_at|date:"d/m/Y - H:i" }}</div>
                 </div>
                 <span class="badge badge-{{ order.status }}">
-                    {% if order.status == 'pending' %}معلق{% elif order.status == 'confirmed' %}مؤكد{% elif order.status
-                    == 'shipped' %}تم الشحن{% elif order.status == 'delivered' %}تم التسليم{% elif order.status ==
-                    'cancelled' %}ملغي{% endif %}
+                    {% if order.status == 'pending' %}
+                    معلق
+                    {% elif order.status == 'confirmed' %}
+                    مؤكد
+                    {% elif order.status == 'shipped' %}
+                    تم الشحن
+                    {% elif order.status == 'delivered' %}
+                    تم التسليم
+                    {% elif order.status == 'cancelled' %}
+                    ملغي
+                    {% endif %}
                 </span>
             </div>
             <div class="order-info">

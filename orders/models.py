@@ -25,6 +25,10 @@ class Order(models.Model):
 
     def __str__(self):
         return f"Order #{self.id} - {self.user.username}"
+    
+    def get_total_pieces(self):
+        """Calculate total pieces across all order items"""
+        return sum(item.quantity for item in self.items.all())
 
     class Meta:
         ordering = ['-created_at']
@@ -57,7 +61,7 @@ class OrderItem(models.Model):
     def save(self, *args, **kwargs):
         # Automatically save variant info when order is created
         if self.variant and not self.variant_info:
-            self.variant_info = f"{self.variant.get_variant_type_display()}: {self.variant.variant_value}"
+            self.variant_info = f"{self.variant.get_variant_type_display()}"
         if self.variant and not self.variant_pcs_carton:
             self.variant_pcs_carton = self.variant.pcs_carton
         super().save(*args, **kwargs)

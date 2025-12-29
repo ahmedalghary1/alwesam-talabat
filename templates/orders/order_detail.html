@@ -602,13 +602,7 @@
                     </div>
                     <div class="summary-row">
                         <span class="summary-label">إجمالي القطع</span>
-                        <span class="summary-value">
-                            {% with total=0 %}
-                            {% for item in order.items.all %}
-                            {{ item.quantity|add:total }}
-                            {% endfor %}
-                            {% endwith %}
-                        </span>
+                        <span class="summary-value">{{ order.get_total_pieces }}</span>
                     </div>
                 </div>
             </div>

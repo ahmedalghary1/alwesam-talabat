@@ -28,15 +28,16 @@
     /* Hero Slider - يحتوي على الصورة والمحتوى */
     .hero-slider {
         position: relative;
-        width: 100vw;
-        min-height: 100vh;
-        /* يملأ الشاشة بالكامل */
+        width: 100%;
+        min-height: calc(100vh - 70px);
+        /* شاشة كاملة ناقص navbar */
         overflow: hidden;
         background: var(--bg-primary);
         margin: 0 !important;
         padding: 0 !important;
         display: flex;
         flex-direction: column;
+        justify-content: space-between;
         left: 0;
         right: 0;
     }
@@ -53,68 +54,92 @@
     .slider-container {
         position: relative;
         width: 100%;
-        height: 100%;
+        max-width: 100%;
+        height: auto;
+        overflow: hidden;
+        flex: 0 0 auto;
+        /* لا تتمدد أو تنكمش */
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
     }
+
 
 
     .slider-slides {
         display: flex;
         width: 100%;
+        max-width: 100%;
+        /* ✅ عدم تجاوز عرض الحاوية */
         height: 100%;
         transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        direction: ltr;
+        /* ✅ ترتيب السلايدات من اليسار لليمين دائماً */
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
     }
 
     .slide {
-        min-width: 100%;
+        width: 100%;
+        /* ✅ عرض ثابت بدلاً من min-width */
+        max-width: 100%;
+        flex-shrink: 0;
+        /* ✅ منع الانكماش */
         height: 100%;
         position: relative;
-        background-size: contain;
-        background-position: center;
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: 0 !important;
+        overflow: hidden;
+        /* ✅ مهم جداً لمنع ظهور الصورة المكبرة خارج الحدود */
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
     }
 
     .slide picture {
         width: 100%;
+        max-width: 100%;
         height: 100%;
         display: flex;
         align-items: center;
         justify-content: center;
         border-radius: 0 !important;
         overflow: hidden;
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
     }
 
     .slide img {
         width: 100%;
+        max-width: 100%;
         height: 100%;
         object-fit: cover;
+        /* ✅ اقتصاص الصور الكبيرة */
         object-position: center;
-        border-radius: 0 !important;
         display: block;
-        /* تأثير التكبير - يبدأ من الحجم الطبيعي */
-        animation: zoomInOnly 3s ease-out forwards;
+        transform-origin: center center;
+        /* ✅ التكبير من المركز */
+        animation: zoomIn 3s ease-out forwards;
+        /* ✅ animation التكبير */
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
     }
 
-    /* تأثير التكبير فقط - بدون رجوع */
-    @keyframes zoomInOnly {
+    /* Animation التكبير - من المركز */
+    @keyframes zoomIn {
         0% {
             transform: scale(1);
         }
 
         100% {
-            transform: scale(1.15);
-            /* تكبير بنسبة 15% والبقاء */
+            transform: scale(1.1);
+            /* تكبير 10% فقط */
         }
     }
-
-    /* عرض جميع الصور - 3 صور فقط */
-    .slide-2,
-    .slide-3 {
-        display: flex !important;
-    }
-
 
 
 
@@ -214,7 +239,8 @@
         left: 50%;
         transform: translateX(-50%);
         z-index: 3;
-        display: flex;
+        display: none;
+        /* إخفاء النقاط */
         gap: clamp(0.5rem, 1vw, 0.75rem);
         padding: 0.5rem;
     }
@@ -243,12 +269,6 @@
         transform: scale(1.2);
     }
 
-
-
-
-
-
-
     /* Hero Section - متجاوب لجميع الأحجام */
     .hero {
         min-height: 70vh;
@@ -262,6 +282,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        flex-direction: column;
     }
 
     /* Tablet */
@@ -278,6 +299,12 @@
         max-width: 800px;
         margin: 0 auto;
         animation: fadeIn 1s ease;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 1rem;
     }
 
     .hero-brand {
@@ -394,13 +421,13 @@
         background: var(--bg-primary);
     }
 
-    /* Section Header - يظهر عند scroll فقط */
+    /* Section Header - تحسين تأثير العناوين */
     .section-header {
         text-align: center;
         margin-bottom: 3rem;
         opacity: 0;
         transform: translateY(-30px);
-        transition: all 0.6s ease-out;
+        transition: opacity 0.6s ease-out, transform 0.6s ease-out;
     }
 
     .section-header.visible {
@@ -470,8 +497,8 @@
 
     .category-image {
         width: 100%;
-        height: 140px;
-        max-height: 140px;
+        height: 200px;
+        max-height: 200px;
         object-fit: contain;
         object-position: center;
         border-radius: 12px;
@@ -599,12 +626,11 @@
         opacity: 0.3;
     }
 
-    /* Section Transitions */
+    /* Section Transitions - تحسين شامل للتأثيرات */
     .section-animate {
         opacity: 0;
-        transform: translateY(40px);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        /* تسريع أكثر إلى 0.3s */
+        transform: translateY(50px);
+        transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .section-animate.visible {
@@ -612,10 +638,12 @@
         transform: translateY(0);
     }
 
+    /* تأثيرات متنوعة للبطاقات */
     .card-animate {
         opacity: 0;
-        transform: translateY(30px) scale(0.95);
-        transition: all 0.5s ease-out;
+        transform: translateY(40px) scale(0.95);
+        transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+            transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .card-animate.visible {
@@ -623,45 +651,72 @@
         transform: translateY(0) scale(1);
     }
 
-    /* كل كرت يبدأ بتأخير مختلف - بعد ظهور العنوان */
+    /* تأثيرات الظهور بالتناوب من اليسار واليمين */
+    .categories-grid .card-animate:nth-child(odd) {
+        transform: translateX(-40px) translateY(20px) scale(0.95);
+    }
+
+    .categories-grid .card-animate:nth-child(even) {
+        transform: translateX(40px) translateY(20px) scale(0.95);
+    }
+
+    .categories-grid .card-animate.visible:nth-child(odd),
+    .categories-grid .card-animate.visible:nth-child(even) {
+        transform: translateX(0) translateY(0) scale(1);
+    }
+
+    /* تأخير تدريجي للبطاقات - Stagger Effect */
     .card-animate.visible:nth-child(1) {
-        transition-delay: 0.2s;
+        transition-delay: 0.1s;
     }
 
     .card-animate.visible:nth-child(2) {
-        transition-delay: 0.3s;
+        transition-delay: 0.2s;
     }
 
     .card-animate.visible:nth-child(3) {
-        transition-delay: 0.4s;
+        transition-delay: 0.3s;
     }
 
     .card-animate.visible:nth-child(4) {
-        transition-delay: 0.5s;
+        transition-delay: 0.4s;
     }
 
     .card-animate.visible:nth-child(5) {
-        transition-delay: 0.6s;
+        transition-delay: 0.5s;
     }
 
     .card-animate.visible:nth-child(6) {
-        transition-delay: 0.7s;
+        transition-delay: 0.6s;
     }
 
     .card-animate.visible:nth-child(7) {
-        transition-delay: 0.8s;
+        transition-delay: 0.7s;
     }
 
     .card-animate.visible:nth-child(8) {
-        transition-delay: 0.9s;
+        transition-delay: 0.8s;
     }
 
-    .card-animate.visible:nth-child(9) {
-        transition-delay: 1s;
+    /* تأثير نابض للأيقونات عند الظهور */
+    .feature-card.visible .feature-icon {
+        animation: pulse 0.6s ease-out;
     }
 
-    .card-animate.visible:nth-child(10) {
-        transition-delay: 1.1s;
+    @keyframes pulse {
+        0% {
+            transform: scale(0.8);
+            opacity: 0;
+        }
+
+        50% {
+            transform: scale(1.1);
+        }
+
+        100% {
+            transform: scale(1);
+            opacity: 1;
+        }
     }
 
     /* تعريف أنيميشن fadeInUp */
@@ -707,26 +762,39 @@
             min-height: 70vh;
             /* قم بتغيير هذه القيمة لتصغير أو تكبير الصورة */
             /* يمكنك استخدام: 60vh, 65vh, 70vh, 75vh, 80vh حسب الحاجة */
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
         }
 
         .slider-container {
-            width: 100vw;
+            width: 100%;
+            max-width: 100%;
             position: relative;
-            left: 50%;
-            right: 50%;
-            margin-left: -50vw;
-            margin-right: -50vw;
-            margin-bottom: 2rem;
+            left: 0;
+            right: 0;
+            margin: 0 0 2rem 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        .slide {
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
         }
 
         .slide picture {
             width: 100%;
             height: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
         }
 
         .slide img {
             /* عرض الصورة كاملة بدون قص على الكمبيوتر */
             width: 100%;
+            max-width: 100%;
             height: auto;
             /* ارتفاع تلقائي للحفاظ على التناسب */
             max-height: 55vh;
@@ -734,17 +802,19 @@
             object-fit: cover;
             /* عرض الصورة كاملة بدون قص */
             object-position: center;
+            box-sizing: border-box;
         }
     }
 
     /* Responsive */
     @media (max-width: 768px) {
 
-        /* Slider optimizations */
+        /* Hero Slider - شاشة كاملة على الهاتف ناقص navbar */
         .hero-slider {
-            height: clamp(180px, 28vh, 300px);
-            /* ارتفاع أصغر على التابلت */
-            margin-top: 0;
+            min-height: calc(100vh - 60px);
+            /* شاشة كاملة ناقص navbar على الموبايل */
+            max-height: calc(100vh - 60px);
+            flex-shrink: 0;
         }
 
 
@@ -778,12 +848,18 @@
             bottom: 1.5rem;
         }
 
-        .hero {
-            padding: 2rem 1rem 1.5rem;
+        .hero-content {
+            padding: 1.5rem 1rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 35vh;
         }
 
-        .hero-content {
-            padding: .5rem;
+        .slider-container {
+            flex: 0 0 auto;
+            max-height: 50vh;
         }
 
         .hero-brand {
@@ -826,16 +902,17 @@
         .categories-grid {
             grid-template-columns: repeat(2, 1fr);
             /* عمودين على الهاتف */
-            gap: 1rem;
+            gap: 0.5rem;
         }
 
         .category-card {
-            padding: 1.25rem;
+            padding: 0.5rem;
         }
 
         .category-image {
-            height: 100px;
-            max-height: 100px;
+            height: 200px;
+            max-height: 200px;
+            padding: 0;
         }
 
         .category-name {
@@ -916,6 +993,8 @@
         /* التأكد من ظهور السهم */
         .scroll-arrow {
             font-size: 1.5rem;
+            margin-top: 5rem;
+
         }
 
         .slide picture {
@@ -1007,19 +1086,20 @@
 
             <!-- Slide 2 -->
             <div class="slide slide-2">
-                <img src="{% static 'images/hero_slide_2.jpg' %}" alt="مستودع الوسام - معدات كهربائية">
+                <img src="{% static 'images/link3 copy.jpg' %}" alt="مستودع الوسام - معدات كهربائية">
             </div>
 
             <!-- Slide 3 -->
             <div class="slide slide-3">
-                <img src="{% static 'images/hero_slide_3.jpg' %}" alt="صالة عرض الوسام - منتجات كهربائية">
+                <img src="{% static 'images/link3 copy 2.jpg' %}" alt="صالة عرض الوسام - منتجات كهربائية">
             </div>
 
         </div>
         <!-- Dots -->
         <div class="slider-dots">
-            <!-- سيتم إنشاء النقاط ديناميكياً بواسطة JavaScript -->
         </div>
+
+
     </div>
 
     <!-- المحتوى تحت الصورة مباشرة -->
@@ -1041,7 +1121,7 @@
 </section>
 
 <!-- Categories Section -->
-<section class="section" id="categories">
+<section class="section section-animate" id="categories">
     <div class="section-header">
         <h2 class="section-title">تصفح <span class="yellow">منتجاتنا</span></h2>
         <p class="section-subtitle">اختر القسم المناسب لاحتياجاتك</p>
@@ -1115,28 +1195,20 @@
 </section>
 
 <script>
-    // Slider functionality with responsive slide counting
+    // Slider functionality - simplified
     let currentSlideIndex = 0;
     let autoSlideInterval;
 
-    // Function to get visible slides only
-    function getVisibleSlides() {
-        return Array.from(document.querySelectorAll('.slide')).filter(slide => {
-            const style = window.getComputedStyle(slide);
-            return style.display !== 'none';
-        });
-    }
-
-    // Function to update dots based on visible slides
+    // Function to update dots
     function updateDots() {
         const dotsContainer = document.querySelector('.slider-dots');
-        const visibleSlides = getVisibleSlides();
+        const slides = document.querySelectorAll('.slide');
 
         // Clear existing dots
         dotsContainer.innerHTML = '';
 
-        // Create dots for visible slides only
-        visibleSlides.forEach((slide, index) => {
+        // Create dots for all slides
+        slides.forEach((slide, index) => {
             const dot = document.createElement('span');
             dot.className = index === 0 ? 'dot active' : 'dot';
             dot.setAttribute('data-slide', index);
@@ -1149,8 +1221,8 @@
     }
 
     function showSlide(index) {
-        const visibleSlides = getVisibleSlides();
-        const totalSlides = visibleSlides.length;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
 
         if (totalSlides === 0) return;
 
@@ -1163,25 +1235,9 @@
             currentSlideIndex = index;
         }
 
-        // Move slides
+        // Move slides (direction: ltr في CSS، لذا نستخدم translateX سالب)
         const slidesContainer = document.querySelector('.slider-slides');
-        const allSlides = document.querySelectorAll('.slide');
-
-        // Find the actual index of the visible slide in all slides
-        let actualIndex = 0;
-        let visibleCount = 0;
-        for (let i = 0; i < allSlides.length; i++) {
-            const style = window.getComputedStyle(allSlides[i]);
-            if (style.display !== 'none') {
-                if (visibleCount === currentSlideIndex) {
-                    actualIndex = i;
-                    break;
-                }
-                visibleCount++;
-            }
-        }
-
-        slidesContainer.style.transform = `translateX(-${actualIndex * 100}%)`;
+        slidesContainer.style.transform = `translateX(-${currentSlideIndex * 100}%)`;
 
         // Update dots
         const dots = document.querySelectorAll('.dot');
@@ -1189,15 +1245,12 @@
             dot.classList.toggle('active', i === currentSlideIndex);
         });
 
-        // إعادة تشغيل تأثير التكبير للصورة الحالية
-        const currentImg = allSlides[actualIndex].querySelector('img');
+        // إعادة تشغيل animation التكبير للصورة الحالية
+        const currentImg = slides[currentSlideIndex].querySelector('img');
         if (currentImg) {
-            // إزالة الـ animation وإعادة إضافته لإعادة التشغيل
             currentImg.style.animation = 'none';
-            // إجبار المتصفح على إعادة حساب الـ styles
-            void currentImg.offsetWidth;
-            // إعادة تطبيق الـ animation
-            currentImg.style.animation = 'zoomInOnly 3s ease-out forwards';
+            void currentImg.offsetWidth; // Force reflow
+            currentImg.style.animation = 'zoomIn 3s ease-out forwards';
         }
     }
 
@@ -1212,11 +1265,16 @@
     }
 
     function autoSlide() {
-        moveSlide(1);
+        showSlide(currentSlideIndex + 1);
+        // ✅ إعادة تشغيل interval بعد كل انتقال لضمان استمراره
+        clearInterval(autoSlideInterval);
+        autoSlideInterval = setInterval(autoSlide, 3000);
     }
 
     function resetAutoSlide() {
-        clearInterval(autoSlideInterval);
+        if (autoSlideInterval) {
+            clearInterval(autoSlideInterval);
+        }
         autoSlideInterval = setInterval(autoSlide, 3000);  // 3 ثواني
     }
 
@@ -1239,57 +1297,41 @@
     window.addEventListener('resize', () => {
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(() => {
-            clearInterval(autoSlideInterval);
-            currentSlideIndex = 0;
-            updateDots();
-            showSlide(0);
-            autoSlideInterval = setInterval(autoSlide, 3000);  // 3 ثواني
+            showSlide(currentSlideIndex); // إعادة عرض السلايد الحالي
         }, 250);
     });
 
+    // ✅ تم إزالة pause on hover لضمان استمرار السلايدر
 
-    // Pause on hover
-    const sliderContainer = document.querySelector('.hero-slider');
-    sliderContainer.addEventListener('mouseenter', () => {
-        clearInterval(autoSlideInterval);
-    });
-    sliderContainer.addEventListener('mouseleave', () => {
-        resetAutoSlide();
-    });
-
-    // Dots hover navigation
-    document.querySelectorAll('.dot').forEach(dot => {
-        dot.addEventListener('mouseenter', function () {
-            const slideIndex = parseInt(this.getAttribute('data-slide'));
-            showSlide(slideIndex);
-            resetAutoSlide();
-        });
-    });
 
     // Touch swipe support for mobile
-    let touchStartX = 0;
-    let touchEndX = 0;
-    const minSwipeDistance = 50;
+    const sliderContainer = document.querySelector('.slider-container');
 
-    sliderContainer.addEventListener('touchstart', (e) => {
-        touchStartX = e.changedTouches[0].screenX;
-    }, { passive: true });
+    if (sliderContainer) {
+        let touchStartX = 0;
+        let touchEndX = 0;
+        const minSwipeDistance = 50;
 
-    sliderContainer.addEventListener('touchend', (e) => {
-        touchEndX = e.changedTouches[0].screenX;
-        handleSwipe();
-    }, { passive: true });
+        sliderContainer.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
 
-    function handleSwipe() {
-        const swipeDistance = touchEndX - touchStartX;
+        sliderContainer.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        }, { passive: true });
 
-        if (Math.abs(swipeDistance) > minSwipeDistance) {
-            if (swipeDistance > 0) {
-                // Swipe right - go to previous (in RTL context)
-                moveSlide(-1);
-            } else {
-                // Swipe left - go to next (in RTL context)
-                moveSlide(1);
+        function handleSwipe() {
+            const swipeDistance = touchEndX - touchStartX;
+
+            if (Math.abs(swipeDistance) > minSwipeDistance) {
+                if (swipeDistance > 0) {
+                    // Swipe right - go to previous (in RTL context)
+                    moveSlide(-1);
+                } else {
+                    // Swipe left - go to next (in RTL context)
+                    moveSlide(1);
+                }
             }
         }
     }
@@ -1312,26 +1354,72 @@
         }
     }, { passive: true });
 
-    // Intersection Observer for scroll animations - محسّن للهاتف
-    const observerOptions = {
-        threshold: 0.05, // تقليل من 0.15 إلى 0.05 لبدء أسرع
-        rootMargin: '0px 0px -20px 0px' // تقليل من -50px إلى -20px
-    };
+    // Intersection Observer - نظام محسّن للتأثيرات
 
-    const observer = new IntersectionObserver((entries) => {
+    // Observer للعناوين - تأثير متكرر في كل مرة
+    const headerObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
                 entry.target.classList.add('visible');
+                console.log('✨ Header visible:', entry.target.className);
             } else {
                 entry.target.classList.remove('visible');
+                console.log('👻 Header hidden:', entry.target.className);
             }
         });
-    }, observerOptions);
-
-    // Observe all animated elements including headers
-    document.querySelectorAll('.section-animate, .card-animate, .section-header').forEach(el => {
-        observer.observe(el);
+    }, {
+        threshold: 0.1,  // ✅ تقليل من 0.2 لظهور أسرع
+        rootMargin: '0px 0px 50px 0px'  // ✅ إيجابي لبدء التأثير قبل دخول viewport
     });
+
+    // Observer للأقسام - تأثير متكرر في كل مرة
+    const sectionObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                console.log('✨ Section visible:', entry.target.id || entry.target.className);
+            } else {
+                entry.target.classList.remove('visible');
+                console.log('👻 Section hidden:', entry.target.id || entry.target.className);
+            }
+        });
+    }, {
+        threshold: 0.05,  // ✅ تقليل من 0.15 لظهور أسرع جداً
+        rootMargin: '0px 0px 100px 0px'  // ✅ يبدأ قبل دخول viewport بـ 100px
+    });
+
+    // Observer للبطاقات - تأثير متكرر في كل مرة مع تأخير تدريجي
+    const cardsObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                // إضافة الكلاس مباشرة بدون تأخير للسرعة
+                entry.target.classList.add('visible');
+                console.log('✨ Card visible:', entry.target.className);
+            } else {
+                // إزالة الكلاس عند الخروج للسماح بالتأثير مرة أخرى
+                entry.target.classList.remove('visible');
+                console.log('👻 Card hidden:', entry.target.className);
+            }
+        });
+    }, {
+        threshold: 0.05,  // ✅ تقليل من 0.1 لظهور فوري تقريباً
+        rootMargin: '0px 0px 150px 0px'  // ✅ يبدأ قبل دخول viewport بـ 150px
+    });
+
+    // تطبيق الـ Observers
+    const headers = document.querySelectorAll('.section-header');
+    const sections = document.querySelectorAll('.section-animate');
+    const cards = document.querySelectorAll('.card-animate');
+
+    console.log('🎯 Scroll Animations Initialized:', {
+        headers: headers.length,
+        sections: sections.length,
+        cards: cards.length
+    });
+
+    headers.forEach(el => headerObserver.observe(el));
+    sections.forEach(el => sectionObserver.observe(el));
+    cards.forEach(el => cardsObserver.observe(el));
 
     // Smooth scroll for anchor links مع offset مناسب
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {

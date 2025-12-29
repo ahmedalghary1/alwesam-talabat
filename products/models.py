@@ -136,7 +136,6 @@ class ProductVariant(ImageCompressionMixin, models.Model):
     
     # Core variant identification
     variant_type = models.CharField(max_length=20, choices=VARIANT_TYPE_CHOICES)
-    variant_value = models.CharField(max_length=100)  
     
     # Variant-specific attributes (NEW)
     name = models.CharField(max_length=200, help_text="اسم النمط الكامل")
@@ -174,8 +173,8 @@ class ProductVariant(ImageCompressionMixin, models.Model):
         self.save_with_compression(image_field_name='image', *args, **kwargs)
     
     class Meta:
-        unique_together = ['product', 'variant_type', 'variant_value']
-        ordering = ['variant_type', 'variant_value']
+        unique_together = ['product', 'code']
+        ordering = ['variant_type']
         verbose_name = "Product Variant"
         verbose_name_plural = "Product Variants"
         indexes = [
@@ -184,4 +183,4 @@ class ProductVariant(ImageCompressionMixin, models.Model):
         ]
     
     def __str__(self):
-        return self.name or f"{self.product.name} - {self.variant_value}"
+        return self.name or f"{self.product.name}"

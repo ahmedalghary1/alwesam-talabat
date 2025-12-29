@@ -12,7 +12,7 @@ class ProductImagesInline(admin.TabularInline):
 class ProductVariantInline(admin.TabularInline):
     model = ProductVariant
     extra = 1
-    fields = ['name', 'code', 'variant_type', 'variant_value', 
+    fields = ['name', 'code', 'variant_type', 
               'pcs_carton', 'image',  'is_available']
     readonly_fields = []
 
@@ -39,6 +39,6 @@ class ProductImagesAdmin(admin.ModelAdmin):
 
 @admin.register(ProductVariant)
 class ProductVariantAdmin(admin.ModelAdmin):
-    list_display = ('product', 'name', 'code', 'variant_type', 'variant_value', 'pcs_carton', 'is_available')
+    list_display = ('product', 'name', 'code', 'variant_type',  'pcs_carton', 'is_available')
     list_filter = ('variant_type', 'is_available')
-    search_fields = ('product__name', 'name', 'code', 'variant_value')
+    search_fields = ('product__name', 'name', 'code')

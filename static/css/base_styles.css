@@ -49,6 +49,14 @@ body {
     color: var(--text-primary);
     line-height: 1.6;
     transition: background 0.3s ease, color 0.3s ease;
+    overflow-x: hidden;
+}
+
+html {
+    overflow-y: scroll;
+    /* Force vertical scrollbar to prevent layout shift */
+    overflow-x: hidden;
+    scroll-behavior: smooth;
 }
 
 a {

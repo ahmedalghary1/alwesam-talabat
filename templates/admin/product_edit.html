@@ -183,7 +183,6 @@
         name: '{{ variant.name|escapejs }}',
         code: '{{ variant.code|default:""}}',
         variant_type: '{{ variant.variant_type }}',
-        variant_value: '{{ variant.variant_value|escapejs }}',
         pcs_carton: {{ variant.pcs_carton }},
         is_available: {{ variant.is_available | yesno:"true,false"| lower }},
         image_url: '{% if variant.image %}{{ variant.image.url }}{% endif %}',
@@ -225,10 +224,7 @@
                     <label style="display: block; font-size: 0.875rem; margin-bottom: 0.25rem; color: var(--text-secondary);">الكود/SKU</label>
                     <input type="text" name="variant_code[]" class="form-input" style="padding: 0.625rem; font-size: 0.875rem;" value="${data.code || ''}">
                 </div>
-                <div>
-                    <label style="display: block; font-size: 0.875rem; margin-bottom: 0.25rem; color: var(--text-secondary);">قيمة النمط *</label>
-                    <input type="text" name="variant_value[]" class="form-input" style="padding: 0.625rem; font-size: 0.875rem;" placeholder="مثال: أحمر, كبير, 1 كجم" value="${data.variant_value || ''}" required>
-                </div>
+
                 <div>
                     <label style="display: block; font-size: 0.875rem; margin-bottom: 0.25rem; color: var(--text-secondary);">عدد القطع/كرتون *</label>
                     <input type="number" name="variant_pcs_carton[]" class="form-input" style="padding: 0.625rem; font-size: 0.875rem;" value="${data.pcs_carton || 24}" min="1" required>

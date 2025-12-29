@@ -585,16 +585,23 @@
             {% for item in cart_items %}
             <div class="cart-item" data-item-id="{{ item.id }}" data-unit-type="{{ item.unit_type }}"
                 data-pcs-carton="{{ item.get_pcs_carton }}">
-                {% if item.product.image %}
-                <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="item-image">
-                {% else %}
-                <div class="item-placeholder">
-                    <i class="fas fa-box"></i>
-                </div>
-                {% endif %}
+                <a href="{% url 'products:product_detail' item.product.slug %}" style="display: block;">
+                    {% if item.product.image %}
+                    <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="item-image">
+                    {% else %}
+                    <div class="item-placeholder">
+                        <i class="fas fa-box"></i>
+                    </div>
+                    {% endif %}
+                </a>
 
                 <div class="item-details">
-                    <h3 class="item-name">{{ item.product.name }}</h3>
+                    <h3 class="item-name">
+                        <a href="{% url 'products:product_detail' item.product.slug %}"
+                            style="color: inherit; text-decoration: none;">
+                            {{ item.product.name }}
+                        </a>
+                    </h3>
                     {% if item.variant %}
                     <p class="item-variant">
                         <i class="fas fa-tag"></i>

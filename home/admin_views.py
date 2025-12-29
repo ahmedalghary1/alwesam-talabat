@@ -93,7 +93,6 @@ def admin_product_add(request):
             # Handle product variants with multiple images
             variant_names = request.POST.getlist('variant_name[]')
             variant_codes = request.POST.getlist('variant_code[]')
-            variant_values = request.POST.getlist('variant_value[]')
             variant_pcs = request.POST.getlist('variant_pcs_carton[]')
             variant_available = request.POST.getlist('variant_available[]')
             
@@ -110,7 +109,6 @@ def admin_product_add(request):
                         name=variant_names[i],
                         code=variant_codes[i] if i < len(variant_codes) and variant_codes[i] else None,
                         variant_type='color',  # Default to color
-                        variant_value=variant_values[i] if i < len(variant_values) else '',
                         pcs_carton=int(variant_pcs[i]) if i < len(variant_pcs) and variant_pcs[i] else 24,
                         is_available=str(i) in variant_available,
                         color_id=color_id if color_id else None
@@ -198,7 +196,6 @@ def admin_product_edit(request, product_id):
         variant_ids = request.POST.getlist('variant_id[]')
         variant_names = request.POST.getlist('variant_name[]')
         variant_codes = request.POST.getlist('variant_code[]')
-        variant_values = request.POST.getlist('variant_value[]')
         variant_pcs = request.POST.getlist('variant_pcs_carton[]')
         variant_available = request.POST.getlist('variant_available[]') # Changed from variant_stocks
         variant_images = request.FILES.getlist('variant_image[]')
@@ -217,7 +214,6 @@ def admin_product_edit(request, product_id):
                     'name': variant_names[i],
                     'code': variant_codes[i] if variant_codes[i] else None,
                     'variant_type': 'color',  # Default to color
-                    'variant_value': variant_values[i],
                     'pcs_carton': int(variant_pcs[i]) if variant_pcs[i] else 24,
                     'is_available': i < len(variant_available),  # Checkbox sends value only if checked
                     'color_id': color_id if color_id else None
