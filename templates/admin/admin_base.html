@@ -335,21 +335,13 @@
                 <i class="fas fa-box"></i>
                 <span>المنتجات</span>
             </a>
-            <a href="{% url 'admin_app:admin_product_add' %}"
-                class="sidebar-link {% block sidebar_add_product %}{% endblock %}">
-                <i class="fas fa-plus-circle"></i>
-                <span>إضافة منتج</span>
-            </a>
+
             <a href="{% url 'admin_app:admin_categories' %}"
                 class="sidebar-link {% block sidebar_categories %}{% endblock %}">
                 <i class="fas fa-th-large"></i>
                 <span>الأقسام</span>
             </a>
-            <a href="{% url 'admin_app:admin_category_add' %}"
-                class="sidebar-link {% block sidebar_add_category %}{% endblock %}">
-                <i class="fas fa-folder-plus"></i>
-                <span>إضافة قسم</span>
-            </a>
+
             <a href="{% url 'admin_app:admin_orders' %}" class="sidebar-link {% block sidebar_orders %}{% endblock %}">
                 <i class="fas fa-shopping-bag"></i>
                 <span>الطلبات</span>
