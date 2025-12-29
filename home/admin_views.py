@@ -316,16 +316,27 @@ def admin_product_delete(request, product_id):
 def admin_orders(request):
     """إدارة الطلبات"""
     status_filter = request.GET.get('status', '')
+    search_query = request.GET.get('search', '').strip()
     
-    orders = Order.objects.all().order_by('-created_at')
+    orders = Order.objects.all().select_related('user').prefetch_related('items__product').order_by('-created_at')
     
+    # Apply search filter (order ID or customer name only)
+    if search_query:
+        orders = orders.filter(
+            Q(id__icontains=search_query) |
+            Q(user__username__icontains=search_query)
+        ).distinct()
+    
+    # Apply status filter
     if status_filter:
         orders = orders.filter(status=status_filter)
     
     return render(request, 'admin/orders.html', {
         'orders': orders,
         'status_filter': status_filter,
+        'search_query': search_query,
     })
+
 
 
 @staff_member_required
