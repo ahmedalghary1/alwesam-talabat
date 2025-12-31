@@ -83,7 +83,7 @@ a {
     background: var(--navbar-bg);
     border-bottom: 3px solid var(--brand-yellow);
     padding: 0.75rem 0;
-    position: fixed;
+    position: fixed !important;
     /* ثابت تماماً في الأعلى */
     top: 0;
     left: 0;

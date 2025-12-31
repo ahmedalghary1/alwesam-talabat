@@ -43,12 +43,12 @@
             {% if product.image or product_images %}
             <div class="thumbs-scroll">
                 {% if product.image %}
-                <button class="thumb-btn active" onclick="switchImage('{{ product.image.url }}', this)">
+                <button class="thumb-btn active" onmouseover="switchImage('{{ product.image.url }}', this)">
                     <img src="{{ product.image.url }}" alt="{{ product.name }}">
                 </button>
                 {% endif %}
                 {% for img in product_images %}
-                <button class="thumb-btn" onclick="switchImage('{{ img.image.url }}', this)">
+                <button class="thumb-btn" onmouseover="switchImage('{{ img.image.url }}', this)">
                     <img src="{{ img.image.url }}" alt="{{ product.name }}">
                 </button>
                 {% endfor %}
@@ -613,7 +613,7 @@
                 images.forEach((img, index) => {
                     const btn = document.createElement('button');
                     btn.className = 'thumb-btn' + (index === 0 ? ' active' : '');
-                    btn.onclick = () => switchImage(img.url, btn);
+                    btn.onmouseover = () => switchImage(img.url, btn);
 
                     const imgEl = document.createElement('img');
                     imgEl.src = img.url;

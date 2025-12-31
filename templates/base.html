@@ -213,6 +213,7 @@
     </style>
     {% compress css %}
     <link rel="stylesheet" href="{% static 'css/base_styles.css' %}">
+    <link rel="stylesheet" href="{% static 'css/customer-service.css' %}">
 
     {% block extra_css %}{% endblock %}
 
@@ -262,6 +263,8 @@
                             منتج</a>
                         <a href="{% url 'admin_app:admin_orders' %}"><i class="fas fa-clipboard-list"></i> متابعة
                             الطلبات</a>
+                        <a href="{% url 'admin_support:messages_list' %}"><i class="fas fa-comments"></i> رسائل
+                            العملاء</a>
                     </div>
                 </li>
                 {% endif %}
@@ -337,6 +340,49 @@
             {{ message }}
         </div>
         {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- CUSTOMER SUPPORT CHAT SYSTEM -->
+    {% if user.is_authenticated and '/admin' not in request.path and '/admin-panel' not in request.path %}
+    <!-- الزر العائم -->
+    <div id="supportFloatingBtn" class="support-floating-btn">
+        <i class="fas fa-headset"></i>
+    </div>
+
+    <!-- نافذة الدردشة -->
+    <div id="supportChatWindow" class="support-chat-window">
+        <div class="support-chat-header">
+            <div class="support-chat-header-info">
+                <div class="support-chat-avatar">
+                    <i class="fas fa-headset"></i>
+                </div>
+                <div class="support-chat-title">
+                    <h3>خدمة العملاء</h3>
+                    <span>
+                        <span class="support-status-indicator"></span>
+                        متصل الآن
+                    </span>
+                </div>
+            </div>
+            <button id="supportCloseBtn" class="support-chat-close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div id="supportChatBody" class="support-chat-body">
+            <!-- الرسائل ستظهر هنا -->
+        </div>
+
+        <div class="support-chat-footer">
+            <form class="support-chat-form" onsubmit="return false;">
+                <textarea id="supportMessageInput" class="support-chat-input" placeholder="اكتب رسالتك هنا..."
+                    rows="1"></textarea>
+                <button id="supportSendBtn" type="button" class="support-send-btn">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </form>
+        </div>
     </div>
     {% endif %}
 
@@ -455,6 +501,7 @@
     <!-- JAVASCRIPT -->
     <script src="{% static 'js/script.js' %}"></script>
     <script src="{% static 'js/validation.js' %}"></script>
+    <script src="{% static 'js/customer-service.js' %}"></script>
 
     {% endcompress %}
 

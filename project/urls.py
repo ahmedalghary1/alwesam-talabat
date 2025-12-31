@@ -36,7 +36,9 @@ urlpatterns = [
     path('products/', include('products.urls')),
     path('orders/', include('orders.urls')),
     path('cart/', include('cart.urls')),
+    path('support/', include('support.urls')),  # Customer support
     path('admin-panel/', include('home.admin_urls')),  # Admin panel routes
+    path('admin-panel/support/', include('support.admin_urls')),  # Support admin routes
     
     # SEO: Sitemap
     path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),

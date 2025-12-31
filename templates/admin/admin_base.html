@@ -346,6 +346,10 @@
                 <i class="fas fa-shopping-bag"></i>
                 <span>الطلبات</span>
             </a>
+            <a href="{% url 'admin_support:messages_list' %}" class="sidebar-link">
+                <i class="fas fa-shopping-bag"></i>
+                <span>رسائل العملاء</span>
+            </a>
             <a href="{% url 'admin_app:pending_users' %}"
                 class="sidebar-link {% block sidebar_pending_users %}{% endblock %}">
                 <i class="fas fa-user-clock"></i>

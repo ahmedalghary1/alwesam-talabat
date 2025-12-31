@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'orders',
     'cart',
     'home',
+    'support',  # Customer support messaging system
 ]
 
 STATICFILES_FINDERS = (
