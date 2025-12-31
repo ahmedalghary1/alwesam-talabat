@@ -543,3 +543,525 @@ body.theme-dark .related-card img {
         font-size: 0.8rem;
     }
 }
+
+
+
+/* CRITICAL FIX: Horizontal Scrolling Thumbnails */
+/* Parent container constraint */
+.gallery-container,
+.product-gallery,
+.main-image-frame {
+    max-width: 100% !important;
+    overflow: hidden !important;
+}
+
+/* Thumbnails scroll container */
+.thumbs-scroll {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 10px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scroll-behavior: smooth !important;
+    -webkit-overflow-scrolling: touch !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    padding: 10px 0 !important;
+}
+
+/* Individual thumbnail buttons */
+.thumb-btn {
+    flex-shrink: 0 !important;
+    flex-grow: 0 !important;
+    width: 80px !important;
+    height: 80px !important;
+    min-width: 80px !important;
+    max-width: 80px !important;
+    box-sizing: border-box !important;
+}
+
+@media (max-width: 768px) {
+    .thumb-btn {
+        width: 70px !important;
+        height: 70px !important;
+        min-width: 70px !important;
+        max-width: 70px !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .thumb-btn {
+        width: 60px !important;
+        height: 60px !important;
+        min-width: 60px !important;
+        max-width: 60px !important;
+    }
+}
+
+/* Premium Variant Selection Styling - Dark Theme Compatible */
+.variant-section {
+    margin: 25px 0;
+    padding: 20px;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+
+.variant-section h4 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--text-primary);
+    margin-bottom: 15px;
+}
+
+.variant-section h4 i {
+    color: #FFC400;
+    font-size: 18px;
+}
+
+/* Variant Options Grid */
+.variant-section .variant-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+}
+
+.variant-section .variant-btn {
+    background: var(--card-bg);
+    padding: 15px;
+    border-radius: 10px;
+    border: 2px solid var(--border-color);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    position: relative;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.variant-section .variant-btn:hover {
+    border-color: #FFC400;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 196, 0, 0.2);
+}
+
+.variant-section .variant-btn.active {
+    border-color: #FFC400;
+    background: var(--yellow-gradient);
+    box-shadow: 0 4px 15px rgba(255, 196, 0, 0.3);
+}
+
+/* Dark theme specific active state */
+.theme-dark .variant-section .variant-btn.active {
+    background: linear-gradient(135deg, rgba(255, 196, 0, 0.15) 0%, rgba(255, 196, 0, 0.05) 100%);
+}
+
+.variant-section .variant-btn.active::before {
+    content: "\f00c";
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    position: absolute;
+    top: 50%;
+    left: 8px;
+    transform: translateY(-50%);
+    width: 22px;
+    height: 22px;
+    background: #FFC400;
+    color: #292222;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+}
+
+.variant-section .variant-btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .variant-section .variant-options {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Color Circle Display */
+.color-circle {
+    display: inline-block;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid var(--border-color);
+    margin-left: 8px;
+    vertical-align: middle;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+}
+
+.theme-dark .color-circle {
+    box-shadow: 0 2px 6px rgba(255, 255, 255, 0.1);
+}
+
+/* Size Badges */
+.sizes-container {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-color);
+}
+
+.size-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    transition: all 0.3s ease;
+}
+
+.theme-dark .size-badge {
+    background: rgba(255, 196, 0, 0.1);
+    border-color: rgba(255, 196, 0, 0.3);
+}
+
+/* Update variant btn to support color and sizes */
+.variant-section .variant-btn {
+    background: var(--card-bg);
+    padding: 15px;
+    padding-left: 40px;
+    /* Extra padding on left to avoid overlap with checkmark */
+    padding-right: 20px;
+    /* Extra padding on right for text spacing */
+    border-radius: 10px;
+    border: 2px solid var(--border-color);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: right;
+    /* Align text to the right (Arabic direction) */
+    position: relative;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    flex-direction: row-reverse;
+    /* Icon on left, text on right in RTL */
+    align-items: center;
+    justify-content: flex-end;
+    /* Align content to the right (end) in RTL */
+    gap: 8px;
+    min-height: 60px;
+}
+
+.variant-btn-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .variant-section .variant-options {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .color-circle {
+        width: 18px;
+        height: 18px;
+    }
+
+    .size-badge {
+        font-size: 0.7rem;
+        padding: 3px 8px;
+    }
+}
+
+@media (max-width: 576px) {
+    .variant-section .variant-options {
+        grid-template-columns: 1fr;
+    }
+
+    .variant-section .variant-btn {
+        padding: 12px;
+    }
+
+    .color-circle {
+        width: 16px;
+        height: 16px;
+        margin-left: 6px;
+    }
+
+    .size-badge {
+        font-size: 0.65rem;
+        padding: 2px 6px;
+    }
+
+    .sizes-container {
+        gap: 4px;
+        margin-top: 8px;
+        padding-top: 8px;
+    }
+}
+
+/* New Interactive Color and Size Selection Styles */
+.variant-selection-section {
+    margin-top: 1.5rem;
+}
+
+.variant-selection-section h4 {
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+    font-size: 1.1rem;
+}
+
+/* Mobile: Show variant selection after gallery */
+@media (max-width: 768px) {
+    .product-info-col {
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Reorder elements on mobile */
+    .stock-badge {
+        order: 1;
+    }
+
+    .page-title {
+        order: 2;
+    }
+
+    .variant-selection-section {
+        order: 3;
+        /* Show variant selection right after title */
+        margin-top: 1rem;
+    }
+
+    .specs-panel {
+        order: 4;
+    }
+
+    .product-description {
+        order: 5;
+    }
+
+    .variant-section {
+        order: 6;
+    }
+
+    .action-row {
+        order: 7;
+    }
+}
+
+.color-selection {
+    display: flex;
+    gap: 15px;
+    row-gap: 50px;
+    /* Larger vertical spacing between rows */
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+    padding-top: 20px;
+    /* Space above color squares */
+    padding-bottom: 20px;
+    /* Space for color name labels below squares */
+}
+
+.color-option {
+    /* Square shape with rounded corners */
+    width: 70px;
+    height: 70px;
+    border-radius: 12px;
+    border: 3px solid transparent;
+    cursor: pointer;
+    transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+
+    /* 3D Effect - Elevated look */
+    box-shadow:
+        0 4px 8px rgba(0, 0, 0, 0.15),
+        0 8px 16px rgba(0, 0, 0, 0.1),
+        inset 0 -2px 4px rgba(0, 0, 0, 0.2),
+        inset 0 2px 4px rgba(255, 255, 255, 0.3);
+
+    /* Subtle outline for visibility */
+    outline: 1px solid rgba(128, 128, 128, 0.2);
+    outline-offset: 0px;
+}
+
+.theme-dark .color-option {
+    outline: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow:
+        0 4px 10px rgba(0, 0, 0, 0.4),
+        0 8px 20px rgba(0, 0, 0, 0.3),
+        inset 0 -2px 4px rgba(0, 0, 0, 0.4),
+        inset 0 2px 4px rgba(255, 255, 255, 0.1);
+}
+
+.color-option:hover:not(.disabled) {
+    transform: translateY(-8px) scale(1.05);
+    box-shadow:
+        0 4px 8px rgba(0, 0, 0, 0.15),
+        0 8px 16px rgba(0, 0, 0, 0.1),
+        inset 0 -2px 4px rgba(0, 0, 0, 0.2),
+        inset 0 2px 4px rgba(255, 255, 255, 0.4);
+    outline-color: #FFC400;
+    outline-width: 2px;
+}
+
+.color-option.selected {
+    outline-color: #FFC400;
+    outline-width: 3px;
+    outline-offset: 1px;
+    transform: translateY(-3px) scale(1.08);
+    box-shadow:
+        0 4px 8px rgba(0, 0, 0, 0.15),
+        0 8px 16px rgba(0, 0, 0, 0.1),
+        inset 0 -3px 6px rgba(0, 0, 0, 0.25),
+        inset 0 3px 6px rgba(255, 255, 255, 0.5);
+}
+
+.color-option.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Color name label below the square */
+.color-option::before {
+    content: attr(data-color-name);
+    position: absolute;
+    bottom: -35px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-weight: 700;
+    font-size: 0.75rem;
+    color: var(--text-primary);
+    white-space: nowrap;
+    padding: 4px 8px;
+    opacity: 0.9;
+}
+
+.color-option.selected::before {
+    color: #FFC400;
+    font-weight: 800;
+    opacity: 1;
+}
+
+/* Tooltip for deselection hint */
+.color-option.selected::after {
+    content: "انقر مرة أخرى لإلغاء التحديد";
+    position: absolute;
+    top: -45px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 10;
+}
+
+.theme-dark .color-option.selected::after {
+    background: rgba(255, 255, 255, 0.9);
+    color: #1a1a1a;
+}
+
+.color-option.selected:hover::after {
+    opacity: 1;
+}
+
+.size-selection-wrapper {
+    margin-top: 1.5rem;
+}
+
+.size-selection {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.size-option {
+    padding: 12px 24px;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--card-bg);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.size-option:hover:not(.disabled) {
+    border-color: #FFC400;
+    background: rgba(255, 196, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.size-option.selected {
+    background: #FFC400;
+    border-color: #FFC400;
+    color: #1a1a1a;
+    box-shadow: 0 4px 8px rgba(255, 196, 0, 0.3);
+}
+
+.size-option.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background: var(--bg-secondary);
+}
+
+@media (max-width: 768px) {
+    .color-option {
+        width: 60px;
+        height: 60px;
+    }
+
+    .color-option::before {
+        font-size: 0.7rem;
+        bottom: -32px;
+    }
+
+    .size-option {
+        padding: 10px 18px;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .color-option {
+        width: 55px;
+        height: 55px;
+    }
+
+    .color-option::before {
+        font-size: 0.65rem;
+        bottom: -30px;
+        padding: 3px 6px;
+    }
+
+    .size-option {
+        padding: 8px 14px;
+        font-size: 0.85rem;
+    }
+}

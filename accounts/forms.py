@@ -16,6 +16,26 @@ class SignupForm(forms.ModelForm):
             'phone': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'أدخل رقم هاتفك'}),
             'address': forms.Textarea(attrs={'class': 'form-input', 'rows': 3, 'placeholder': 'أدخل عنوانك الكامل'}),
         }
+    
+    image = forms.ImageField(label='صورة الملف الشخصي', required=False, widget=forms.FileInput(attrs={'class': 'form-input'}))
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        if CustomUser.objects.filter(username=username).exists():
+            raise forms.ValidationError("اسم المستخدم هذا مستخدم بالفعل")
+        return username
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if CustomUser.objects.filter(email=email).exists():
+            raise forms.ValidationError("البريد الإلكتروني هذا مستخدم بالفعل")
+        return email
+
+    def clean_phone(self):
+        phone = self.cleaned_data.get('phone')
+        if CustomUser.objects.filter(phone=phone).exists():
+            raise forms.ValidationError("رقم الهاتف هذا مستخدم بالفعل")
+        return phone
 
     def clean_password2(self):
         password1 = self.cleaned_data.get('password1')
@@ -30,6 +50,13 @@ class SignupForm(forms.ModelForm):
         if commit:
             user.save()
         return user
+
+    def save_profile_image(self, user):
+        """Save the profile image if provided"""
+        image = self.cleaned_data.get('image')
+        if image and hasattr(user, 'profile'):
+            user.profile.image = image
+            user.profile.save()
 
 
 class LoginForm(forms.Form):
@@ -102,3 +129,24 @@ class ProfileUpdateForm(forms.ModelForm):
             if len(phone) < 10:
                 raise forms.ValidationError('رقم الهاتف يجب أن يكون 10 أرقام على الأقل.')
         return phone
+        if phone:
+            # إزالة المسافات والرموز غير الضرورية
+            phone = phone.strip()
+            if len(phone) < 10:
+                raise forms.ValidationError('رقم الهاتف يجب أن يكون 10 أرقام على الأقل.')
+        return phone
+
+
+class ProfileImageForm(forms.ModelForm):
+    class Meta:
+        from .models import Profile
+        model = Profile
+        fields = ['image', 'bio']
+        labels = {
+            'image': 'صورة الملف الشخصي',
+            'bio': 'نبذة شخصية',
+        }
+        widgets = {
+            'image': forms.FileInput(attrs={'class': 'form-input'}),
+            'bio': forms.Textarea(attrs={'class': 'form-textarea', 'rows': 3, 'placeholder': 'اكتب نبذة عنك...'}),
+        }

@@ -60,7 +60,12 @@
                     <td>
                         <div class="user-info">
                             <div class="user-avatar">
+                                {% if user.profile.image %}
+                                <img src="{{ user.profile.image.url }}" alt="{{ user.username }}"
+                                    style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                                {% else %}
                                 <i class="fas fa-user"></i>
+                                {% endif %}
                             </div>
                             <div>
                                 <strong>{{ user.username }}</strong>

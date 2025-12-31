@@ -7,7 +7,7 @@ from django.utils import translation
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django_ratelimit.decorators import ratelimit
-from .forms import SignupForm, LoginForm, ProfileUpdateForm
+from .forms import SignupForm, LoginForm, ProfileUpdateForm, ProfileImageForm
 from .models import CustomUser
 from cart.models import Cart, CartItem
 from products.models import Product
@@ -27,6 +27,9 @@ def signup_view(request):
             # Set user as inactive - requires admin approval
             user.is_active = False
             user.save()
+            
+            # Save profile image
+            form.save_profile_image(user)
             
             logger.info(f'New user registered (inactive): {user.email}')
             
@@ -99,15 +102,26 @@ def profile_view(request):
 def update_profile(request):
     """تحديث معلومات المستخدم"""
     if request.method == 'POST':
-        form = ProfileUpdateForm(request.POST, instance=request.user)
-        if form.is_valid():
-            form.save()
+        user_form = ProfileUpdateForm(request.POST, instance=request.user)
+        # Handle profile fields if they exist, otherwise create/get profile
+        profile = getattr(request.user, 'profile', None)
+        profile_form = ProfileImageForm(request.POST, request.FILES, instance=profile)
+
+        if user_form.is_valid() and profile_form.is_valid():
+            user_form.save()
+            profile_form.save()
             messages.success(request, 'تم تحديث معلوماتك بنجاح')
             return redirect('accounts:profile')
     else:
-        form = ProfileUpdateForm(instance=request.user)
+        user_form = ProfileUpdateForm(instance=request.user)
+        # Create profile if not exists
+        profile = getattr(request.user, 'profile', None)
+        profile_form = ProfileImageForm(instance=profile)
     
-    return render(request, 'accounts/update_profile.html', {'form': form})
+    return render(request, 'accounts/update_profile.html', {
+        'form': user_form,
+        'profile_form': profile_form
+    })
 
 
 def sync_cart_on_login(request):

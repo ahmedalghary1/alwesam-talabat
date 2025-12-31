@@ -1,18 +1,44 @@
-{% load static %}
+{% load compress static %}
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}الوسام طلبات{% endblock %}</title>
+
+    <!-- SEO: Title -->
+    <title>{% block title %}الوسام - أدوات كهربائية بالجملة | مستلزمات كهرباء للتجار في مصر 2025{% endblock %}</title>
+
+    <!-- SEO: Meta Description -->
+    <meta name="description"
+        content="{% block meta_description %}الوسام - موزع معتمد للأدوات والمستلزمات الكهربائية بالجملة في مصر. أسعار تنافسية للتجار، توصيل سريع، منتجات أصلية مضمونة. اطلب الآن!{% endblock %}">
+
+    <!-- SEO: Keywords -->
+    <meta name="keywords"
+        content="أدوات كهربائية جملة, مستلزمات كهرباء للتجار, بيع أدوات كهربائية بالجملة في مصر, موزع أدوات كهربائية, معدات كهربائية جملة">
+
+    <!-- SEO: Canonical URL -->
+    <link rel="canonical" href="{% block canonical_url %}{{ request.build_absolute_uri }}{% endblock %}">
+
+    <!-- SEO: Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    <meta property="og:title"
+        content="{% block og_title %}الوسام - أدوات كهربائية بالجملة | مستلزمات كهرباء للتجار في مصر{% endblock %}">
+    <meta property="og:description"
+        content="{% block og_description %}موزع معتمد للأدوات الكهربائية بالجملة. أسعار تنافسية، توصيل سريع، منتجات أصلية مضمونة{% endblock %}">
+    <meta property="og:image"
+        content="{% block og_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'images/ELWSAM.png' %}{% endblock %}">
+    <meta property="og:locale" content="ar_EG">
+    <meta property="og:site_name" content="الوسام طلبات">
+
+    <!-- Favicon -->
     <link rel="icon" href="{% static 'images/ELWSAM.png' %}" type="image/png">
 
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="{% static 'css/base_styles.css' %}">
 
     <!-- إضافة Swiper CSS إذا كنت تستخدمه -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
@@ -185,11 +211,16 @@
             }
         }
     </style>
+    {% compress css %}
+    <link rel="stylesheet" href="{% static 'css/base_styles.css' %}">
 
     {% block extra_css %}{% endblock %}
+
+    {% endcompress %}
 </head>
 
-<body data-user-authenticated="{% if user.is_authenticated %}true{% else %}false{% endif %}">
+<body data-user-authenticated="{% if user.is_authenticated %}true{% else %}false{% endif %}"
+    class="{% block body_class %}{% endblock %}">
     <!-- CSRF Token for AJAX requests -->
     {% csrf_token %}
 
@@ -249,16 +280,17 @@
                     <span class="cart-badge" id="cart-count">{{ cart_count|default:0 }}</span>
                 </a>
 
-                <!-- Mobile Toggle -->
-                <button class="mobile-toggle" onclick="toggleMenu()">
-                    <i class="fas fa-bars"></i>
-                </button>
 
                 <!-- User -->
                 {% if user.is_authenticated %}
-                <a href="{% url 'accounts:profile' %}" class="btn-yellow">
+                <a href="{% url 'accounts:profile' %}" class="btn-icon" title="الملف الشخصي"
+                    style="width: 45px; height: 45px; padding: 0; overflow: hidden; border-radius: 50%;">
+                    {% if user.profile.image %}
+                    <img src="{{ user.profile.image.url }}" alt="{{ user.username }}"
+                        style="width: 100%; height: 100%; object-fit: cover;">
+                    {% else %}
                     <i class="fas fa-user"></i>
-                    <span>{{ user.username }}</span>
+                    {% endif %}
                 </a>
                 {% else %}
                 <a href="{% url 'accounts:login' %}" class="btn-yellow">
@@ -266,6 +298,12 @@
                     <span>دخول</span>
                 </a>
                 {% endif %}
+
+
+                <!-- Mobile Toggle -->
+                <button class="mobile-toggle" onclick="toggleMenu()">
+                    <i class="fas fa-bars"></i>
+                </button>
             </div>
         </div>
     </nav>
@@ -362,11 +400,63 @@
                     style="color: var(--brand-yellow);">طلبات</span> - جميع الحقوق محفوظة
             </div>
         </div>
+
+        <!-- SEO: Organization Schema Markup -->
+        <script type="application/ld+json">
+        {
+          "@context": "https://schema.org",
+          "@type": "LocalBusiness",
+          "name": "الوسام - أدوات كهربائية بالجملة",
+          "alternateName": "Alwesam Electrical Wholesale",
+          "description": "موزع معتمد للأدوات والمستلزمات الكهربائية بالجملة في مصر. أسعار تنافسية للتجار، توصيل سريع، منتجات أصلية مضمونة.",
+          "image": "{{ request.scheme }}://{{ request.get_host }}{% static 'images/ELWSAM.png' %}",
+          "logo": "{{ request.scheme }}://{{ request.get_host }}{% static 'images/ELWSAM.png' %}",
+          "url": "{{ request.scheme }}://{{ request.get_host }}/",
+          "telephone": "01001252900",
+          "priceRange": "جملة",
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "شارع مستجد ١٢ والجمال",
+            "addressLocality": "المطرية",
+            "addressRegion": "الدقهلية",
+            "addressCountry": "EG"
+          },
+          "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": "31.1656",
+            "longitude": "31.4913"
+          },
+          "openingHoursSpecification": [
+            {
+              "@type": "OpeningHoursSpecification",
+              "dayOfWeek": [
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Saturday",
+                "Sunday"
+              ],
+              "opens": "09:00",
+              "closes": "18:00"
+            }
+          ],
+          "sameAs": [
+            "https://www.facebook.com/people/Elwsam-Electric/61575621072046/",
+            "https://wa.me/201001252900",
+            "https://www.instagram.com/elwsamelectric/"
+          ]
+        }
+        </script>
     </footer>
+
+    {% compress js %}
 
     <!-- JAVASCRIPT -->
     <script src="{% static 'js/script.js' %}"></script>
     <script src="{% static 'js/validation.js' %}"></script>
+
+    {% endcompress %}
 
     <!-- Swiper JS إذا كنت تستخدمه -->
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
@@ -376,6 +466,10 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
         crossorigin="anonymous"></script>
+
+
+
+
 
     <script>
         // وظيفة الـ slider الأساسية
@@ -581,6 +675,23 @@
             // يمكنك إضافة منطق تحديث عداد السلة هنا
         }
 
+        // تأثير navbar عند التمرير
+        let lastScrollTop = 0;
+        const navbar = document.querySelector('.navbar');
+
+        window.addEventListener('scroll', function () {
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+
+            // إضافة class 'scrolled' عند التمرير لأسفل أكثر من 50px
+            if (scrollTop > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+
+            lastScrollTop = scrollTop;
+        }, { passive: true });
+
         // تحسينات للهواتف عند تغيير الاتجاه
         window.addEventListener('orientationchange', function () {
             setTimeout(function () {
@@ -589,6 +700,26 @@
             }, 300);
         });
     </script>
+
+
+    <!-- <script>
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('selectstart', e => e.preventDefault());
+    document.addEventListener('copy', e => e.preventDefault());
+
+    document.addEventListener('keydown', function(e) {
+        if (
+            e.key === "F12" ||
+            (e.ctrlKey && e.shiftKey && ["I","C","J"].includes(e.key)) ||
+            (e.ctrlKey && e.key === "U")
+        ) {
+            e.preventDefault();
+        }
+    });
+</script> -->
+
+
+
 </body>
 
 </html>

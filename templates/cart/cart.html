@@ -893,9 +893,14 @@
         const currentQty = parseInt(qtyElement.textContent);
         const newQty = currentQty + change;
 
-        if (newQty < 1) {
-            removeFromCart(itemId);
+        // إذا كانت الكمية الحالية = 1 والمستخدم يحاول إنقاصها، اعرض رسالة تأكيد الحذف
+        if (currentQty === 1 && change === -1) {
+            removeFromCart(itemId, null);  // سيعرض modal التأكيد
             return;
+        }
+
+        if (newQty < 1) {
+            return;  // حماية إضافية (لن يحدث بعد التحقق السابق)
         }
 
         try {
@@ -1230,6 +1235,17 @@
         if (cart[index]) {
             const unitType = cart[index].unit_type || 'carton';
             const pcsCarton = cart[index].pcs_carton || 24;
+
+            // حساب الكمية المعروضة الحالية بناءً على نوع الوحدة
+            const currentDisplayQty = (unitType === 'carton')
+                ? Math.floor(cart[index].quantity / pcsCarton)
+                : cart[index].quantity;
+
+            // إذا كانت الكمية المعروضة = 1 والمستخدم يحاول إنقاصها، اعرض رسالة تأكيد الحذف
+            if (currentDisplayQty === 1 && change === -1) {
+                removeLocalItem(index);  // سيعرض modal التأكيد
+                return;
+            }
 
             // Calculate new quantity based on unit type
             if (unitType === 'piece') {

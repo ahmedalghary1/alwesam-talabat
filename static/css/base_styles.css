@@ -1,5 +1,8 @@
 /* ==================== CSS VARIABLES ==================== */
 :root {
+    /* Typography - مكان مركزي لتغيير خط الموقع بالكامل */
+    --font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
+
     /* Brand Colors */
     --brand-black: #1a1a1a;
     --brand-yellow: #FFC400;
@@ -44,12 +47,17 @@ body.theme-dark {
 }
 
 body {
-    font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
+    font-family: var(--font-family);
     background: var(--bg-primary);
     color: var(--text-primary);
     line-height: 1.6;
     transition: background 0.3s ease, color 0.3s ease;
     overflow-x: hidden;
+}
+
+/* تعويض ارتفاع navbar - لجميع الصفحات عدا الرئيسية */
+body:not(.home-page) {
+    padding-top: 80px;
 }
 
 html {
@@ -75,10 +83,27 @@ a {
     background: var(--navbar-bg);
     border-bottom: 3px solid var(--brand-yellow);
     padding: 0.75rem 0;
-    position: sticky;
+    position: fixed;
+    /* ثابت تماماً في الأعلى */
     top: 0;
+    left: 0;
+    right: 0;
     z-index: 1000;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+/* تأثير عند التمرير - يمكن تفعيله بـ JavaScript */
+.navbar.scrolled {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    padding: 0.5rem 0;
+    /* تصغير طفيف عند التمرير */
+}
+
+main {
+    min-height: calc(100vh - 80px);
+    /* ضمان ارتفاع كافٍ للتمرير */
 }
 
 .nav-container {

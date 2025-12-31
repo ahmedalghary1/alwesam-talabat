@@ -3,8 +3,14 @@ from products.models import Category
 
 
 def home(request):
-    """الصفحة الرئيسية - عرض الأقسام"""
-    categories = Category.objects.all() # أول 10 أقسام
-    return render(request, 'home/home.html', {
-        'categories': categories
-    })
+    """Home page view"""
+    categories = Category.objects.all()
+    context = {
+        'categories': categories,
+    }
+    return render(request, 'home/home.html', context)
+
+
+def faq(request):
+    """FAQ page view for SEO"""
+    return render(request, 'home/faq.html')

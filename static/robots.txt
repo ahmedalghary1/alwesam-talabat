@@ -1,0 +1,23 @@
+# Alwesam Electrical Wholesale - Robots.txt
+# موقع الوسام للأدوات الكهربائية بالجملة
+
+User-agent: *
+Allow: /
+Allow: /products/
+Allow: /products/category/
+Allow: /static/
+
+# Disallow admin and private areas
+Disallow: /admin/
+Disallow: /accounts/login/
+Disallow: /accounts/signup/
+Disallow: /cart/
+Disallow: /orders/
+Disallow: /media/cache/
+
+# Allow search engines to index product images
+Allow: /media/product-image/
+Allow: /media/category-images/
+
+# Sitemap location
+Sitemap: https://www.elwsam.com/sitemap.xml

@@ -1,7 +1,10 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}الوسام طلبات - الرئيسية{% endblock %}
+{% block title %}الوسام - أدوات كهربائية بالجملة | مستلزمات كهرباء للتجار في مصر 2025{% endblock %}
+{% block meta_description %}الوسام - موزع معتمد للأدوات والمستلزمات الكهربائية بالجملة في مصر. أسعار تنافسية للتجار،
+توصيل سريع، منتجات أصلية مضمونة. اطلب الآن!{% endblock %}
+{% block body_class %}home-page{% endblock %}
 {% block nav_home %}active{% endblock %}
 
 {% block extra_css %}
@@ -17,17 +20,20 @@
         <div class="slider-slides">
             <!-- Slide 1 -->
             <div class="slide slide-1">
-                <img src="{% static 'images/link3.jpg' %}" alt="الوسام طلبات - مستلزمات كهربائية">
+                <img src="{% static 'images/link3.jpg' %}"
+                    alt="الوسام - موزع أدوات كهربائية بالجملة في مصر - مستلزمات كهرباء للتجار">
             </div>
 
             <!-- Slide 2 -->
             <div class="slide slide-2">
-                <img src="{% static 'images/link3 copy.jpg' %}" alt="مستودع الوسام - معدات كهربائية">
+                <img src="{% static 'images/link3 copy.jpg' %}"
+                    alt="مستودع الوسام للأدوات الكهربائية بالجملة - معدات كهربائية أصلية">
             </div>
 
             <!-- Slide 3 -->
             <div class="slide slide-3">
-                <img src="{% static 'images/link3 copy 2.jpg' %}" alt="صالة عرض الوسام - منتجات كهربائية">
+                <img src="{% static 'images/link3 copy 2.jpg' %}"
+                    alt="صالة عرض الوسام - منتجات كهربائية بالجملة لتجار القاهرة والجيزة">
             </div>
 
         </div>
@@ -49,6 +55,10 @@
             <br>الموثوقية والجودة بأسعار الجملة المميزة
         </p>
 
+        <div class="section-header">
+            <h2 class="section-title">تصفح <span class="yellow">منتجاتنا</span></h2>
+            <p class="section-subtitle">اختر القسم المناسب لاحتياجاتك</p>
+        </div>
         <!-- Scroll Arrow -->
         <a href="#categories" class="scroll-arrow">
             <i class="fas fa-chevron-down"></i>
@@ -58,17 +68,15 @@
 
 <!-- Categories Section -->
 <section class="section section-animate" id="categories">
-    <div class="section-header">
-        <h2 class="section-title">تصفح <span class="yellow">منتجاتنا</span></h2>
-        <p class="section-subtitle">اختر القسم المناسب لاحتياجاتك</p>
-    </div>
+
 
     {% if categories %}
     <div class="categories-grid">
         {% for category in categories %}
         <a href="{% url 'products:category_products' category.slug %}" class="category-card card-animate">
             {% if category.image %}
-            <img src="{{ category.image.url }}" alt="{{ category.name }}" class="category-image" loading="lazy">
+            <img src="{{ category.image.url }}" alt="{{ category.name }} بالجملة - أسعار مميزة للتجار من الوسام"
+                class="category-image" loading="lazy">
             {% else %}
             <div class="category-icon">
                 <i class="fas fa-cube"></i>
@@ -304,8 +312,8 @@
             }
         });
     }, {
-        threshold: 0.1,  // ✅ تقليل من 0.2 لظهور أسرع
-        rootMargin: '0px 0px 50px 0px'  // ✅ إيجابي لبدء التأثير قبل دخول viewport
+        threshold: 0.01,
+        rootMargin: '0px 0px 150px 0px'
     });
 
     // Observer للأقسام - تأثير متكرر في كل مرة
@@ -320,26 +328,70 @@
             }
         });
     }, {
-        threshold: 0.05,  // ✅ تقليل من 0.15 لظهور أسرع جداً
-        rootMargin: '0px 0px 100px 0px'  // ✅ يبدأ قبل دخول viewport بـ 100px
+        threshold: 0.01,
+        rootMargin: '0px 0px 200px 0px'
     });
 
-    // Observer للبطاقات - تأثير متكرر في كل مرة مع تأخير تدريجي
+    // ========== نظام قياس سرعة التمرير ==========
+    let lastScrollY = window.pageYOffset;
+    let lastScrollTime = Date.now();
+    let scrollVelocity = 0;
+    let baseDelay = 0.1; // التأخير الأساسي بين الكروت
+
+    // تحديث سرعة التمرير
+    window.addEventListener('scroll', () => {
+        const currentScrollY = window.pageYOffset;
+        const currentTime = Date.now();
+        const timeDiff = currentTime - lastScrollTime;
+
+        if (timeDiff > 0) {
+            const scrollDiff = Math.abs(currentScrollY - lastScrollY);
+            scrollVelocity = scrollDiff / timeDiff; // pixels per millisecond
+        }
+
+        lastScrollY = currentScrollY;
+        lastScrollTime = currentTime;
+    }, { passive: true });
+
+    // دالة لحساب التأخير بناءً على سرعة التمرير
+    function getAdaptiveDelay(index) {
+        // إذا كانت السرعة عالية (> 2 pixels/ms)، قلل التأخير
+        // إذا كانت السرعة منخفضة، استخدم التأخير العادي
+        let delayMultiplier = 1;
+
+        if (scrollVelocity > 2) {
+            delayMultiplier = 0.4; // تمرير سريع جداً - تأخير 40% فقط
+        } else if (scrollVelocity > 1) {
+            delayMultiplier = 0.6; // تمرير سريع - تأخير 60%
+        } else if (scrollVelocity > 0.5) {
+            delayMultiplier = 0.8; // تمرير متوسط - تأخير 80%
+        }
+        // تمرير بطيء أو ثابت = delayMultiplier = 1 (100%)
+
+        return index * baseDelay * delayMultiplier;
+    }
+
+    // Observer للبطاقات - تأثير يظهر مرة واحدة فقط لتحسين الأداء
     const cardsObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
+                const card = entry.target;
+                const index = parseInt(card.getAttribute('data-card-index'));
+
+                // تطبيق التأخير التكيفي بناءً على سرعة التمرير
+                const adaptiveDelay = getAdaptiveDelay(index);
+                card.style.transitionDelay = `${adaptiveDelay}s`;
+
                 // إضافة الكلاس مباشرة بدون تأخير للسرعة
-                entry.target.classList.add('visible');
-                console.log('✨ Card visible:', entry.target.className);
-            } else {
-                // إزالة الكلاس عند الخروج للسماح بالتأثير مرة أخرى
-                entry.target.classList.remove('visible');
-                console.log('👻 Card hidden:', entry.target.className);
+                card.classList.add('visible');
+                console.log(`✨ Card ${index} visible with delay: ${adaptiveDelay.toFixed(2)}s (velocity: ${scrollVelocity.toFixed(2)})`);
+                // إيقاف مراقبة هذا العنصر بعد ظهوره لتحسين الأداء
+                cardsObserver.unobserve(entry.target);
             }
         });
     }, {
-        threshold: 0.05,  // ✅ تقليل من 0.1 لظهور فوري تقريباً
-        rootMargin: '0px 0px 150px 0px'  // ✅ يبدأ قبل دخول viewport بـ 150px
+        threshold: 0.01,
+        rootMargin: '0px 0px 200px 0px'
     });
 
     // تطبيق الـ Observers
@@ -355,7 +407,12 @@
 
     headers.forEach(el => headerObserver.observe(el));
     sections.forEach(el => sectionObserver.observe(el));
-    cards.forEach(el => cardsObserver.observe(el));
+
+    // إضافة data-index لكل كارت لضمان الترتيب الصحيح
+    cards.forEach((card, index) => {
+        card.setAttribute('data-card-index', index);
+        cardsObserver.observe(card);
+    });
 
     // Smooth scroll for anchor links مع offset مناسب
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {

@@ -468,7 +468,39 @@ def admin_approve_user(request, user_id):
         user = get_object_or_404(CustomUser, id=user_id, is_staff=False)
         user.is_active = True
         user.save()
-        messages.success(request, f'تم تفعيل حساب "{user.username}" بنجاح')
+        
+        # Send activation email
+        try:
+            from django.core.mail import EmailMultiAlternatives
+            from django.template.loader import render_to_string
+            from django.utils.html import strip_tags
+            from django.conf import settings
+            
+            subject = 'تم تفعيل حسابك - الوسام طلبات'
+            login_url = request.build_absolute_uri('/accounts/login/')
+            
+            # Context for the email template
+            context = {
+                'username': user.username,
+                'login_url': login_url,
+            }
+            
+            # Render HTML content
+            html_content = render_to_string('emails/activation_email.html', context)
+            text_content = strip_tags(html_content)  # Fallback for plain text
+            
+            from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'info@elwsam.com')
+            recipient_list = [user.email]
+            
+            # Create the email
+            email = EmailMultiAlternatives(subject, text_content, from_email, recipient_list)
+            email.attach_alternative(html_content, "text/html")
+            email.send()
+            
+            messages.success(request, f'تم تفعيل حساب "{user.username}" وإرسال بريد إلكتروني للإشعار بنجاح')
+            
+        except Exception as e:
+            messages.success(request, f'تم تفعيل حساب "{user.username}" (فشل إرسال البريد الإلكتروني: {str(e)})')
     
     return redirect('admin_app:pending_users')
 
@@ -499,7 +531,38 @@ def admin_toggle_user_status(request, user_id):
         user.is_active = not user.is_active
         user.save()
         
-        status_text = "تفعيل" if user.is_active else "إيقاف"
-        messages.success(request, f'تم {status_text} حساب المستخدم "{user.username}" بنجاح')
+        if user.is_active:
+            status_text = "تفعيل"
+            # Send activation email
+            try:
+                from django.core.mail import EmailMultiAlternatives
+                from django.template.loader import render_to_string
+                from django.utils.html import strip_tags
+                from django.conf import settings
+                
+                subject = 'تم تفعيل حسابك - الوسام طلبات'
+                login_url = request.build_absolute_uri('/accounts/login/')
+                
+                context = {
+                    'username': user.username,
+                    'login_url': login_url,
+                }
+                
+                html_content = render_to_string('emails/activation_email.html', context)
+                text_content = strip_tags(html_content)
+                
+                from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'info@elwsam.com')
+                recipient_list = [user.email]
+                
+                email = EmailMultiAlternatives(subject, text_content, from_email, recipient_list)
+                email.attach_alternative(html_content, "text/html")
+                email.send()
+                
+                messages.success(request, f'تم تفعيل حساب "{user.username}" وإرسال بريد إلكتروني للإشعار بنجاح')
+            except Exception as e:
+                messages.success(request, f'تم تفعيل حساب "{user.username}" (فشل إرسال البريد الإلكتروني: {str(e)})')
+        else:
+            status_text = "إيقاف"
+            messages.success(request, f'تم {status_text} حساب المستخدم "{user.username}" بنجاح')
         
     return redirect('admin_app:all_users')

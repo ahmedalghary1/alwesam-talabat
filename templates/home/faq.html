@@ -1,0 +1,664 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}الأسئلة الشائعة - الوسام للأدوات الكهربائية بالجملة{% endblock %}
+{% block meta_description %}إجابات شاملة على جميع أسئلتك حول الشراء بالجملة من الوسام. معلومات عن الطلب، التوصيل،
+الأسعار، وطرق الدفع للتجار.{% endblock %}
+
+{% block extra_css %}
+<style>
+    .faq-page {
+        background: var(--bg-primary);
+        min-height: 100vh;
+        padding-top: 100px;
+    }
+
+    .faq-header {
+        text-align: center;
+        padding: 3rem 1rem;
+        background: var(--bg-secondary);
+        border-bottom: 2px solid var(--border-color);
+        margin-bottom: 3rem;
+    }
+
+    .faq-title {
+        font-size: clamp(2rem, 5vw, 3rem);
+        font-weight: 900;
+        margin-bottom: 1rem;
+        color: var(--text-primary);
+    }
+
+    .faq-title .yellow {
+        color: #FFC400;
+    }
+
+    .faq-subtitle {
+        font-size: 1.125rem;
+        color: var(--text-secondary);
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .faq-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 0 1rem 4rem;
+    }
+
+    .faq-category {
+        margin-bottom: 3rem;
+    }
+
+    .faq-category-title {
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .faq-category-icon {
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, #FFC400, #FFD700);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: #1a1a1a;
+    }
+
+    .faq-item {
+        background: var(--card-bg);
+        border: 2px solid var(--border-color);
+        border-radius: 15px;
+        margin-bottom: 1rem;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .faq-item:hover {
+        border-color: #FFC400;
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(255, 196, 0, 0.1);
+    }
+
+    .faq-question {
+        padding: 1.5rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        user-select: none;
+    }
+
+    .faq-question-text {
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        flex: 1;
+    }
+
+    .faq-toggle {
+        width: 30px;
+        height: 30px;
+        background: #FFC400;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #1a1a1a;
+        font-size: 1.25rem;
+        transition: transform 0.3s ease;
+        flex-shrink: 0;
+    }
+
+    .faq-item.active .faq-toggle {
+        transform: rotate(180deg);
+    }
+
+    .faq-answer {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+    }
+
+    .faq-answer-content {
+        padding: 0 1.5rem 1.5rem;
+        color: var(--text-secondary);
+        line-height: 1.8;
+        font-size: 1rem;
+    }
+
+    .faq-answer-content strong {
+        color: var(--text-primary);
+    }
+
+    .faq-item.active .faq-answer {
+        max-height: 1000px;
+    }
+
+    .faq-cta {
+        background: var(--card-bg);
+        border: 2px solid #FFC400;
+        border-radius: 20px;
+        padding: 2.5rem;
+        text-align: center;
+        margin-top: 3rem;
+    }
+
+    .faq-cta-title {
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+    }
+
+    .faq-cta-text {
+        color: var(--text-secondary);
+        margin-bottom: 2rem;
+        font-size: 1.125rem;
+    }
+
+    .faq-cta-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem 2rem;
+        border-radius: 50px;
+        font-weight: 700;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #FFC400, #FFD700);
+        color: #1a1a1a;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(255, 196, 0, 0.3);
+    }
+
+    .btn-secondary {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        border: 2px solid var(--border-color);
+    }
+
+    .btn-secondary:hover {
+        border-color: #FFC400;
+        transform: translateY(-2px);
+    }
+
+    @media (max-width: 768px) {
+        .faq-cta-buttons {
+            flex-direction: column;
+        }
+
+        .btn-primary,
+        .btn-secondary {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="faq-page">
+
+    <!-- Header -->
+    <div class="faq-header">
+        <h1 class="faq-title">
+            <span class="yellow">الأسئلة</span> الشائعة
+        </h1>
+        <p class="faq-subtitle">
+            كل ما تحتاج معرفته عن الشراء بالجملة من الوسام
+        </p>
+    </div>
+
+    <!-- FAQ Container -->
+    <div class="faq-container">
+
+        <!-- Category 1: معلومات عامة -->
+        <div class="faq-category">
+            <h2 class="faq-category-title">
+                <div class="faq-category-icon"><i class="fas fa-info-circle"></i></div>
+                معلومات عامة
+            </h2>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <div class="faq-question-text">ما هو موقع الوسام؟</div>
+                    <div class="faq-toggle"><i class="fas fa-chevron-down"></i></div>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        الوسام هو موقع إلكتروني متخصص في بيع <strong>الأدوات والمستلزمات الكهربائية بالجملة</strong>
+                        للتجار والموزعين في مصر.
+                        نوفر منتجات أصلية بأسعار تنافسية مع خدمة توصيل سريعة لجميع المحافظات.
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <div class="faq-question-text">من يمكنه الشراء من الوسام؟</div>
+                    <div class="faq-toggle"><i class="fas fa-chevron-down"></i></div>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        موقع الوسام مخصص للشراء <strong>بالجملة فقط</strong> ويستهدف:
+                        <ul style="margin-top: 0.5rem; padding-right: 1.5rem;">
+                            <li>أصحاب المحلات التجارية</li>
+                            <li>الموزعين والتجار</li>
+                            <li>المقاولين</li>
+                            <li>أصحاب المشاريع والشركات</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <div class="faq-question-text">هل المنتجات أصلية؟</div>
+                    <div class="faq-toggle"><i class="fas fa-chevron-down"></i></div>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        نعم، <strong>جميع منتجاتنا أصلية 100%</strong> ومضمونة من الوسام. نحرص على توفير منتجات عالية
+                        الجودة من مصادر موثوقة فقط.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category 2: الطلب والشراء -->
+        <div class="faq-category">
+            <h2 class="faq-category-title">
+                <div class="faq-category-icon"><i class="fas fa-shopping-cart"></i></div>
+                الطلب والشراء
+            </h2>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <div class="faq-question-text">ما هو الحد الأدنى للطلب؟</div>
+                    <div class="faq-toggle"><i class="fas fa-chevron-down"></i></div>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        الحد الأدنى للطلب هو <strong>كرتونة واحدة</strong> للمنتج. كما يمكنك الطلب بالقطعة حسب
+                        احتياجاتك.
+                        لكل منتج عدد محدد من القطع في الكرتونة موضح في صفحة المنتج.
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <div class="faq-question-text">كيف أقوم بتقديم طلب؟</div>
+                    <div class="faq-toggle"><i class="fas fa-chevron-down"></i></div>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        خطوات الطلب بسيطة وسهلة:
+                        <ol style="margin-top: 0.5rem; padding-right: 1.5rem;">
+                            <li><strong>سجّل حساب جديد</strong> أو سجّل دخول</li>
+                            <li><strong>تصفح المنتجات</strong> واختر ما يناسبك</li>
+                            <li><strong>أضف للسلة</strong> وحدد الكمية (كرتونة أو قطعة)</li>
+                            <li><strong>أتمم الطلب</strong> وأدخل بيانات التوصيل</li>
+                            <li><strong>تأكيد الطلب</strong> وانتظر التواصل من فريقنا</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <div class="faq-question-text">هل يمكنني تعديل طلبي بعد تأكيده؟</div>
+                    <div class="faq-toggle"><i class="fas fa-chevron-down"></i></div>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        نعم، يمكنك تعديل أو إلغاء طلبك <strong>قبل البدء في التجهيز</strong>.
+                        يُرجى التواصل معنا فوراً على <strong>01001252900</strong> أو <strong>01005434244</strong>.
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <div class="faq-question-text">هل تقدمون خصومات للكميات الكبيرة؟</div>
+                    <div class="faq-toggle"><i class="fas fa-chevron-down"></i></div>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        نعم، نقدم <strong>أسعار خاصة وخصومات مميزة</strong> للطلبات بالكميات الكبيرة.
+                        تواصل معنا مباشرة للحصول على عرض سعر مخصص يناسب احتياجاتك.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category 3: التوصيل والشحن -->
+        <div class="faq-category">
+            <h2 class="faq-category-title">
+                <div class="faq-category-icon"><i class="fas fa-truck"></i></div>
+                التوصيل والشحن
+            </h2>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <div class="faq-question-text">كم مدة التوصيل؟</div>
+                    <div class="faq-toggle"><i class="fas fa-chevron-down"></i></div>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        نوفر <strong>التوصيل السريع خلال 2-5 أيام عمل</strong> حسب موقعك الجغرافي:
+                        <ul style="margin-top: 0.5rem; padding-right: 1.5rem;">
+                            <li><strong>القاهرة والجيزة:</strong> 2-3 أيام</li>
+                            <li><strong>الدلتا والصعيد:</strong> 3-5 أيام</li>
+                            <li><strong>المحافظات النائية:</strong> 5-7 أيام</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <div class="faq-question-text">هل التوصيل مجاني؟</div>
+                    <div class="faq-toggle"><i class="fas fa-chevron-down"></i></div>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        تكلفة التوصيل تعتمد على <strong>الكمية والموقع</strong>. للطلبات الكبيرة، نقدم عروض شحن مميزة
+                        وأحياناً مجانية.
+                        تواصل معنا لمعرفة تكلفة الشحن لطلبك.
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <div class="faq-question-text">إلى أي محافظات توصلون؟</div>
+                    <div class="faq-toggle"><i class="fas fa-chevron-down"></i></div>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        نوفر خدمة التوصيل لـ<strong>جميع محافظات مصر</strong> من شمال سيناء إلى أسوان.
+                        مقرنا الرئيسي في المطرية - الدقهلية، ونخدم جميع أنحاء الجمهورية.
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <div class="faq-question-text">كيف أتتبع طلبي؟</div>
+                    <div class="faq-toggle"><i class="fas fa-chevron-down"></i></div>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        بعد تأكيد طلبك، يمكنك <strong>تتبع حالة الطلب</strong> من خلال:
+                        <ul style="margin-top: 0.5rem; padding-right: 1.5rem;">
+                            <li>صفحة "طلباتي" في حسابك</li>
+                            <li>التواصل المباشر مع خدمة العملاء</li>
+                            <li>رسائل التحديث التي نرسلها عبر الواتساب أو الهاتف</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category 4: الدفع -->
+        <div class="faq-category">
+            <h2 class="faq-category-title">
+                <div class="faq-category-icon"><i class="fas fa-credit-card"></i></div>
+                طرق الدفع
+            </h2>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <div class="faq-question-text">ما هي طرق الدفع المتاحة؟</div>
+                    <div class="faq-toggle"><i class="fas fa-chevron-down"></i></div>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        نوفر عدة طرق دفع مرنة:
+                        <ul style="margin-top: 0.5rem; padding-right: 1.5rem;">
+                            <li><strong>الدفع عند الاستلام</strong> (نقداً)</li>
+                            <li><strong>التحويل البنكي</strong></li>
+                            <li><strong>الدفع الإلكتروني</strong> (قريباً)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <div class="faq-question-text">هل يمكن الدفع بالتقسيط؟</div>
+                    <div class="faq-toggle"><i class="fas fa-chevron-down"></i></div>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        للعملاء الدائمين والطلبات الكبيرة، نوفر <strong>نظام دفع مؤجل</strong> بشروط خاصة.
+                        تواصل معنا لمعرفة التفاصيل والشروط.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category 5: الضمان والإرجاع -->
+        <div class="faq-category">
+            <h2 class="faq-category-title">
+                <div class="faq-category-icon"><i class="fas fa-shield-alt"></i></div>
+                الضمان والإرجاع
+            </h2>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <div class="faq-question-text">هل المنتجات مضمونة؟</div>
+                    <div class="faq-toggle"><i class="fas fa-chevron-down"></i></div>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        نعم، نقدم <strong>ضمان الجودة</strong> على جميع منتجاتنا.
+                        في حالة وجود أي عيب في المنتج، نستبدله فوراً حسب سياسة الضمان.
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <div class="faq-question-text">ما هي سياسة الإرجاع والاستبدال؟</div>
+                    <div class="faq-toggle"><i class="fas fa-chevron-down"></i></div>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        يمكنك <strong>إرجاع أو استبدال المنتجات المعيبة خلال 7 أيام</strong> من تاريخ الاستلام،
+                        بشرط أن تكون المنتجات في حالتها الأصلية ولم يتم استخدامها.
+                        يُرجى التواصل معنا فوراً عند اكتشاف أي عيب.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category 6: الحساب والتسجيل -->
+        <div class="faq-category">
+            <h2 class="faq-category-title">
+                <div class="faq-category-icon"><i class="fas fa-user-circle"></i></div>
+                الحساب والتسجيل
+            </h2>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <div class="faq-question-text">هل التسجيل في الموقع مجاني؟</div>
+                    <div class="faq-toggle"><i class="fas fa-chevron-down"></i></div>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        نعم، <strong>التسجيل مجاني 100%</strong> ويستغرق أقل من دقيقة.
+                        ستحتاج فقط إلى اسمك، رقم هاتفك، والبريد الإلكتروني لإنشاء الحساب.
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <div class="faq-question-text">لماذا يجب عليّ إنشاء حساب؟</div>
+                    <div class="faq-toggle"><i class="fas fa-chevron-down"></i></div>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        إنشاء حساب يمنحك مزايا عديدة:
+                        <ul style="margin-top: 0.5rem; padding-right: 1.5rem;">
+                            <li>تتبع طلباتك بسهولة</li>
+                            <li>حفظ عناوين التوصيل</li>
+                            <li>الوصول السريع لسجل الطلبات</li>
+                            <li>عروض وخصومات حصرية</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <div class="faq-question-text">نسيت كلمة المرور، ماذا أفعل؟</div>
+                    <div class="faq-toggle"><i class="fas fa-chevron-down"></i></div>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        يمكنك <strong>استعادة كلمة المرور</strong> من خلال:
+                        <ul style="margin-top: 0.5rem; padding-right: 1.5rem;">
+                            <li>النقر على "نسيت كلمة المرور" في صفحة تسجيل الدخول</li>
+                            <li>إدخال بريدك الإلكتروني المسجل</li>
+                            <li>ستصلك رسالة لإعادة تعيين كلمة المرور</li>
+                        </ul>
+                        أو تواصل مع خدمة العملاء للمساعدة.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CTA Section -->
+        <div class="faq-cta">
+            <h2 class="faq-cta-title">لم تجد إجابة لسؤالك؟</h2>
+            <p class="faq-cta-text">
+                فريقنا جاهز لمساعدتك! تواصل معنا مباشرة وسنجيب على جميع استفساراتك
+            </p>
+            <div class="faq-cta-buttons">
+                <a href="https://wa.me/201001252900" class="btn-primary" target="_blank">
+                    <i class="fab fa-whatsapp"></i>
+                    تواصل عبر واتساب
+                </a>
+                <a href="tel:01001252900" class="btn-secondary">
+                    <i class="fas fa-phone"></i>
+                    اتصل بنا
+                </a>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- SEO: FAQ Schema Markup -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "ما هو الحد الأدنى للطلب؟",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "الحد الأدنى للطلب هو كرتونة واحدة للمنتج. كما يمكنك الطلب بالقطعة حسب احتياجاتك."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "هل المنتجات أصلية؟",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "نعم، جميع منتجاتنا أصلية 100% ومضمونة من الوسام. نحرص على توفير منتجات عالية الجودة من مصادر موثوقة فقط."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "كم مدة التوصيل؟",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "نوفر التوصيل السريع خلال 2-5 أيام عمل حسب موقعك الجغرافي. القاهرة والجيزة: 2-3 أيام، الدلتا والصعيد: 3-5 أيام."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "هل تقدمون خصومات للكميات الكبيرة؟",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "نعم، نقدم أسعار خاصة وخصومات مميزة للطلبات بالكميات الكبيرة. تواصل معنا مباشرة للحصول على عرض سعر مخصص."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "ما هي طرق الدفع المتاحة؟",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "نوفر عدة طرق دفع مرنة: الدفع عند الاستلام (نقداً)، التحويل البنكي، والدفع الإلكتروني (قريباً)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "ما هي سياسة الإرجاع والاستبدال؟",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "يمكنك إرجاع أو استبدال المنتجات المعيبة خلال 7 أيام من تاريخ الاستلام، بشرط أن تكون المنتجات في حالتها الأصلية."
+      }
+    }
+  ]
+}
+</script>
+
+<script>
+    // FAQ Toggle Functionality
+    function toggleFaq(questionElement) {
+        const faqItem = questionElement.parentElement;
+        const isActive = faqItem.classList.contains('active');
+
+        // Close all other FAQs
+        document.querySelectorAll('.faq-item').forEach(item => {
+            item.classList.remove('active');
+        });
+
+        // Toggle current FAQ
+        if (!isActive) {
+            faqItem.classList.add('active');
+        }
+    }
+
+    // Close FAQ when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.faq-item')) {
+            document.querySelectorAll('.faq-item').forEach(item => {
+                item.classList.remove('active');
+            });
+        }
+    });
+</script>
+{% endblock %}

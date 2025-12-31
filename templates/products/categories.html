@@ -1,7 +1,9 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{{ category.name }} - الوسام{% endblock %}
+{% block title %}{{ category.name }} بالجملة | أسعار مميزة للتجار - الوسام{% endblock %}
+{% block meta_description %}تسوق {{ category.name }} بالجملة بأفضل الأسعار في مصر. جودة عالية، توريد للمحلات والمقاولين.
+احصل على عرض سعر مخصص الآن من الوسام!{% endblock %}
 {% block nav_products %}active{% endblock %}
 
 {% block extra_css %}
@@ -321,5 +323,11 @@
         </div>
         {% endfor %}
     </div>
+
+    <!-- SEO Content Section -->
+    {% if category.description or True %}
+
+    {% endif %}
+
 </section>
 {% endblock %}
