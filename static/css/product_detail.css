@@ -1042,6 +1042,20 @@ body.theme-dark .related-card img {
         bottom: -32px;
     }
 
+    /* CRITICAL FIX: Force outline reset when not selected on mobile */
+    .color-option:not(.selected) {
+        outline-color: rgba(128, 128, 128, 0.2) !important;
+        outline-width: 1px !important;
+        outline-offset: 0px !important;
+    }
+
+    /* Ensure selected state is properly applied */
+    .color-option.selected {
+        outline-color: #FFC400 !important;
+        outline-width: 3px !important;
+        outline-offset: 1px !important;
+    }
+
     .size-option {
         padding: 10px 18px;
         font-size: 0.9rem;
@@ -1058,6 +1072,20 @@ body.theme-dark .related-card img {
         font-size: 0.65rem;
         bottom: -30px;
         padding: 3px 6px;
+    }
+
+    /* CRITICAL FIX: Force outline reset when not selected on small mobile */
+    .color-option:not(.selected) {
+        outline-color: rgba(128, 128, 128, 0.2) !important;
+        outline-width: 1px !important;
+        outline-offset: 0px !important;
+    }
+
+    /* Ensure selected state is properly applied */
+    .color-option.selected {
+        outline-color: #FFC400 !important;
+        outline-width: 3px !important;
+        outline-offset: 1px !important;
     }
 
     .size-option {

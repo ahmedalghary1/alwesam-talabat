@@ -121,7 +121,8 @@
                     <span id="quantity-value">1</span>
                     <button class="qty-btn" onclick="increaseQty()" {% if not product.is_available %}disabled{% endif %}>+</button>
                 </div>
-                <button class="btn-add-to-cart" id="add-to-cart-btn" {% if not product.is_available %}disabled style="opacity: 0.5; cursor: not-allowed; background: #ccc;" {% endif %}>
+                <button class="btn-add-to-cart" id="add-to-cart-btn" {% if not product.is_available %}disabled
+                    style="opacity: 0.5; cursor: not-allowed; background: #ccc;" {% endif %}>
                     <i class="fas fa-shopping-cart"></i>
                     {% if product.is_available %}
                     إضافة للسلة
@@ -328,6 +329,17 @@
             if (selectedColor && selectedColor.classList.contains('selected')) {
                 // إلغاء التحديد
                 selectedColor.classList.remove('selected');
+
+                // CRITICAL FIX: Force reset outline properties for mobile browsers
+                // Mobile browsers (Safari iOS, Chrome Android) don't properly reset
+                // outline-width and outline-offset when class is removed
+                selectedColor.style.outlineColor = '';
+                selectedColor.style.outlineWidth = '';
+                selectedColor.style.outlineOffset = '';
+
+                // Force reflow to ensure CSS is reapplied (critical for mobile browsers)
+                void selectedColor.offsetWidth;
+
                 selectedColorId = null;
                 selectedColorName = null;
                 selectedVariantId = null;
@@ -528,12 +540,12 @@
         // Product images for fallback
         const productImages = [
             {% if product.image %}
-                { url: '{{ product.image.url }}', alt: '{{ product.name }}' },
-            {% endif %}
+        { url: '{{ product.image.url }}', alt: '{{ product.name }}' },
+        {% endif %}
 
-            {% for img in product.additional_images.all %}
-                { url: '{{ img.image.url }}', alt: '{{ product.name }}' } {% if not forloop.last %}, {% endif %}
-            {% endfor %}
+        {% for img in product.additional_images.all %}
+        { url: '{{ img.image.url }}', alt: '{{ product.name }}' } {% if not forloop.last %}, {% endif %}
+        {% endfor %}
         ];
 
         // === QUANTITY CONTROLS ===

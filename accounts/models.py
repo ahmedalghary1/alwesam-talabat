@@ -11,7 +11,7 @@ class CustomUser(AbstractUser):
     """
     username = models.CharField(max_length=150, unique=True, verbose_name="اسم المستخدم")
     email = models.EmailField(unique=True, verbose_name="البريد الإلكتروني")
-    phone = models.CharField(max_length=20, verbose_name="رقم الهاتف")
+    phone = models.CharField(max_length=20, verbose_name="رقم الهاتف", db_index=True)  # Index for search performance
     address = models.TextField(verbose_name="العنوان")
     
     USERNAME_FIELD = 'email'

@@ -56,7 +56,8 @@ def category_products(request, slug):
         return redirect('products:all_categories')
     except Exception as e:
         logger.error(f'Error loading category products for slug {slug}: {str(e)}', exc_info=True)
-        messages.error(request, e)
+        # SECURITY: Don't expose internal error details to users
+        messages.error(request, 'حدث خطأ أثناء تحميل المنتجات. يرجى المحاولة لاحقاً')
         return redirect('products:all_categories')
 
 
@@ -68,8 +69,10 @@ def product_detail(request, slug):
         # Get product images
         product_images = product.additional_images.all()
         
-        # Get product variants
-        variants = product.variants.filter(is_available=True)
+        # Get product variants with optimized queries
+        variants = product.variants.filter(
+            is_available=True
+        ).select_related('color').prefetch_related('sizes')
         
         # منتجات ذات صلة (نفس القسم) - مع تحسين الأداء
         related_products = Product.objects.filter(
@@ -87,5 +90,6 @@ def product_detail(request, slug):
         return redirect('products:all_categories')
     except Exception as e:
         logger.error(f'Error loading product detail for slug {slug}: {str(e)}', exc_info=True)
-        messages.error(request, e)
+        # SECURITY: Don't expose internal error details to users
+        messages.error(request, 'حدث خطأ أثناء تحميل تفاصيل المنتج. يرجى المحاولة لاحقاً')
         return redirect('products:all_categories')

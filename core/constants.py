@@ -24,3 +24,37 @@ THUMBNAIL_SIZE = (300, 300)
 # Rate Limiting
 LOGIN_RATE_LIMIT = '5/m'  # 5 attempts per minute
 CART_RATE_LIMIT = '30/m'  # 30 requests per minute
+
+# Unit Types (NEW)
+UNIT_TYPE_CARTON = 'carton'
+UNIT_TYPE_PIECE = 'piece'
+
+UNIT_TYPE_CHOICES = [
+    (UNIT_TYPE_PIECE, 'قطعة'),
+    (UNIT_TYPE_CARTON, 'كرتونة'),
+]
+
+# Order Status (NEW)
+ORDER_STATUS_PENDING = 'pending'
+ORDER_STATUS_CONFIRMED = 'confirmed'
+ORDER_STATUS_SHIPPED = 'shipped'
+ORDER_STATUS_DELIVERED = 'delivered'
+ORDER_STATUS_CANCELLED = 'cancelled'
+
+ORDER_STATUS_CHOICES = (
+    (ORDER_STATUS_PENDING, 'قيد الانتظار'),
+    (ORDER_STATUS_CONFIRMED, 'تم التأكيد'),
+    (ORDER_STATUS_SHIPPED, 'تم الشحن'),
+    (ORDER_STATUS_DELIVERED, 'تم التسليم'),
+    (ORDER_STATUS_CANCELLED, 'تم الإلغاء'),
+)
+
+# Product Variant Types (NEW)
+VARIANT_TYPE_COLOR = 'color'
+
+VARIANT_TYPE_CHOICES = [
+    (VARIANT_TYPE_COLOR, 'اللون'),
+]
+
+# Default Values (NEW)
+DEFAULT_PCS_CARTON = 24
