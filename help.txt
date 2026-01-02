@@ -5,3 +5,7 @@ python manage.py makemigrations orders
 python manage.py makemigrations support
 
 python manage.py migrate
+
+
+
+waitress-serve --port=80 project.wsgi:application

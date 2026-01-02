@@ -16,6 +16,7 @@
 {% block content %}
 <!-- Hero Slider مع المحتوى -->
 <section class="hero-slider">
+
     <div class="slider-container">
         <div class="slider-slides">
             <!-- Slide 1 -->
@@ -35,14 +36,12 @@
                 <img src="{% static 'images/link3 copy 2.jpg' %}"
                     alt="صالة عرض الوسام - منتجات كهربائية بالجملة لتجار القاهرة والجيزة">
             </div>
-
         </div>
         <!-- Dots -->
         <div class="slider-dots">
         </div>
-
-
     </div>
+
 
     <!-- المحتوى تحت الصورة مباشرة -->
     <div class="hero-content">
@@ -247,7 +246,6 @@
 
     // ✅ تم إزالة pause on hover لضمان استمرار السلايدر
 
-
     // Touch swipe support for mobile
     const sliderContainer = document.querySelector('.slider-container');
 
@@ -298,9 +296,6 @@
         }
     }, { passive: true });
 
-    // Intersection Observer - نظام محسّن للتأثيرات
-
-    // Observer للعناوين - تأثير متكرر في كل مرة
     const headerObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
@@ -336,7 +331,7 @@
     let lastScrollY = window.pageYOffset;
     let lastScrollTime = Date.now();
     let scrollVelocity = 0;
-    let baseDelay = 0.1; // التأخير الأساسي بين الكروت
+    let baseDelay = 0.1;
 
     // تحديث سرعة التمرير
     window.addEventListener('scroll', () => {
@@ -346,7 +341,7 @@
 
         if (timeDiff > 0) {
             const scrollDiff = Math.abs(currentScrollY - lastScrollY);
-            scrollVelocity = scrollDiff / timeDiff; // pixels per millisecond
+            scrollVelocity = scrollDiff / timeDiff; 
         }
 
         lastScrollY = currentScrollY;
@@ -355,37 +350,30 @@
 
     // دالة لحساب التأخير بناءً على سرعة التمرير
     function getAdaptiveDelay(index) {
-        // إذا كانت السرعة عالية (> 2 pixels/ms)، قلل التأخير
-        // إذا كانت السرعة منخفضة، استخدم التأخير العادي
         let delayMultiplier = 1;
 
         if (scrollVelocity > 2) {
-            delayMultiplier = 0.4; // تمرير سريع جداً - تأخير 40% فقط
+            delayMultiplier = 0.4;
         } else if (scrollVelocity > 1) {
-            delayMultiplier = 0.6; // تمرير سريع - تأخير 60%
+            delayMultiplier = 0.6;
         } else if (scrollVelocity > 0.5) {
-            delayMultiplier = 0.8; // تمرير متوسط - تأخير 80%
+            delayMultiplier = 0.8;
         }
-        // تمرير بطيء أو ثابت = delayMultiplier = 1 (100%)
 
         return index * baseDelay * delayMultiplier;
     }
 
-    // Observer للبطاقات - تأثير يظهر مرة واحدة فقط لتحسين الأداء
     const cardsObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
                 const card = entry.target;
                 const index = parseInt(card.getAttribute('data-card-index'));
 
-                // تطبيق التأخير التكيفي بناءً على سرعة التمرير
                 const adaptiveDelay = getAdaptiveDelay(index);
                 card.style.transitionDelay = `${adaptiveDelay}s`;
 
-                // إضافة الكلاس مباشرة بدون تأخير للسرعة
                 card.classList.add('visible');
                 console.log(`✨ Card ${index} visible with delay: ${adaptiveDelay.toFixed(2)}s (velocity: ${scrollVelocity.toFixed(2)})`);
-                // إيقاف مراقبة هذا العنصر بعد ظهوره لتحسين الأداء
                 cardsObserver.unobserve(entry.target);
             }
         });
@@ -421,7 +409,7 @@
             if (href !== '#' && document.querySelector(href)) {
                 e.preventDefault();
                 const target = document.querySelector(href);
-                const navbarHeight = 80; // ارتفاع الـ navbar تقريباً
+                const navbarHeight = 80;
                 const targetPosition = target.getBoundingClientRect().top + window.pageYOffset - navbarHeight;
 
                 window.scrollTo({
