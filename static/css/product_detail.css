@@ -61,6 +61,8 @@
     overflow: hidden;
     transition: border-color 0.3s ease;
     max-width: 100%;
+    /* Ensure vertical scrolling works even if gesture starts here */
+    touch-action: pan-y;
 }
 
 .main-image-frame:hover {
@@ -77,8 +79,10 @@
     background: #ffffff;
 }
 
-.product-img:hover {
-    transform: scale(1.02);
+@media (hover: hover) {
+    .product-img:hover {
+        transform: scale(1.02);
+    }
 }
 
 /* Dark theme support for main image */
@@ -552,7 +556,8 @@ body.theme-dark .related-card img {
 .product-gallery,
 .main-image-frame {
     max-width: 100% !important;
-    overflow: hidden !important;
+    /* Removed overflow: hidden !important to fix scrolling hang on mobile */
+    overflow: visible !important;
 }
 
 /* Thumbnails scroll container */
@@ -568,6 +573,8 @@ body.theme-dark .related-card img {
     width: 100% !important;
     box-sizing: border-box !important;
     padding: 10px 0 !important;
+    /* Ensure vertical scrolling works while touching this area */
+    touch-action: pan-x;
 }
 
 /* Individual thumbnail buttons */
