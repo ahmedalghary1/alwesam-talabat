@@ -529,7 +529,7 @@ body.theme-dark .btn-icon:hover {
     height: 250px;
     object-fit: contain;
     border-radius: 12px;
-    background: #ffffff;
+    background: transparent;
 }
 
 .product-image,
@@ -538,7 +538,7 @@ body.theme-dark .btn-icon:hover {
     height: 250px;
     object-fit: contain;
     border-radius: 12px;
-    background: #ffffff;
+    background: transparent;
 }
 
 .product-detail-image {
@@ -546,21 +546,21 @@ body.theme-dark .btn-icon:hover {
     max-height: 500px;
     object-fit: contain;
     border-radius: 12px;
-    background: #ffffff;
+    background: transparent;
 }
 
 /* Dark theme product backgrounds */
 body.theme-dark .category-image {
-    background: #2a2a2a;
+    background: transparent;
 }
 
 body.theme-dark .product-image,
 body.theme-dark .product-card img {
-    background: #2a2a2a;
+    background: transparent;
 }
 
 body.theme-dark .product-detail-image {
-    background: #2a2a2a;
+    background: transparent;
 }
 
 @media (max-width: 768px) {

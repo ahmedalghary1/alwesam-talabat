@@ -39,7 +39,7 @@
 
 .product-image-wrapper {
     position: relative;
-    background: var(--white);
+    background: transparent;
     padding: 2rem;
     display: flex;
     justify-content: center;

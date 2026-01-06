@@ -76,7 +76,7 @@
     height: auto;
     object-fit: contain;
     transition: opacity 0.3s ease, transform 0.3s ease;
-    background: #ffffff;
+    background: transparent;
 }
 
 @media (hover: hover) {
@@ -87,7 +87,7 @@
 
 /* Dark theme support for main image */
 body.theme-dark .product-img {
-    background: #2a2a2a;
+    background: transparent;
 }
 
 .product-placeholder {
@@ -142,12 +142,12 @@ body.theme-dark .product-img {
     width: 100%;
     height: 100%;
     object-fit: contain;
-    background: #ffffff;
+    background: transparent;
 }
 
 /* Dark theme support for thumbnails */
 body.theme-dark .thumb-btn img {
-    background: #2a2a2a;
+    background: transparent;
 }
 
 .thumb-btn.active,
@@ -415,12 +415,12 @@ body.theme-dark .thumb-btn img {
     width: 100%;
     height: 200px;
     object-fit: contain;
-    background: #ffffff;
+    background: transparent;
 }
 
 /* Dark theme support for related cards */
 body.theme-dark .related-card img {
-    background: #2a2a2a;
+    background: transparent;
 }
 
 .related-card-content {

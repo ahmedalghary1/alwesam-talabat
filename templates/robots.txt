@@ -7,7 +7,7 @@ Allow: /products/
 Allow: /products/category/
 Allow: /static/
 
-# Disallow admin and private areas
+# Disallow private areas
 Disallow: /accounts/login/
 Disallow: /accounts/signup/
 Disallow: /cart/
