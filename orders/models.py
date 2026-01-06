@@ -25,7 +25,7 @@ class Order(models.Model):
 
     def __str__(self):
         return f"Order #{self.id} - {self.user.username}"
-    
+
     def get_total_pieces(self):
         """Calculate total pieces across all order items"""
         return sum(item.quantity for item in self.items.all())
@@ -33,19 +33,18 @@ class Order(models.Model):
     class Meta:
         ordering = ['-created_at']
 
-
 class OrderItem(models.Model):
     UNIT_TYPE_CHOICES = [
         ('piece', 'قطعة'),
         ('carton', 'كرتونة'),
     ]
-    
+
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     variant = models.ForeignKey(ProductVariant, on_delete=models.SET_NULL, null=True, blank=True)
     quantity = models.PositiveIntegerField(default=1)  # Always stored in pieces
     unit_type = models.CharField(max_length=10, choices=UNIT_TYPE_CHOICES, default='carton')
-    
+
     # Preserve variant information at order time
     variant_info = models.CharField(max_length=200, blank=True, 
                                     help_text="معلومات النمط وقت الطلب")
@@ -73,18 +72,18 @@ class OrderItem(models.Model):
         if self.variant:
             return self.variant.pcs_carton
         return self.product.pcs_carton
-    
+
     def get_quantity_in_cartons(self):
         """Get quantity in cartons (for display)"""
         pcs_carton = self.get_pcs_carton()
         if pcs_carton > 0:
             return self.quantity / pcs_carton
         return 0
-    
+
     def get_quantity_in_pieces(self):
         """Get quantity in pieces"""
         return self.quantity
-    
+
     def get_total_pieces(self):
         """Calculate total pieces in this order item (same as quantity)"""
         return self.quantity
