@@ -695,7 +695,7 @@ main {
 
 @media (min-width: 1024px) {
     .hero-slider {
-        min-height: 70vh;
+        min-height: 75vh;
         width: 100%;
         max-width: 100%;
         box-sizing: border-box;
@@ -729,7 +729,7 @@ main {
         width: 100%;
         max-width: 100%;
         height: auto;
-        max-height: 55vh;
+        max-height: 60vh;
         object-fit: cover;
         object-position: center;
         box-sizing: border-box;
