@@ -72,28 +72,28 @@
     {% if categories %}
     <div class="categories-grid">
         {% for category in categories %}
-            <a href="{% url 'products:category_products' category.slug %}" class="category-card card-animate">
-                {% if category.image %}
-                <img src="{{ category.image.url }}" alt="{{ category.name }} بالجملة - أسعار مميزة للتجار من الوسام"
-                    class="category-image" loading="lazy">
-                {% else %}
-                <div class="category-icon">
-                    <i class="fas fa-cube"></i>
-                </div>
-                {% endif %}
-                <h3 class="category-name">{{ category.name }}</h3>
-                <p class="category-desc">{{ category.description|default:"اكتشف منتجاتنا المتميزة"|truncatewords:12 }}</p>
-            </a>
+        <a href="{% url 'products:category_products' category.slug %}" class="category-card card-animate">
+            {% if category.image %}
+            <img src="{{ category.image.url }}" alt="{{ category.name }} بالجملة - أسعار مميزة للتجار من الوسام"
+                class="category-image" loading="lazy">
+            {% else %}
+            <div class="category-icon">
+                <i class="fas fa-cube"></i>
+            </div>
+            {% endif %}
+            <h3 class="category-name">{{ category.name }}</h3>
+            <p class="category-desc">{{ category.description|default:"اكتشف منتجاتنا المتميزة"|truncatewords:12 }}</p>
+        </a>
         {% endfor %}
     </div>
 
 
     {% else %}
-        <div class="empty-state">
-            <div class="empty-icon"><i class="fas fa-box-open"></i></div>
-            <h3 style="font-size: 1.5rem; margin-bottom: 0.5rem;">لا توجد أقسام متاحة حالياً</h3>
-            <p style="color: var(--text-secondary);">نعمل على إضافة المزيد قريباً</p>
-        </div>
+    <div class="empty-state">
+        <div class="empty-icon"><i class="fas fa-box-open"></i></div>
+        <h3 style="font-size: 1.5rem; margin-bottom: 0.5rem;">لا توجد أقسام متاحة حالياً</h3>
+        <p style="color: var(--text-secondary);">نعمل على إضافة المزيد قريباً</p>
+    </div>
     {% endif %}
 </section>
 
@@ -341,7 +341,7 @@
 
         if (timeDiff > 0) {
             const scrollDiff = Math.abs(currentScrollY - lastScrollY);
-            scrollVelocity = scrollDiff / timeDiff; 
+            scrollVelocity = scrollDiff / timeDiff;
         }
 
         lastScrollY = currentScrollY;

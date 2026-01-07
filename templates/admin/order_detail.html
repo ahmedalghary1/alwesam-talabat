@@ -184,12 +184,16 @@
             <span class="status-badge status-{{ order.status }}">
                 {% if order.status == 'pending' %}
                 قيد الانتظار
-                {% elif order.status == 'processing' %}
-                قيد المعالجة
-                {% elif order.status == 'completed' %}
-                مكتمل
-                {% else %}
+                {% elif order.status == 'confirmed' %}
+                تم التأكيد
+                {% elif order.status == 'shipped' %}
+                تم الشحن
+                {% elif order.status == 'delivered' %}
+                تم التسليم
+                {% elif order.status == 'cancelled' %}
                 ملغى
+                {% else %}
+                {{ order.get_status_display }}
                 {% endif %}
             </span>
         </div>
@@ -241,7 +245,8 @@
                         {% if item.unit_type == 'piece' %}
                         <i class="fas fa-cube"></i> طلب بالقطعة: <strong>{{ item.quantity }} قطعة</strong> ({{ item.get_pcs_carton }} قطعة/كرتون)
                         {% else %}
-                        <i class="fas fa-box"></i> طلب بالكرتونة: <strong>{{ item.get_quantity_in_cartons|floatformat:0 }} كرتون</strong> × {{ item.get_pcs_carton }} قطعة = <strong>{{ item.quantity }} قطعة إجمالي</strong>
+                        <i class="fas fa-box"></i> طلب بالكرتونة: <strong>{{ item.get_quantity_in_cartons|floatformat:0 }} كرتون</strong> × {{ item.get_pcs_carton }} قطعة = <strong>{{ item.quantity }} قطعة
+                            إجمالي</strong>
                         {% endif %}
                     </div>
                 </div>
@@ -254,8 +259,9 @@
             {% csrf_token %}
             <select name="status" class="form-select">
                 <option value="pending" {% if order.status == 'pending' %}selected{% endif %}>قيد الانتظار</option>
-                <option value="processing" {% if order.status == 'processing' %}selected{% endif %}>قيد المعالجة</option>
-                <option value="completed" {% if order.status == 'completed' %}selected{% endif %}>مكتمل</option>
+                <option value="confirmed" {% if order.status == 'confirmed' %}selected{% endif %}>تم التأكيد</option>
+                <option value="shipped" {% if order.status == 'shipped' %}selected{% endif %}>تم الشحن</option>
+                <option value="delivered" {% if order.status == 'delivered' %}selected{% endif %}>تم التسليم</option>
                 <option value="cancelled" {% if order.status == 'cancelled' %}selected{% endif %}>ملغى</option>
             </select>
             <button type="submit" class="btn-update">
