@@ -620,7 +620,8 @@
 
                         {% if item.size_name %}
                         <span class="badge badge-size">
-                            <i class="fas fa-ruler"></i> {{ item.size_name }}
+                            <i class="fas fa-ruler"></i>مقاس
+                            {% if item.variant.length_label %}{{ item.variant.length_label }}: {% endif %}{{ item.size_name }}
                         </span>
                         {% endif %}
                     </div>
