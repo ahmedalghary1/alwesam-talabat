@@ -139,6 +139,7 @@ class ProductVariant(ImageCompressionMixin, models.Model):
     
     # Variant-specific attributes (NEW)
     name = models.CharField(max_length=200, help_text="اسم النمط الكامل")
+    length_label = models.CharField(max_length=50, blank=True, null=True, verbose_name="نوع الطول", help_text="مثال: مقاس السلك، طول الصابع")
     code = models.CharField(max_length=50, unique=True, blank=True, null=True,
                            help_text="كود/SKU خاص بالنمط")
     pcs_carton = models.PositiveIntegerField(default=24,

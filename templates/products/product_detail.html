@@ -91,7 +91,8 @@
 
                 <!-- Size Selection Section (Hidden initially) -->
                 <div class="size-selection-wrapper" id="size-selection-wrapper" style="display: none;">
-                    <h4><i class="fas fa-ruler"></i> اختر المقاس</h4>
+                    <h4><i class="fas fa-ruler"></i> اختر مقاس <span id="dynamic-length-label"
+                            style="font-size: 0.9em; color: var(--text-secondary); font-weight: normal;"></span></h4>
                     <div class="size-selection" id="size-selection">
                         <!-- Will be populated by JavaScript -->
                     </div>
@@ -121,8 +122,7 @@
                     <span id="quantity-value">1</span>
                     <button class="qty-btn" onclick="increaseQty()" {% if not product.is_available %}disabled{% endif %}>+</button>
                 </div>
-                <button class="btn-add-to-cart" id="add-to-cart-btn" {% if not product.is_available %}disabled
-                    style="opacity: 0.5; cursor: not-allowed; background: #ccc;" {% endif %}>
+                <button class="btn-add-to-cart" id="add-to-cart-btn" {% if not product.is_available %}disabled style="opacity: 0.5; cursor: not-allowed; background: #ccc;" {% endif %}>
                     <i class="fas fa-shopping-cart"></i>
                     {% if product.is_available %}
                     إضافة للسلة
@@ -256,10 +256,11 @@
             id: {{ v.id }},
             name: '',
             pcsCarton: {{ v.pcs_carton }},
-            isAvailable:{{ v.is_available | yesno:"true,false" }},
+            isAvailable: {{ v.is_available | yesno:"true,false" }},
             colorId: {% if v.color %} {{ v.color.id }} {% else %} null{% endif %},
             colorName: '{% if v.color %}{{v.color.name|escapejs}}{% endif %}',
             colorHex: '{% if v.color %}{{v.color.hex_code}}{% endif %}',
+            lengthLabel: '{{ v.length_label|default:""|escapejs }}',
             sizes: [{% for size in v.sizes.all %} {{ size.id }} {% if not forloop.last %}, {% endif %} {% endfor %}],
             sizeNames: [{% for size in v.sizes.all %}'{{size.name|escapejs}}'{% if not forloop.last %}, {% endif %} {% endfor %}],
             image: '{% if v.image %}{{v.image.url}}{% endif %}'
@@ -410,9 +411,16 @@
 
         function renderSizeSelection(variants) {
             const sizeContainer = document.getElementById('size-selection');
+            const labelSpan = document.getElementById('dynamic-length-label');
             if (!sizeContainer) return;
 
             sizeContainer.innerHTML = '';
+
+            // Update length label from the first variant (assuming consistent label for the group)
+            if (labelSpan && variants.length > 0) {
+                const label = variants[0].lengthLabel;
+                labelSpan.textContent = label ? `(${label})` : '';
+            }
 
             variants.forEach(variant => {
                 // If variant has multiple sizes, create a button for each size
@@ -517,9 +525,9 @@
         // Product info
         const PRODUCT_DATA = {
             id: {{ product.id }},
-            name: "{{ product.name|escapejs }}",
+        name: "{{ product.name|escapejs }}",
             image: "{% if product.image %}{{ product.image.url }}{% endif %}",
-            pcsCarton: {{ product.pcs_carton }}
+                pcsCarton: {{ product.pcs_carton }}
         }
 
         // Variant images data

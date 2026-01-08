@@ -157,6 +157,12 @@
         text-align: center;
         margin-top: 2rem;
     }
+
+    /* Fix: Remove global hover effect that hides text */
+    .btn-yellow::before,
+    .btn-outline::before {
+        display: none !important;
+    }
 </style>
 {% endblock %}
 

@@ -176,13 +176,13 @@
         console.log('=== Loading variant #{{ forloop.counter }} ===');
         console.log('Variant name:', '{{ variant.name }}');
         console.log('Variant ID:', {{ variant.id }});
-    console.log('Is available:', {{ variant.is_available | yesno:"true,false"| lower }});
 
     addVariant({
         id: {{ variant.id }},
         name: '{{ variant.name|escapejs }}',
         code: '{{ variant.code|default:""}}',
         variant_type: '{{ variant.variant_type }}',
+        length_label: '{{ variant.length_label|default:"" }}',
         pcs_carton: {{ variant.pcs_carton }},
         is_available: {{ variant.is_available | yesno:"true,false"| lower }},
         image_url: '{% if variant.image %}{{ variant.image.url }}{% endif %}',
@@ -246,6 +246,12 @@
                     </div>
                 <div style="grid-column: 1 / -1;">
                     <label style="display: block; font-size: 0.875rem; margin-bottom: 0.5rem; color: var(--text-secondary);">
+                        <i class="fas fa-tag"></i> نوع الطول (اختياري)
+                    </label>
+                     <input type="text" name="variant_length_label[]" class="form-input" style="padding: 0.625rem; font-size: 0.875rem;" value="${data.length_label || ''}" placeholder="مثال: مقاس السلك، طول الصابع">
+                </div>
+                <div style="grid-column: 1 / -1;">
+                    <label style="display: block; font-size: 0.875rem; margin-bottom: 0.5rem; color: var(--text-secondary);">
                         <i class="fas fa-ruler"></i> الأطوال المتاحة (اختياري)
                     </label>
                     <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
@@ -296,7 +302,7 @@
     }
 
     function loadVariantImages(variantId, counter) {
-        const imagesContainer = document.getElementById(`variant-${counter}-existing-images`);
+        const imagesContainer = document.getElementById(`variant - ${ counter } -existing - images`);
         if (!imagesContainer) return;
         {% for variant in variants %}
         if ({{ variant.id }} == variantId) {

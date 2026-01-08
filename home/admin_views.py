@@ -109,6 +109,7 @@ def admin_product_add(request):
                         name=variant_names[i],
                         code=variant_codes[i] if i < len(variant_codes) and variant_codes[i] else None,
                         variant_type='color',  # Default to color
+                        length_label=request.POST.getlist('variant_length_label[]')[i] if i < len(request.POST.getlist('variant_length_label[]')) else None,
                         pcs_carton=int(variant_pcs[i]) if i < len(variant_pcs) and variant_pcs[i] else 24,
                         is_available=str(i) in variant_available,
                         color_id=color_id if color_id else None
@@ -213,6 +214,7 @@ def admin_product_edit(request, product_id):
                     'product': product,
                     'name': variant_names[i],
                     'code': variant_codes[i] if variant_codes[i] else None,
+                    'length_label': request.POST.getlist('variant_length_label[]')[i] if i < len(request.POST.getlist('variant_length_label[]')) else None,
                     'variant_type': 'color',  # Default to color
                     'pcs_carton': int(variant_pcs[i]) if variant_pcs[i] else 24,
                     'is_available': i < len(variant_available),  # Checkbox sends value only if checked

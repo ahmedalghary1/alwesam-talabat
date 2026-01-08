@@ -62,8 +62,9 @@ main {
     width: 100%;
     max-width: 100%;
     height: 100%;
-    /* transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); */
-    transition: none;
+
+    transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    /* transition: none; */
 
     direction: ltr;
     box-sizing: border-box;
@@ -107,14 +108,27 @@ main {
     object-position: center;
     display: block;
     transform-origin: center center;
-    animation: zoomIn 3s ease-out forwards;
-    animation: none;
+    /* ✅ Animation محسّن - تكبير سلس ومستمر */
+    animation: smoothZoom 20s ease-in-out infinite;
     box-sizing: border-box;
     margin: 0;
     padding: 0;
 }
 
-/* Animation التكبير - من المركز */
+/* ✅ Animation محسّن - تكبير سلس ومتكرر */
+@keyframes smoothZoom {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.08);
+    }
+}
+
+/* Animation قديم - محفوظ للتوافق */
 @keyframes zoomIn {
     0% {
         transform: scale(1);
@@ -216,38 +230,65 @@ main {
     right: clamp(0.5rem, 2vw, 2rem);
 }
 
-/* Slider Dots */
+/* Slider Dots - ✅ محسّنة وظاهرة */
+/* Slider Dots - ❌ مخفية بناءً على الطلب */
 .slider-dots {
-    position: absolute;
-    bottom: clamp(1rem, 3vh, 2rem);
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 3;
-    display: none;
-    gap: clamp(0.5rem, 1vw, 0.75rem);
-    padding: 0.5rem;
+    display: none !important;
 }
 
 .dot {
-    width: clamp(6px, 1vw, 8px);
-    height: clamp(6px, 1vw, 8px);
+    width: clamp(8px, 1.2vw, 10px);
+    height: clamp(8px, 1.2vw, 10px);
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.5);
     border: 2px solid rgba(255, 255, 255, 0.8);
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     padding: 0;
+    position: relative;
 }
 
+/* ✅ Dot النشط مع تأثير مميز */
 .dot.active {
     background: #FFC400;
     border-color: #FFC400;
-    transform: scale(1.3);
+    transform: scale(1.4);
+    box-shadow: 0 0 0 3px rgba(255, 196, 0, 0.3);
 }
 
+.dot.active::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 18px;
+    height: 18px;
+    background: rgba(255, 196, 0, 0.2);
+    border-radius: 50%;
+    animation: dotPulse 2s ease-in-out infinite;
+}
+
+/* ✅ تأثير Hover محسّن */
 .dot:hover {
-    background: rgba(255, 196, 0, 0.7);
-    transform: scale(1.2);
+    background: rgba(255, 196, 0, 0.8);
+    transform: scale(1.25);
+    box-shadow: 0 0 0 2px rgba(255, 196, 0, 0.2);
+}
+
+/* ✅ Animation للنقطة النشطة */
+@keyframes dotPulse {
+
+    0%,
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0.5;
+    }
+
+    50% {
+        transform: translate(-50%, -50%) scale(1.3);
+        opacity: 0;
+    }
 }
 
 /* Hero Section - متجاوب لجميع الأحجام */
@@ -435,15 +476,19 @@ main {
     gap: 1.5rem;
 }
 
+/* ✅ Category Cards محسّنة */
 .category-card {
     background: var(--card-bg);
     border: 2px solid var(--border-color);
-    border-radius: 16px;
+    border-radius: 20px;
     padding: 1.5rem;
     text-align: center;
-    transition: all 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     position: relative;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
 }
 
 .category-card::before {
@@ -453,31 +498,43 @@ main {
     left: 0;
     right: 0;
     height: 4px;
-    background: #FFC400;
+    background: linear-gradient(90deg, #FFC400 0%, #FFB300 100%);
     transform: scaleX(0);
     transition: transform 0.3s ease;
 }
 
+/* ✅ تأثير Hover محسّن */
 .category-card:hover {
     border-color: #FFC400;
-    transform: translateY(-5px);
-    box-shadow: 0 15px 40px rgba(255, 196, 0, 0.15);
+    transform: translateY(-10px) scale(1.02);
+    box-shadow:
+        0 20px 60px rgba(255, 196, 0, 0.25),
+        0 0 0 4px rgba(255, 196, 0, 0.1);
 }
 
 .category-card:hover::before {
     transform: scaleX(1);
 }
 
+/* ✅ Category Images محسّنة */
 .category-image {
     width: 100%;
-    height: 200px;
-    max-height: 200px;
+    aspect-ratio: 4/3;
     object-fit: contain;
     object-position: center;
     border-radius: 12px;
     margin-bottom: 1rem;
-    background: #ffffff;
-    padding: 0.5rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    padding: 1rem;
+    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+body.theme-dark .category-image {
+    background: linear-gradient(135deg, #2a2a2a 0%, #1e1e1e 100%);
+}
+
+.category-card:hover .category-image {
+    transform: scale(1.08) rotate(2deg);
 }
 
 .category-icon {
@@ -920,6 +977,7 @@ main {
         height: auto;
         max-height: none;
         margin-top: 85px;
+        margin-bottom: 2.5rem;
         display: flex;
         flex-direction: column;
     }
@@ -1039,5 +1097,120 @@ main {
 
     .hero-tagline {
         font-size: 0.95rem;
+    }
+}
+
+
+
+
+/* ==================== MOBILE RESPONSIVE - FINAL RADICAL FIX ==================== */
+
+/* Tablet (= 768px) */
+@media (max-width: 768px) {
+
+    /* 1. Body/Main Spacing Fix */
+    body.home-page main {
+        padding-top: 85px !important;
+        /* Reduced from 100px to match navbar height closely */
+    }
+
+    .hero-slider {
+        margin: 0 0 2.5rem 0 !important;
+        width: 100%;
+        height: auto;
+        min-height: auto;
+        display: flex !important;
+        /* Changed to flex to use gap */
+        flex-direction: column;
+        gap: 2rem;
+        /* Consistent spacing between image and content */
+        padding: 0 !important;
+    }
+
+    .slider-container {
+        /* 2. Container Fix: Content-based height */
+        position: relative;
+        width: 100%;
+        height: auto;
+        min-height: auto;
+        /* Remove forced height to eliminate bottom gap */
+        overflow: hidden;
+        background: var(--bg-secondary);
+    }
+
+    .slide {
+        width: 100%;
+        height: auto;
+        position: relative;
+    }
+
+    .slide img {
+        /* 3. Image Fix */
+        width: 100%;
+        height: auto;
+        display: block;
+        object-fit: contain !important;
+        max-height: 60vh;
+    }
+
+    /* Add space above content on small screens (moved from 480px to cover all mobile) */
+    .hero-content {
+        margin-top: 2rem !important;
+    }
+
+    /* Dots Adjustment */
+    .slider-dots {
+        bottom: 10px;
+        background: rgba(0, 0, 0, 0.4);
+        padding: 4px 12px;
+        border-radius: 20px;
+    }
+}
+
+/* Mobile (= 480px) */
+@media (max-width: 480px) {
+    body.home-page main {
+        padding-top: 70px !important;
+        /* Reduced from 80px */
+    }
+
+    .slider-container {
+        min-height: auto;
+        /* Ensure no forced height here too */
+    }
+
+    .slide img {
+        max-height: 50vh;
+    }
+
+    .hero-content {
+        margin-top: 2rem !important;
+    }
+
+
+    .slider-dots {
+        bottom: 5px;
+        padding: 3px 8px;
+    }
+
+    .dot {
+        width: 6px;
+        height: 6px;
+    }
+}
+
+/* Remove Extra Spacing After Slider */
+@media (max-width: 768px) {
+    main>section:first-child {
+        margin-top: 0 !important;
+    }
+
+    .hero-content {
+        margin-top: 1rem !important;
+        padding-top: 0 !important;
+    }
+
+    .categories-section {
+        margin-top: 1rem !important;
     }
 }
