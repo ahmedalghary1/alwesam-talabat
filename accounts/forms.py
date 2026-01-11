@@ -101,36 +101,36 @@ class ProfileUpdateForm(forms.ModelForm):
         }
     
     def clean_username(self):
-        """التحقق من أن اسم المستخدم فريد"""
+        """Validate that username is unique"""
         username = self.cleaned_data.get('username')
         if username:
-            # التحقق من وجود اسم مستخدم مطابق لمستخدم آخر
+            # Check if username already exists for another user
             existing_user = CustomUser.objects.filter(username=username).exclude(pk=self.instance.pk).first()
             if existing_user:
                 raise forms.ValidationError('اسم المستخدم هذا مستخدم بالفعل. الرجاء اختيار اسم آخر.')
         return username
     
     def clean_email(self):
-        """التحقق من أن البريد الإلكتروني فريد"""
+        """Validate that email is unique"""
         email = self.cleaned_data.get('email')
         if email:
-            # التحقق من وجود بريد إلكتروني مطابق لمستخدم آخر
+            # Check if email already exists for another user
             existing_user = CustomUser.objects.filter(email=email).exclude(pk=self.instance.pk).first()
             if existing_user:
                 raise forms.ValidationError('هذا البريد الإلكتروني مستخدم بالفعل. الرجاء استخدام بريد آخر.')
         return email
     
     def clean_phone(self):
-        """التحقق من صحة رقم الهاتف"""
+        """Validate phone number format and length"""
         phone = self.cleaned_data.get('phone')
         if phone:
-            # إزالة المسافات والرموز غير الضرورية
+            # Remove spaces and special characters
             phone = phone.strip()
             if len(phone) < 10:
                 raise forms.ValidationError('رقم الهاتف يجب أن يكون 10 أرقام على الأقل.')
         return phone
         if phone:
-            # إزالة المسافات والرموز غير الضرورية
+            # Remove spaces and special characters
             phone = phone.strip()
             if len(phone) < 10:
                 raise forms.ValidationError('رقم الهاتف يجب أن يكون 10 أرقام على الأقل.')

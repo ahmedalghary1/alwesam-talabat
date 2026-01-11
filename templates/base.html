@@ -40,7 +40,7 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- إضافة Swiper CSS إذا كنت تستخدمه -->
+    <!-- Add Swiper CSS if using it -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
 
     <style>
@@ -348,12 +348,12 @@
 
     <!-- CUSTOMER SUPPORT CHAT SYSTEM -->
     {% if user.is_authenticated and '/admin' not in request.path and '/admin-panel' not in request.path %}
-    <!-- الزر العائم -->
+    <!-- Floating button -->
     <div id="supportFloatingBtn" class="support-floating-btn">
         <i class="fas fa-headset"></i>
     </div>
 
-    <!-- نافذة الدردشة -->
+    <!-- Chat window -->
     <div id="supportChatWindow" class="support-chat-window">
         <div class="support-chat-header">
             <div class="support-chat-header-info">
@@ -374,7 +374,7 @@
         </div>
 
         <div id="supportChatBody" class="support-chat-body">
-            <!-- الرسائل ستظهر هنا -->
+            <!-- Messages will appear here -->
         </div>
 
         <div class="support-chat-footer">
@@ -391,7 +391,7 @@
 
     <!-- MAIN CONTENT -->
     <main id="main-content" role="main">
-        <!-- يمكنك وضع الـ slider هنا في الصفحة الرئيسية -->
+        <!-- You can place the slider here on the homepage -->
         {% block content %}{% endblock %}
     </main>
 
@@ -508,7 +508,7 @@
 
     {% endcompress %}
 
-    <!-- Swiper JS إذا كنت تستخدمه -->
+    <!-- Swiper JS if using it -->
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 
     {% block extra_js %}{% endblock %}
@@ -518,7 +518,7 @@
         crossorigin="anonymous"></script>
 
     <script>
-        // وظيفة الـ slider الأساسية
+        // Basic slider functionality
         function initSlider() {
             const slider = document.querySelector('.slider');
             const slides = document.querySelectorAll('.slider-slide');
@@ -532,32 +532,32 @@
             const totalSlides = slides.length;
 
             function updateSlider() {
-                // تحريك الـ slider
+                // Move the slider
                 slider.style.transform = `translateX(-${currentSlide * 100}%)`;
 
-                // تحديث النقاط
+                // Update the dots
                 dots.forEach((dot, index) => {
                     dot.classList.toggle('active', index === currentSlide);
                 });
             }
 
-            // الانتقال للشريحة التالية
+            // Move to the next slide
             function nextSlide() {
                 currentSlide = (currentSlide + 1) % totalSlides;
                 updateSlider();
             }
 
-            // الانتقال للشريحة السابقة
+            // Move to the previous slide
             function prevSlide() {
                 currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
                 updateSlider();
             }
 
-            // إضافة الأحداث للأزرار
+            // Add events to buttons
             if (nextBtn) nextBtn.addEventListener('click', nextSlide);
             if (prevBtn) prevBtn.addEventListener('click', prevSlide);
 
-            // إضافة الأحداث للنقاط
+            // Add events to dots
             dots.forEach((dot, index) => {
                 dot.addEventListener('click', () => {
                     currentSlide = index;
@@ -565,7 +565,7 @@
                 });
             });
 
-            // التحكم بالسحب على الهواتف
+            // Control the swipe on mobile devices
             let startX = 0;
             let endX = 0;
 
@@ -583,20 +583,20 @@
 
                 if (Math.abs(diff) > threshold) {
                     if (diff > 0) {
-                        nextSlide(); // سحب لليسار
+                        nextSlide(); // Swipe left
                     } else {
-                        prevSlide(); // سحب لليمين
+                        prevSlide(); // Swipe right
                     }
                 }
             });
 
-            // تشغيل السلايدر التلقائي
+            // Start the slider automatically
             setInterval(nextSlide, 5000);
         }
 
-        // بدء الـ slider عند تحميل الصفحة
+        // Start the slider when the page loads
         document.addEventListener('DOMContentLoaded', function () {
-            // تطبيق الثيم المحفوظ
+            // Apply saved theme from localStorage
             const savedTheme = localStorage.getItem('theme');
             const icon = document.getElementById('theme-icon');
 
@@ -608,13 +608,13 @@
                 if (icon) icon.className = 'fas fa-moon';
             }
 
-            // بدء الـ slider
+            // Start slider
             initSlider();
 
-            // تحديث عداد السلة
+            // Update cart count badge
             updateCartCount();
 
-            // إعداد Swiper إذا كان موجوداً
+            // Initialize Swiper if library is loaded
             if (typeof Swiper !== 'undefined') {
                 const swiper = new Swiper('.swiper', {
                     direction: 'horizontal',
@@ -679,7 +679,7 @@
             confirmCallback = callback;
             modal.classList.add('active');
 
-            // منع التمرير في body
+            // Prevent body scrolling when modal is open
             document.body.style.overflow = 'hidden';
         }
 
@@ -688,7 +688,7 @@
             modal.classList.remove('active');
             confirmCallback = null;
 
-            // استعادة التمرير
+            // Restore body scrolling
             document.body.style.overflow = '';
         }
 
@@ -699,14 +699,14 @@
             hideConfirmModal();
         }
 
-        // إغلاق النافذة عند النقر خارجها
+        // Close modal when clicking outside
         document.addEventListener('click', function (e) {
             if (e.target.classList.contains('confirm-overlay')) {
                 hideConfirmModal();
             }
         });
 
-        // إغلاق النافذة عند الضغط على ESC
+        // Close modal when pressing ESC key
         document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') {
                 const modal = document.getElementById('confirmModal');
@@ -716,19 +716,19 @@
             }
         });
 
-        // تحديث عداد السلة
+        // Update cart count function
         function updateCartCount() {
-            // يمكنك إضافة منطق تحديث عداد السلة هنا
+            // Cart count update logic can be added here
         }
 
-        // تأثير navbar عند التمرير
+        // Navbar scroll effect
         let lastScrollTop = 0;
         const navbar = document.querySelector('.navbar');
 
         window.addEventListener('scroll', function () {
             const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
 
-            // إضافة class 'scrolled' عند التمرير لأسفل أكثر من 50px
+            // Add 'scrolled' class when scrolling down more than 50px
             if (scrollTop > 50) {
                 navbar.classList.add('scrolled');
             } else {
@@ -738,10 +738,10 @@
             lastScrollTop = scrollTop;
         }, { passive: true });
 
-        // تحسينات للهواتف عند تغيير الاتجاه
+        // Mobile optimizations for orientation change
         window.addEventListener('orientationchange', function () {
             setTimeout(function () {
-                // إعادة حساب أبعاد الـ slider بعد تغيير الاتجاه
+                // Recalculate slider dimensions after orientation change
                 initSlider();
             }, 300);
         });

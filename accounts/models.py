@@ -6,14 +6,19 @@ from django.conf import settings
 
 class CustomUser(AbstractUser):
     """
-    Custom User model with email as the primary authentication field
-    and mandatory phone and address fields
+    Custom User model for wholesale e-commerce system.
+    
+    Uses email as the primary authentication field instead of username.
+    All new users are created with is_active=False and require admin approval
+    before they can log in. This allows for business verification of wholesale customers.
     """
     username = models.CharField(max_length=150, unique=True, verbose_name="اسم المستخدم")
     email = models.EmailField(unique=True, verbose_name="البريد الإلكتروني")
-    phone = models.CharField(max_length=20, verbose_name="رقم الهاتف", db_index=True)  # Index for search performance
+    # Indexed for performance when searching/filtering users by phone
+    phone = models.CharField(max_length=20, verbose_name="رقم الهاتف", db_index=True)
     address = models.TextField(verbose_name="العنوان")
     
+    # Email is used for login instead of username
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'phone', 'address']
     
@@ -29,11 +34,18 @@ User = settings.AUTH_USER_MODEL
 
 
 class Profile(ImageCompressionMixin, models.Model):
+    """
+    Extended user profile with bio and profile image.
+    
+    Automatically compresses uploaded images to optimize storage and performance.
+    Profile is created via signal when a user registers.
+    """
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile')
     bio = models.TextField(blank=True, verbose_name="نبذة شخصية")
     image = models.ImageField(upload_to='user-image/', blank=True, null=True, verbose_name="صورة الملف الشخصي")
     
     def save(self, *args, **kwargs):
+        # Compress image before saving to reduce file size
         self.save_with_compression(image_field_name='image', *args, **kwargs)
     
     def __str__(self):
@@ -41,7 +53,12 @@ class Profile(ImageCompressionMixin, models.Model):
     
 
 class Address(models.Model):
-    """Additional addresses for the user (shipping addresses)"""
+    """
+    Additional shipping addresses for users.
+    
+    Users can have multiple addresses (home, office, warehouse, etc.)
+    with one marked as default for checkout convenience.
+    """
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='addresses')
     label = models.CharField(max_length=50, default="المنزل", verbose_name="تسمية العنوان")
     street = models.CharField(max_length=255, verbose_name="الشارع")

@@ -11,7 +11,11 @@ import json
 @login_required
 @require_http_methods(["POST"])
 def send_message(request):
-    """إرسال رسالة جديدة من العميل"""
+    """
+    Send new message from customer.
+    
+    Creates a customer message in the support system.
+    """
     try:
         data = json.loads(request.body)
         message_text = data.get('message', '').strip()
@@ -22,7 +26,7 @@ def send_message(request):
                 'error': 'الرسالة فارغة'
             }, status=400)
         
-        # إنشاء الرسالة
+        # Create message
         message = CustomerMessage.objects.create(
             user=request.user,
             message=message_text
@@ -48,7 +52,12 @@ def send_message(request):
 @login_required
 @require_http_methods(["GET"])
 def get_user_messages(request):
-    """جلب جميع رسائل المستخدم مع الردود"""
+    """
+    Get all user messages with replies.
+    
+    Returns a list of all messages from the authenticated user
+    including admin replies.
+    """
     try:
         messages = CustomerMessage.objects.filter(
             user=request.user
@@ -66,7 +75,7 @@ def get_user_messages(request):
                 'replies': []
             }
             
-            # إضافة الردود
+            # Add replies
             for reply in msg.replies.all():
                 msg_dict['replies'].append({
                     'id': reply.id,
@@ -92,7 +101,11 @@ def get_user_messages(request):
 @login_required
 @require_http_methods(["GET"])
 def get_conversation(request, message_id):
-    """جلب محادثة محددة"""
+    """
+    Get specific conversation by message ID.
+    
+    Returns message with all its replies.
+    """
     try:
         message = CustomerMessage.objects.prefetch_related('replies').get(
             id=message_id,

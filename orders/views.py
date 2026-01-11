@@ -12,7 +12,11 @@ logger = logging.getLogger(__name__)
 
 @login_required
 def order_list(request):
-    """عرض قائمة طلبات المستخدم"""
+    """
+    Display list of user's orders.
+    
+    Shows all orders with optimized database queries.
+    """
     orders = Order.objects.filter(user=request.user)\
         .select_related('user')\
         .prefetch_related('items__product')\
@@ -23,7 +27,12 @@ def order_list(request):
 
 @login_required
 def order_detail(request, order_id):
-    """عرض تفاصيل طلب"""
+    """
+    Display detailed order information.
+    
+    Shows order items, quantities, and calculated totals.
+    Uses database aggregation for performance.
+    """
     order = Order.objects.filter(id=order_id, user=request.user)\
         .select_related('user')\
         .prefetch_related('items__product__category')\
@@ -61,7 +70,13 @@ def order_detail(request, order_id):
 @login_required
 @require_http_methods(["POST"])
 def create_order(request):
-    """إنشاء طلب جديد من السلة"""
+    """
+    Create new order from shopping cart.
+    
+    Converts cart items to order items with transaction safety.
+    Preserves variant, color, and size information for historical accuracy.
+    Clears cart after successful order creation.
+    """
     cart = get_object_or_404(Cart, user=request.user)
     
     if not cart.items.exists():
@@ -74,7 +89,7 @@ def create_order(request):
     
     try:
         with transaction.atomic():
-            # إنشاء الطلب
+            # Create order with user contact information
             order = Order.objects.create(
                 user=request.user,
                 phone_number=phone_number,
@@ -83,7 +98,7 @@ def create_order(request):
                 status='pending'
             )
             
-            # نقل عناصر السلة إلى الطلب
+            # Transfer cart items to order
             cart_items = cart.items.all()
             for cart_item in cart_items:
                 # Extract color and size information
@@ -111,7 +126,7 @@ def create_order(request):
                     size_name=size_name  # NEW: preserve size
                 )
             
-            # تفريغ السلة
+            # Clear cart after order creation
             cart.items.all().delete()
             
             messages.success(request, f'تم إنشاء الطلب #{order.id} بنجاح')
@@ -125,7 +140,11 @@ def create_order(request):
 @login_required
 @require_http_methods(["POST"])
 def cancel_order(request, order_id):
-    """إلغاء طلب"""
+    """
+    Cancel pending order.
+
+    Only allows cancellation of orders with 'pending' status.
+    """
     order = get_object_or_404(Order, id=order_id, user=request.user)
     
     if order.status == 'pending':

@@ -19,7 +19,12 @@ logger = logging.getLogger(__name__)
 
 
 def signup_view(request):
-    """تسجيل مستخدم جديد"""
+    """
+    Register a new user account.
+    
+    New users are created with is_active=False and require admin approval
+    before they can login. This implements a business verification workflow.
+    """
     if request.method == 'POST':
         form = SignupForm(request.POST)
         if form.is_valid():
@@ -43,7 +48,12 @@ def signup_view(request):
 
 @ratelimit(key='ip', rate=LOGIN_RATE_LIMIT, method='POST', block=True)
 def login_view(request):
-    """تسجيل دخول بالإيميل أو رقم الهاتف"""
+    """
+    Authenticate user with email or phone number.
+    
+    Uses custom authentication backend that accepts both email and phone.
+    Rate limited to prevent brute force attacks.
+    """
     if request.method == 'POST':
         username_or_phone = request.POST.get('email')  # Field name is 'email' but accepts both
         password = request.POST.get('password')
@@ -61,7 +71,7 @@ def login_view(request):
             login(request, user)
             logger.info(f'User {user.email} logged in successfully')
             
-            # مزامنة السلة
+            # Sync cart from localStorage to database
             sync_cart_on_login(request)
             
             messages.success(request, f'مرحباً {user.username}!')
@@ -76,12 +86,18 @@ def login_view(request):
 
 
 def pending_approval_view(request):
-    """صفحة انتظار الموافقة"""
+    """
+    Display pending approval page.
+    
+    Shown to users after registration while waiting for admin approval.
+    """
     return render(request, 'accounts/pending_approval.html')
 
 
 def logout_view(request):
-    """تسجيل خروج"""
+    """
+    Log out the current user and redirect to homepage.
+    """
     logout(request)
     messages.success(request, 'تم تسجيل الخروج بنجاح')
     return redirect('home:home')
@@ -89,7 +105,9 @@ def logout_view(request):
 
 @login_required
 def profile_view(request):
-    """عرض الملف الشخصي"""
+    """
+    Display user profile with recent orders.
+    """
     from orders.models import Order
     recent_orders = Order.objects.filter(user=request.user).order_by('-created_at')[:5]
     
@@ -100,7 +118,9 @@ def profile_view(request):
 
 @login_required
 def update_profile(request):
-    """تحديث معلومات المستخدم"""
+    """
+    Update user profile information and profile image.
+    """
     if request.method == 'POST':
         user_form = ProfileUpdateForm(request.POST, instance=request.user)
         # Handle profile fields if they exist, otherwise create/get profile
@@ -125,14 +145,20 @@ def update_profile(request):
 
 
 def sync_cart_on_login(request):
-    """مزامنة السلة من localStorage عند تسجيل الدخول"""
-    # هذه الدالة يتم استدعاؤها من JavaScript
+    """
+    Sync cart from localStorage to database on login.
+    
+    This function is called from JavaScript after successful authentication.
+    The actual sync logic is handled client-side via AJAX.
+    """
     pass
 
 
 @require_POST
 def set_theme(request):
-    """تعيين الثيم (فاتح/داكن) في الجلسة"""
+    """
+    Set user theme preference (light/dark) in session.
+    """
     try:
         data = json.loads(request.body)
         theme = data.get('theme', 'theme-light')
@@ -148,7 +174,9 @@ def set_theme(request):
 
 @require_POST
 def set_language(request):
-    """تعيين اللغة في الجلسة"""
+    """
+    Set user language preference (Arabic/English) in session.
+    """
     try:
         data = json.loads(request.body)
         language = data.get('language', 'ar')
@@ -163,12 +191,16 @@ def set_language(request):
 
 
 def get_theme(request):
-    """الحصول على الثيم الحالي"""
+    """
+    Get current theme preference from session.
+    """
     theme = request.session.get('theme', 'theme-light')
     return JsonResponse({'theme': theme})
 
 
 def get_language(request):
-    """الحصول على اللغة الحالية"""
+    """
+    Get current language preference from session.
+    """
     language = request.session.get('language', 'ar')
     return JsonResponse({'language': language})

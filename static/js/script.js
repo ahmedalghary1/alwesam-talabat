@@ -1,5 +1,5 @@
-// ==================== الوسام طلبات - Cart System ====================
-// Professional Cart Management with localStorage + Server sync
+// ==================== ALWESAM TALABAT - CART SYSTEM ====================
+// Professional cart management with localStorage + server synchronization
 
 // ==================== UTILITY FUNCTIONS ====================
 function getCookie(name) {

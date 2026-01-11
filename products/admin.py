@@ -1,3 +1,8 @@
+"""
+Django admin configuration for Products app.
+
+Registers models with customized list displays, filters, and inline editing.
+"""
 from django.contrib import admin
 from .models import Product, Category, ProductImages, ProductVariant , Color , Size
 

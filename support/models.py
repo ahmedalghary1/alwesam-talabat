@@ -3,7 +3,9 @@ from django.conf import settings
 
 
 class CustomerMessage(models.Model):
-    """رسائل العملاء إلى خدمة العملاء"""
+    """
+    Customer messages to customer support
+    """
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -34,7 +36,9 @@ class CustomerMessage(models.Model):
 
 
 class MessageReply(models.Model):
-    """ردود المسؤول على رسائل العملاء"""
+    """
+    Admin replies to customer messages
+    """
     customer_message = models.ForeignKey(
         CustomerMessage,
         on_delete=models.CASCADE,

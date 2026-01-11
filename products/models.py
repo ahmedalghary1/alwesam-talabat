@@ -2,18 +2,23 @@ from django.db import models
 from django.utils.text import slugify
 from utils.image_utils import ImageCompressionMixin
 
-
-
-
 class Category(ImageCompressionMixin, models.Model):
+    """
+    Product category for organizing products.
+    
+    Automatically generates slug from name and compresses uploaded images.
+    """
     name = models.CharField(max_length=200)
-    slug = models.CharField(max_length=255, unique=True, blank=True, db_index=True)  # Added index for performance
+    # Indexed for faster category lookups and URL routing
+    slug = models.CharField(max_length=255, unique=True, blank=True, db_index=True)
     description = models.TextField(blank=True)
     image = models.ImageField(upload_to='category-images')
 
     def save(self, *args, **kwargs):
+        # Auto-generate slug from category name if not provided
         if not self.slug:
             self.slug = slugify(self.name, allow_unicode=True)
+        # Compress image to optimize storage
         self.save_with_compression(image_field_name='image', *args, **kwargs)
 
     def __str__(self):
@@ -24,19 +29,29 @@ class Category(ImageCompressionMixin, models.Model):
 
 
 class Product(ImageCompressionMixin, models.Model):
+    """
+    Main product model for wholesale items.
+    
+    Products are sold by carton with configurable pieces per carton.
+    Can have multiple variants (colors, sizes) and additional images.
+    """
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True)
+    # Default pieces per carton (can be overridden by variants)
     pcs_carton = models.PositiveIntegerField(default=24)
-    slug = models.CharField(max_length=255, unique=True, blank=True, db_index=True)  # Added index for performance
+    # Indexed for URL routing and faster queries
+    slug = models.CharField(max_length=255, unique=True, blank=True, db_index=True)
     image = models.ImageField(upload_to='product-image')
     category = models.ForeignKey(Category, related_name='products', on_delete=models.SET_NULL, null=True, blank=True)
     is_available = models.BooleanField(default=True, verbose_name="متوفر")
-    created_at = models.DateTimeField(auto_now_add=True)  # Removed unnecessary null=True, blank=True
+    created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
+        # Auto-generate slug from product name
         if not self.slug:
             self.slug = slugify(self.name, allow_unicode=True)
+        # Compress image before saving
         self.save_with_compression(image_field_name='image', *args, **kwargs)
 
     def __str__(self):
@@ -44,20 +59,26 @@ class Product(ImageCompressionMixin, models.Model):
 
     class Meta:
         ordering = ['-created_at']
+        # Strategic indexes for common query patterns
         indexes = [
-            models.Index(fields=['category', '-created_at']),  # For category product listing
-            models.Index(fields=['-created_at']),  # For latest products
-            models.Index(fields=['is_available']),  # For filtering available products
+            models.Index(fields=['category', '-created_at']),  # Category listing
+            models.Index(fields=['-created_at']),  # Latest products
+            models.Index(fields=['is_available']),  # Availability filtering
         ]
 
-
 class ProductImages(ImageCompressionMixin, models.Model):
+    """
+    Additional product images for gallery/slideshow.
+    
+    Images are ordered by the 'order' field for display control.
+    """
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='additional_images')
     image = models.ImageField(upload_to='products/additional/')
     order = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
+        # Auto-compress uploaded images
         self.save_with_compression(image_field_name='image', *args, **kwargs)
 
     class Meta:
@@ -68,13 +89,16 @@ class ProductImages(ImageCompressionMixin, models.Model):
     def __str__(self):
         return f"صورة لـ {self.product.name}"
 
-
 class Color(models.Model):
-    """ألوان المنتجات - يمكن ربطها بالأنماط"""
+    """
+    Product colors for product variants.
+    
+    Stores color name and hex code for visual display.
+    """
     name = models.CharField(max_length=50, verbose_name="اسم اللون")
     hex_code = models.CharField(
-        max_length=7, 
-        verbose_name="كود اللون", 
+        max_length=7,
+        verbose_name="كود اللون",
         help_text="مثال: #FF0000 للأحمر"
     )
     created_at = models.DateTimeField(auto_now_add=True)
@@ -87,9 +111,12 @@ class Color(models.Model):
     def __str__(self):
         return f"{self.name} ({self.hex_code})"
 
-
 class Size(models.Model):
-    """أطوال/مقاسات المنتجات - يمكن ربطها بالأنماط"""
+    """
+    Product sizes/lengths for product variants.
+    Examples: S, M, L, XL or wire gauges, fabric lengths, etc.
+    Ordered by 'order' field for consistent display.
+    """
     name = models.CharField(max_length=50, verbose_name="اسم المقاس")
     order = models.PositiveIntegerField(default=0, verbose_name="الترتيب")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -102,15 +129,18 @@ class Size(models.Model):
     def __str__(self):
         return self.name
 
-
 class VariantImage(ImageCompressionMixin, models.Model):
-    """صور متعددة لأنماط المنتجات"""
+    """
+    Multiple images for product variants.
+    Allows variants to have their own image gallery.
+    """
     variant = models.ForeignKey('ProductVariant', on_delete=models.CASCADE, related_name='images')
     image = models.ImageField(upload_to='products/variants/', verbose_name='الصورة')
     order = models.PositiveIntegerField(default=0, verbose_name='الترتيب')
     created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
+        # Compress variant images
         self.save_with_compression(image_field_name='image', *args, **kwargs)
 
     class Meta:
@@ -124,30 +154,30 @@ class VariantImage(ImageCompressionMixin, models.Model):
 
 class ProductVariant(ImageCompressionMixin, models.Model):
     """
-    أنماط المنتج - كل variant له مواصفات مستقلة
-    Product variants - each variant has independent specifications
+    Product variants with independent specifications.
+    Each variant can have its own color, sizes, SKU code, and piece count.
+    This allows selling the same product in different configurations.
+    Example: Same shirt in different colors or different wire gauges.
     """
     VARIANT_TYPE_CHOICES = [
         ('color', 'اللون'),
-
     ]
     
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='variants')
     
-    # Core variant identification
+    # Variant classification
     variant_type = models.CharField(max_length=20, choices=VARIANT_TYPE_CHOICES)
     
-    # Variant-specific attributes (NEW)
+    # Variant-specific attributes
     name = models.CharField(max_length=200, help_text="اسم النمط الكامل")
     length_label = models.CharField(max_length=50, blank=True, null=True, verbose_name="نوع الطول", help_text="مثال: مقاس السلك، طول الصابع")
-    code = models.CharField(max_length=50, unique=True, blank=True, null=True,
-                           help_text="كود/SKU خاص بالنمط")
-    pcs_carton = models.PositiveIntegerField(default=24,
-                                             help_text="عدد القطع في الكرتونة لهذا النمط")
-    image = models.ImageField(upload_to='variant-images', blank=True, null=True,
-                              help_text="صورة خاصة بالنمط")
+    # Unique SKU/product code for inventory tracking
+    code = models.CharField(max_length=50, unique=True, blank=True, null=True,help_text="كود/SKU خاص بالنمط")
+    # Variant can override product's default pcs_carton
+    pcs_carton = models.PositiveIntegerField(default=24,help_text="عدد القطع في الكرتونة لهذا النمط")
+    image = models.ImageField(upload_to='variant-images', blank=True, null=True,help_text="صورة خاصة بالنمط")
     
-    # Color and Size relationships (NEW)
+    # Color and size relationships
     color = models.ForeignKey(
         Color, 
         on_delete=models.SET_NULL, 
@@ -165,22 +195,25 @@ class ProductVariant(ImageCompressionMixin, models.Model):
         help_text="الأطوال/المقاسات المتاحة لهذا النمط (اختياري)"
     )
     
-    # Inventory
+    # Availability flag
     is_available = models.BooleanField(default=True)
     
     created_at = models.DateTimeField(auto_now_add=True)
     
     def save(self, *args, **kwargs):
+        # Compress variant image if provided
         self.save_with_compression(image_field_name='image', *args, **kwargs)
     
     class Meta:
+        # Ensure each product has unique variant codes
         unique_together = ['product', 'code']
         ordering = ['variant_type']
         verbose_name = "Product Variant"
         verbose_name_plural = "Product Variants"
+        # Optimize common queries
         indexes = [
-            models.Index(fields=['is_available']),  # For filtering available variants
-            models.Index(fields=['product', 'is_available']),  # For product variant queries
+            models.Index(fields=['is_available']),
+            models.Index(fields=['product', 'is_available']),
         ]
     
     def __str__(self):

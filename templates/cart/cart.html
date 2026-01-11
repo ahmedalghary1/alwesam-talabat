@@ -669,8 +669,7 @@
                         </span>
                         <button class="qty-btn" onclick="updateQuantity({{ item.id }}, 1)">+</button>
                     </div>
-                    <button class="btn-remove" onclick="removeFromCart({{ item.id }}, this)" title="إزالة"
-                        ontouchstart="">
+                    <button class="btn-remove" onclick="removeFromCart({{ item.id }}, this)" title="إزالة" ontouchstart="">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
@@ -894,14 +893,14 @@
         const currentQty = parseInt(qtyElement.textContent);
         const newQty = currentQty + change;
 
-        // إذا كانت الكمية الحالية = 1 والمستخدم يحاول إنقاصها، اعرض رسالة تأكيد الحذف
+        // If current quantity is 1 and user tries to decrease it, show delete confirmation modal
         if (currentQty === 1 && change === -1) {
-            removeFromCart(itemId, null);  // سيعرض modal التأكيد
+            removeFromCart(itemId, null);  // This will show the confirmation modal
             return;
         }
 
         if (newQty < 1) {
-            return;  // حماية إضافية (لن يحدث بعد التحقق السابق)
+            return;  // Additional protection (will not happen after previous validation)
         }
 
         try {
@@ -1237,12 +1236,12 @@
             const unitType = cart[index].unit_type || 'carton';
             const pcsCarton = cart[index].pcs_carton || 24;
 
-            // حساب الكمية المعروضة الحالية بناءً على نوع الوحدة
+            // Calculate current displayed quantity based on unit type
             const currentDisplayQty = (unitType === 'carton')
                 ? Math.floor(cart[index].quantity / pcsCarton)
                 : cart[index].quantity;
 
-            // إذا كانت الكمية المعروضة = 1 والمستخدم يحاول إنقاصها، اعرض رسالة تأكيد الحذف
+            // If current displayed quantity is 1 and user tries to decrease it, show delete confirmation modal
             if (currentDisplayQty === 1 && change === -1) {
                 removeLocalItem(index);  // سيعرض modal التأكيد
                 return;

@@ -9,7 +9,7 @@ from django.utils.safestring import mark_safe
 def generate_product_schema(product):
     """
     Generate Product Schema Markup (JSON-LD)
-    إنشاء Schema Markup للمنتج
+    create schema markup for product
     """
     schema = {
         "@context": "https://schema.org/",
@@ -52,7 +52,7 @@ def generate_product_schema(product):
 def generate_organization_schema(request):
     """
     Generate Organization/LocalBusiness Schema Markup
-    إنشاء Schema Markup للأعمال المحلية
+    create schema markup for organization
     """
     schema = {
         "@context": "https://schema.org",
@@ -106,7 +106,7 @@ def generate_organization_schema(request):
 def generate_breadcrumb_schema(breadcrumbs):
     """
     Generate BreadcrumbList Schema Markup
-    إنشاء Schema Markup لمسار التنقل
+    create schema markup for breadcrumb
     
     Args:
         breadcrumbs: list of dicts with 'name' and 'url' keys
@@ -163,7 +163,7 @@ def generate_faq_schema(faq_list):
 def get_meta_description(page_type, **kwargs):
     """
     Generate optimized meta descriptions
-    توليد وصف meta محسّن
+    create optimized meta descriptions
     """
     templates = {
         'home': 'الوسام - موزع معتمد للأدوات والمستلزمات الكهربائية بالجملة في مصر. أسعار تنافسية للتجار، توصيل سريع، منتجات أصلية مضمونة. اطلب الآن!',
@@ -179,7 +179,6 @@ def get_meta_description(page_type, **kwargs):
 def get_page_title(page_type, **kwargs):
     """
     Generate optimized page titles
-    توليد عنوان صفحة محسّن
     """
     templates = {
         'home': 'الوسام - أدوات كهربائية بالجملة | مستلزمات كهرباء للتجار في مصر 2025',
@@ -187,6 +186,6 @@ def get_page_title(page_type, **kwargs):
         'product': '{product_name} بالجملة | أسعار مميزة للتجار - الوسام',
         'all_categories': 'جميع الأقسام - أدوات كهربائية بالجملة | الوسام',
     }
-    
+
     template = templates.get(page_type, 'الوسام طلبات')
     return template.format(**kwargs) if template else 'الوسام طلبات'

@@ -9,17 +9,19 @@ import json
 
 @staff_member_required
 def messages_list(request):
-    """عرض قائمة جميع المحادثات مجمعة حسب المستخدم"""
+    """
+    show list of all conversations grouped by user
+    """
     from django.db.models import Max, Count, Q
     
-    # جلب آخر رسالة لكل مستخدم مع عدد الرسائل غير المقروءة
+    # Get last message for each user with unread count
     users_with_messages = CustomerMessage.objects.values('user').annotate(
         last_message_date=Max('created_at'),
         total_messages=Count('id'),
         unread_count=Count('id', filter=Q(is_read=False))
     ).order_by('-last_message_date')
     
-    # جلب معلومات المستخدمين وآخر رسالة لكل منهم
+    # Get user info and last message for each
     conversations = []
     for user_data in users_with_messages:
         user_id = user_data['user']
@@ -44,24 +46,26 @@ def messages_list(request):
 
 @staff_member_required
 def conversation_detail(request, message_id):
-    """عرض جميع رسائل المستخدم (المحادثة الكاملة)"""
-    # جلب الرسالة الأولى للحصول على معلومات المستخدم
+    """
+    show all messages of a user (full conversation)
+    """
+    # Get first message to retrieve user information
     first_message = get_object_or_404(CustomerMessage, id=message_id)
     user = first_message.user
     
-    # جلب جميع رسائل هذا المستخدم مع الردود
+    # Get all messages of this user with replies
     all_user_messages = CustomerMessage.objects.filter(
         user=user
     ).select_related('user').prefetch_related(
         Prefetch('replies', queryset=MessageReply.objects.select_related('admin_user'))
     ).order_by('created_at')
     
-    # تحديد جميع الرسائل غير المقروءة كمقروءة
+    # mark all messages as read
     CustomerMessage.objects.filter(user=user, is_read=False).update(is_read=True)
     
     context = {
         'user': user,
-        'user_messages': all_user_messages,  # تم تغيير الاسم من messages إلى user_messages
+        'user_messages': all_user_messages, 
         'total_messages': all_user_messages.count(),
     }
     
@@ -70,7 +74,11 @@ def conversation_detail(request, message_id):
 
 @staff_member_required
 def send_reply(request, message_id):
-    """إرسال رد على رسالة"""
+    """
+    send reply to a customer message.
+    
+    Marks message as read after sending reply.
+    """
     if request.method == 'POST':
         message = get_object_or_404(CustomerMessage, id=message_id)
         reply_text = request.POST.get('reply', '').strip()
@@ -82,12 +90,12 @@ def send_reply(request, message_id):
                 reply=reply_text
             )
             
-            # تحديد الرسالة كمقروءة
+            # Mark message as read
             if not message.is_read:
                 message.is_read = True
                 message.save()
             
-            # إذا كان AJAX request، أرجع JSON
+            # if AJAX request, return JSON
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return JsonResponse({
                     'success': True,
@@ -113,7 +121,11 @@ def send_reply(request, message_id):
 
 @staff_member_required
 def mark_as_read(request, message_id):
-    """تحديد رسالة كمقروءة"""
+    """
+    Mark message as read.
+    
+    AJAX endpoint to update message read status.
+    """
     if request.method == 'POST':
         message = get_object_or_404(CustomerMessage, id=message_id)
         message.is_read = True
@@ -132,12 +144,14 @@ def mark_as_read(request, message_id):
 
 @staff_member_required
 def delete_message(request, message_id):
-    """حذف جميع رسائل المستخدم (المحادثة الكاملة)"""
+    """
+    Delete all messages of a user (full conversation)
+    """
     if request.method == 'POST':
         message = get_object_or_404(CustomerMessage, id=message_id)
         user = message.user
         
-        # حذف جميع رسائل هذا المستخدم (سيتم حذف الردود تلقائياً بسبب CASCADE)
+        # Delete all messages from this user (replies deleted automatically via CASCADE)
         deleted_count = CustomerMessage.objects.filter(user=user).delete()[0]
         
         messages.success(request, f'تم حذف {deleted_count} رسالة من المحادثة بنجاح')

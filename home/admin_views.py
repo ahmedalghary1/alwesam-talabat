@@ -8,14 +8,14 @@ from orders.models import Order
 
 @staff_member_required
 def admin_dashboard(request):
-    """لوحة تحكم الإدارة"""
-    # إحصائيات
+    """Admin dashboard with statistics and recent orders"""
+    # Statistics
     total_products = Product.objects.count()
     total_categories = Category.objects.count()
     total_orders = Order.objects.count()
     pending_orders = Order.objects.filter(status='pending').count()
     
-    # آخر الطلبات
+    # Recent orders
     recent_orders = Order.objects.all().order_by('-created_at')[:10]
     
     context = {
@@ -30,7 +30,7 @@ def admin_dashboard(request):
 
 @staff_member_required
 def admin_products(request):
-    """إدارة المنتجات"""
+    """Product management with search and filter"""
     search_query = request.GET.get('search', '')
     category_filter = request.GET.get('category', '')
     
@@ -149,7 +149,7 @@ def admin_product_add(request):
 
 @staff_member_required
 def admin_product_edit(request, product_id):
-    """تعديل منتج موجود"""
+    """Edit existing product"""
     product = get_object_or_404(Product, id=product_id)
     categories = Category.objects.all()
     colors = Color.objects.all()
@@ -305,7 +305,7 @@ def admin_product_edit(request, product_id):
 
 @staff_member_required
 def admin_product_delete(request, product_id):
-    """حذف منتج"""
+    """Delete product"""
     if request.method == 'POST':
         product = get_object_or_404(Product, id=product_id)
         product_name = product.name
@@ -316,7 +316,7 @@ def admin_product_delete(request, product_id):
 
 @staff_member_required
 def admin_orders(request):
-    """إدارة الطلبات"""
+    """Order management with search and filter"""
     status_filter = request.GET.get('status', '')
     search_query = request.GET.get('search', '').strip()
     
@@ -343,7 +343,7 @@ def admin_orders(request):
 
 @staff_member_required
 def admin_order_detail(request, order_id):
-    """تفاصيل طلب في لوحة الإدارة"""
+    """Order details in admin panel"""
     order = get_object_or_404(Order, id=order_id)
     
     if request.method == 'POST':
@@ -358,14 +358,14 @@ def admin_order_detail(request, order_id):
 
 @staff_member_required
 def admin_categories(request):
-    """إدارة الأقسام"""
+    """Category management"""
     categories = Category.objects.all().order_by('name')
     return render(request, 'admin/categories.html', {'categories': categories})
 
 
 @staff_member_required
 def admin_category_add(request):
-    """إضافة قسم جديد"""
+    """Add new category"""
     if request.method == 'POST':
         name = request.POST.get('name')
         description = request.POST.get('description', '')
@@ -387,7 +387,7 @@ def admin_category_add(request):
 
 @staff_member_required
 def admin_category_edit(request, category_id):
-    """تعديل قسم"""
+    """Edit category"""
     category = get_object_or_404(Category, id=category_id)
     
     if request.method == 'POST':
@@ -406,7 +406,7 @@ def admin_category_edit(request, category_id):
 
 @staff_member_required
 def admin_category_delete(request, category_id):
-    """حذف قسم"""
+    """Delete category"""
     if request.method == 'POST':
         category = get_object_or_404(Category, id=category_id)
         category_name = category.name
@@ -417,7 +417,7 @@ def admin_category_delete(request, category_id):
 
 @staff_member_required
 def admin_pending_users(request):
-    """عرض المستخدمين في انتظار الموافقة"""
+    """Display users awaiting approval"""
     from accounts.models import CustomUser
     
     # Get all inactive users
@@ -432,7 +432,7 @@ def admin_pending_users(request):
 
 @staff_member_required
 def admin_all_users(request):
-    """عرض جميع المستخدمين"""
+    """Display all users"""
     from accounts.models import CustomUser
     
     search_query = request.GET.get('search', '')
@@ -463,7 +463,7 @@ def admin_all_users(request):
 
 @staff_member_required
 def admin_approve_user(request, user_id):
-    """الموافقة على مستخدم"""
+    """Approve user registration"""
     from accounts.models import CustomUser
     
     if request.method == 'POST':
@@ -509,7 +509,7 @@ def admin_approve_user(request, user_id):
 
 @staff_member_required
 def admin_reject_user(request, user_id):
-    """رفض مستخدم وحذف حسابه"""
+    """Reject user and delete account"""
     from accounts.models import CustomUser
     
     if request.method == 'POST':
@@ -523,7 +523,7 @@ def admin_reject_user(request, user_id):
 
 @staff_member_required
 def admin_toggle_user_status(request, user_id):
-    """تبديل حالة تفعيل المستخدم (إيقاف/تفعيل)"""
+    """Toggle user active status (deactivate/activate)"""
     from accounts.models import CustomUser
     
     if request.method == 'POST':

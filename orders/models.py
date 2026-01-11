@@ -6,6 +6,12 @@ User = settings.AUTH_USER_MODEL
 
 
 class Order(models.Model):
+    """
+    Customer order representing a purchase transaction.
+    
+    Tracks order status from pending to delivered/cancelled.
+    Contains user contact info and order metadata.
+    """
     STATUS_CHOICES = (
         ('pending', 'قيد الانتظار'),
         ('confirmed', 'تم التأكيد'),
@@ -34,6 +40,13 @@ class Order(models.Model):
         ordering = ['-created_at']
 
 class OrderItem(models.Model):
+    """
+    Individual item within an order.
+    
+    Preserves product/variant information at time of order to maintain
+    accurate historical records even if product details change later.
+    Quantity always stored in pieces for consistency.
+    """
     UNIT_TYPE_CHOICES = [
         ('piece', 'قطعة'),
         ('carton', 'كرتونة'),
@@ -42,10 +55,12 @@ class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     variant = models.ForeignKey(ProductVariant, on_delete=models.SET_NULL, null=True, blank=True)
-    quantity = models.PositiveIntegerField(default=1)  # Always stored in pieces
+    # Quantity always stored in pieces for accurate inventory tracking
+    quantity = models.PositiveIntegerField(default=1)
+    # User's preferred display unit (carton or piece)
     unit_type = models.CharField(max_length=10, choices=UNIT_TYPE_CHOICES, default='carton')
 
-    # Preserve variant information at order time
+    # Preserve variant information at order time for historical accuracy
     variant_info = models.CharField(max_length=200, blank=True, 
                                     help_text="معلومات النمط وقت الطلب")
     variant_pcs_carton = models.PositiveIntegerField(null=True, blank=True,
@@ -58,7 +73,7 @@ class OrderItem(models.Model):
                                  help_text="اسم الطول/المقاس وقت الطلب")
 
     def save(self, *args, **kwargs):
-        # Automatically save variant info when order is created
+        # Automatically preserve variant information when order is created
         if self.variant and not self.variant_info:
             self.variant_info = f"{self.variant.get_variant_type_display()}"
         if self.variant and not self.variant_pcs_carton:

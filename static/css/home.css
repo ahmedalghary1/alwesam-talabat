@@ -17,7 +17,7 @@ main {
     padding-top: 0 !important;
 }
 
-/* Hero Slider - يحتوي على الصورة والمحتوى */
+/* Hero Slider - Contains images and content */
 .hero-slider {
     position: relative;
     width: 100%;
@@ -33,7 +33,7 @@ main {
     right: 0;
 }
 
-/* hero-content داخل slider */
+/* Hero content inside slider */
 .hero-slider .hero-content {
     text-align: center;
     display: flex;
@@ -108,14 +108,14 @@ main {
     object-position: center;
     display: block;
     transform-origin: center center;
-    /* ✅ Animation محسّن - تكبير سلس ومستمر */
+    /* Smooth continuous zoom animation */
     animation: smoothZoom 20s ease-in-out infinite;
     box-sizing: border-box;
     margin: 0;
     padding: 0;
 }
 
-/* ✅ Animation محسّن - تكبير سلس ومتكرر */
+/* Smooth repeating zoom keyframes */
 @keyframes smoothZoom {
 
     0%,
@@ -128,7 +128,6 @@ main {
     }
 }
 
-/* Animation قديم - محفوظ للتوافق */
 @keyframes zoomIn {
     0% {
         transform: scale(1);
@@ -230,8 +229,6 @@ main {
     right: clamp(0.5rem, 2vw, 2rem);
 }
 
-/* Slider Dots - ✅ محسّنة وظاهرة */
-/* Slider Dots - ❌ مخفية بناءً على الطلب */
 .slider-dots {
     display: none !important;
 }
@@ -248,7 +245,6 @@ main {
     position: relative;
 }
 
-/* ✅ Dot النشط مع تأثير مميز */
 .dot.active {
     background: #FFC400;
     border-color: #FFC400;
@@ -269,14 +265,12 @@ main {
     animation: dotPulse 2s ease-in-out infinite;
 }
 
-/* ✅ تأثير Hover محسّن */
 .dot:hover {
     background: rgba(255, 196, 0, 0.8);
     transform: scale(1.25);
     box-shadow: 0 0 0 2px rgba(255, 196, 0, 0.2);
 }
 
-/* ✅ Animation للنقطة النشطة */
 @keyframes dotPulse {
 
     0%,
@@ -291,7 +285,7 @@ main {
     }
 }
 
-/* Hero Section - متجاوب لجميع الأحجام */
+/* Hero Section */
 .hero {
     min-height: 70vh;
     padding: 0.5rem;
@@ -436,7 +430,7 @@ main {
     background: var(--bg-primary);
 }
 
-/* Section Header - تحسين تأثير العناوين */
+/* Section Header */
 .section-header {
     text-align: center;
     margin-bottom: 1rem;
@@ -476,7 +470,7 @@ main {
     gap: 1.5rem;
 }
 
-/* ✅ Category Cards محسّنة */
+/* Enhanced category cards */
 .category-card {
     background: var(--card-bg);
     border: 2px solid var(--border-color);
@@ -503,7 +497,7 @@ main {
     transition: transform 0.3s ease;
 }
 
-/* ✅ تأثير Hover محسّن */
+/* Enhanced hover effect */
 .category-card:hover {
     border-color: #FFC400;
     transform: translateY(-10px) scale(1.02);
@@ -516,7 +510,7 @@ main {
     transform: scaleX(1);
 }
 
-/* ✅ Category Images محسّنة */
+/* Enhanced category images */
 .category-image {
     width: 100%;
     aspect-ratio: 4/3;
@@ -656,7 +650,7 @@ body.theme-dark .category-image {
     opacity: 0.3;
 }
 
-/* Section Transitions - تحسين شامل للتأثيرات */
+/* Section Transitions */
 .section-animate {
     opacity: 0;
     transform: translateY(30px);
@@ -668,7 +662,6 @@ body.theme-dark .category-image {
     transform: translateY(0);
 }
 
-/* تأثيرات متنوعة للبطاقات */
 .card-animate {
     opacity: 0;
     transform: translateY(20px) scale(0.98);
@@ -681,7 +674,7 @@ body.theme-dark .category-image {
     transform: translateY(0) scale(1);
 }
 
-/* تأثير الظهور من الأسفل - جميع الكروت تظهر بنفس الطريقة */
+/* Slide up animation from bottom - all cards appear the same way */
 .categories-grid .card-animate {
     transform: translateY(30px) scale(0.98);
 }
@@ -691,7 +684,7 @@ body.theme-dark .category-image {
 }
 
 
-/* تأثير نابض للأيقونات عند الظهور */
+/* Pulse effect for icons on appearance */
 .feature-card.visible .feature-icon {
     animation: pulse 0.6s ease-out;
 }
@@ -712,7 +705,7 @@ body.theme-dark .category-image {
     }
 }
 
-/* تعريف أنيميشن fadeInUp */
+/* Fade in from bottom keyframes */
 @keyframes fadeInUp {
     from {
         opacity: 0;

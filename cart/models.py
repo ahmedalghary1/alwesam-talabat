@@ -18,6 +18,12 @@ class Cart(models.Model):
 
 
 class CartItem(models.Model):
+    """
+    Individual item in shopping cart.
+    
+    Quantity is always stored in pieces internally, but can be displayed
+    as cartons or pieces based on unit_type. This ensures accurate inventory tracking.
+    """
     UNIT_TYPE_CHOICES = [
         ('piece', 'قطعة'),
         ('carton', 'كرتونة'),
@@ -26,11 +32,14 @@ class CartItem(models.Model):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     variant = models.ForeignKey(ProductVariant, on_delete=models.SET_NULL, null=True, blank=True)
-    quantity = models.PositiveIntegerField(default=1)  # Always stored in pieces
+    # Always stored in pieces for consistency
+    quantity = models.PositiveIntegerField(default=1)
+    # User's preferred display unit (converted to pieces internally)
     unit_type = models.CharField(max_length=10, choices=UNIT_TYPE_CHOICES, default='carton')
     size_name = models.CharField(max_length=100, blank=True, help_text="اسم الطول/المقاس المختار")
 
     class Meta:
+        # Prevent duplicate items with same product/variant/unit/size
         unique_together = ['cart', 'product', 'variant', 'unit_type', 'size_name']
 
     def get_pcs_carton(self):

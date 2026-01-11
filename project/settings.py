@@ -183,10 +183,10 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-# مجلدات التطوير
+# Development: Static files
 STATICFILES_DIRS = [BASE_DIR / "static"]
 
-# مجلد التجميع عند النشر
+# Production: Static files
 STATIC_ROOT = BASE_DIR / "staticfiles"
 COMPRESS_ENABLED = not DEBUG
 MEDIA_URL = '/media/'

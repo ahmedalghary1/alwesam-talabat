@@ -1,3 +1,8 @@
+"""
+Django admin configuration for Accounts app.
+
+Registers Profile and Address models with search and filter capabilities.
+"""
 from django.contrib import admin
 from .models import Profile, Address
 

@@ -10,15 +10,19 @@ class CustomerMessageAdmin(admin.ModelAdmin):
     readonly_fields = ['user', 'message', 'created_at']
     
     def message_preview(self, obj):
-        """عرض معاينة الرسالة"""
+        """
+        Display message preview
+        """
         return obj.message[:50] + '...' if len(obj.message) > 50 else obj.message
-    message_preview.short_description = 'معاينة الرسالة'
+    message_preview.short_description = 'Message Preview'
     
     def has_reply(self, obj):
-        """التحقق من وجود رد"""
+        """
+        Check if message has a reply
+        """
         return obj.has_reply
     has_reply.boolean = True
-    has_reply.short_description = 'تم الرد'
+    has_reply.short_description = 'Has Reply'
 
 
 @admin.register(MessageReply)
@@ -29,6 +33,8 @@ class MessageReplyAdmin(admin.ModelAdmin):
     readonly_fields = ['customer_message', 'admin_user', 'created_at']
     
     def reply_preview(self, obj):
-        """عرض معاينة الرد"""
+        """
+        Display reply preview
+        """
         return obj.reply[:50] + '...' if len(obj.reply) > 50 else obj.reply
-    reply_preview.short_description = 'معاينة الرد'
+    reply_preview.short_description = 'Reply Preview'

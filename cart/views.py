@@ -14,7 +14,9 @@ logger = logging.getLogger(__name__)
 
 
 def cart_view(request):
-    """عرض السلة"""
+    """
+    Display the cart
+    """
     cart = None
     cart_items = []
     total_cartons = 0
@@ -40,7 +42,9 @@ def cart_view(request):
 
 @ensure_csrf_cookie
 def add_to_cart(request, product_id):
-    """إضافة منتج للسلة - للمستخدمين المسجلين فقط"""
+    """
+    Add product to cart - for authenticated users only
+    """
     # Check if user is authenticated
     if not request.user.is_authenticated:
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -172,7 +176,9 @@ def add_to_cart(request, product_id):
 
 @login_required
 def remove_from_cart(request, item_id):
-    """حذف منتج من السلة"""
+    """
+    Remove product from cart
+    """
     cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
     product_name = cart_item.get_display_name() if hasattr(cart_item, 'get_display_name') else cart_item.product.name
     cart_item.delete()
@@ -189,7 +195,9 @@ def remove_from_cart(request, item_id):
 
 @login_required
 def update_cart_item(request, item_id):
-    """تحديث كمية منتج في السلة"""
+    """
+    Update product quantity in cart
+    """
     if request.method == 'POST':
         cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
         
@@ -222,7 +230,9 @@ def update_cart_item(request, item_id):
 
 @require_POST
 def sync_cart_from_local(request):
-    """مزامنة السلة من localStorage"""
+    """
+    Synchronize cart from localStorage
+    """
     if not request.user.is_authenticated:
         return JsonResponse({
             'success': False,
@@ -305,7 +315,9 @@ def sync_cart_from_local(request):
 
 @login_required
 def checkout(request):
-    """صفحة إتمام الطلب"""
+    """
+    Checkout page
+    """
     cart = get_object_or_404(Cart, user=request.user)
     cart_items = cart.items.all()
     

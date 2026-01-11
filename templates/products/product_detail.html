@@ -326,9 +326,9 @@
         function selectColor(colorId, variants) {
             const selectedColor = document.querySelector(`[data-color-id="${colorId}"]`);
 
-            // Toggle behavior: إذا كان اللون محدد، إلغاء التحديد
+            // Toggle behavior: If color is already selected, deselect it
             if (selectedColor && selectedColor.classList.contains('selected')) {
-                // إلغاء التحديد
+                // Deselect
                 selectedColor.classList.remove('selected');
 
                 // CRITICAL FIX: Force reset outline properties for mobile browsers
@@ -347,23 +347,23 @@
                 selectedSizeName = null;
                 document.getElementById('selected-variant-id').value = '';
 
-                // إخفاء قسم المقاسات
+                // Hide size selection section
                 const sizeWrapper = document.getElementById('size-selection-wrapper');
                 if (sizeWrapper) {
                     sizeWrapper.style.display = 'none';
                 }
 
-                // مسح المقاسات المحددة
+                // Clear selected sizes
                 document.querySelectorAll('.size-option').forEach(el => el.classList.remove('selected'));
 
-                // إعادة تعيين الصورة للمنتج الأساسي
+                // Reset the product image
                 updateGallery(productImages);
 
                 console.log('✓ تم إلغاء تحديد اللون');
                 return;
             }
 
-            // تحديد اللون الجديد
+            // Select the new color
             document.querySelectorAll('.color-option').forEach(el => el.classList.remove('selected'));
             if (selectedColor) selectedColor.classList.add('selected');
 
@@ -525,35 +525,35 @@
         // Product info
         const PRODUCT_DATA = {
             id: {{ product.id }},
-        name: "{{ product.name|escapejs }}",
+            name: "{{ product.name|escapejs }}",
             image: "{% if product.image %}{{ product.image.url }}{% endif %}",
-                pcsCarton: {{ product.pcs_carton }}
+            pcsCarton: {{ product.pcs_carton }}
         }
 
         // Variant images data
         const variantImagesData = {
         {% for v in variants %}
-        '{{ v.id }}': [
+            '{{ v.id }}': [
             {% if v.images.all %}
-        {% for vimg in v.images.all %}
-        { url: '{{ vimg.image.url }}', alt: '' } {% if not forloop.last %}, {% endif %}
-        {% endfor %}
-        {% elif v.image %}
-        { url: '{{ v.image.url }}', alt: '' }
-        {% endif %}
-        ]{% if not forloop.last %}, {% endif %}
+                {% for vimg in v.images.all %}
+                    { url: '{{ vimg.image.url }}', alt: '' } {% if not forloop.last %}, {% endif %}
+                {% endfor %}
+            {% elif v.image %}
+                { url: '{{ v.image.url }}', alt: '' }
+            {% endif %}
+            ]{% if not forloop.last %}, {% endif %}
         {% endfor %}
     };
 
         // Product images for fallback
         const productImages = [
             {% if product.image %}
-        { url: '{{ product.image.url }}', alt: '{{ product.name }}' },
-        {% endif %}
+                { url: '{{ product.image.url }}', alt: '{{ product.name }}' },
+            {% endif %}
 
-        {% for img in product.additional_images.all %}
-        { url: '{{ img.image.url }}', alt: '{{ product.name }}' } {% if not forloop.last %}, {% endif %}
-        {% endfor %}
+            {% for img in product.additional_images.all %}
+                { url: '{{ img.image.url }}', alt: '{{ product.name }}' } {% if not forloop.last %}, {% endif %}
+            {% endfor %}
         ];
 
         // === QUANTITY CONTROLS ===
@@ -684,7 +684,7 @@
                 }, 3000);
             }
 
-            // تسليط الضوء على القسم المطلوب
+            // Highlight the required section
             const targetElement = document.querySelector(targetSelector);
             if (targetElement) {
                 targetElement.style.border = '2px solid #ef4444';
@@ -701,13 +701,13 @@
 
         // === ADD TO CART ===
         async function handleAddToCart() {
-            // Validation 1: التحقق من اختيار اللون (إذا كان المنتج يحتوي على variants)
+            // Validation 1: Check for color selection (if product has variants)
             if (ALL_VARIANTS.length > 0 && !selectedVariantId) {
                 showValidationError('⚠️ يرجى اختيار لون المنتج أولاً', '.variant-selection-section');
                 return;
             }
 
-            // Validation 2: التحقق من وحدة الطلب
+            // Validation 2: Check for unit selection
             if (!selectedUnit) {
                 showValidationError('⚠️ يرجى اختيار وحدة الطلب (كرتونة أو قطعة)', '.variant-section');
                 return;

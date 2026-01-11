@@ -20,7 +20,7 @@ def handle_exceptions(redirect_url='home:home', error_message='حدث خطأ غ�
     Usage:
         @handle_exceptions(redirect_url='products:all_categories')
         def my_view(request):
-            # view code
+           # view code 
     """
     def decorator(view_func):
         @wraps(view_func)

@@ -10,7 +10,11 @@ logger = logging.getLogger(__name__)
 
 
 def search_products(request):
-    """بحث في المنتجات"""
+    """
+    Search products by name, description, or category.
+    
+    Returns search results page with matching products.
+    """
     query = request.GET.get('q', '').strip()
     
     if not query:
@@ -30,7 +34,11 @@ def search_products(request):
 
 
 def all_categories(request):
-    """عرض جميع الأقسام"""
+    """
+    Display all available product categories.
+    
+    Returns categories page or redirects to home on error.
+    """
     try:
         categories = Category.objects.all()
         return render(request, 'products/all_categories.html', {
@@ -42,7 +50,7 @@ def all_categories(request):
 
 
 def category_products(request, slug):
-    """عرض منتجات قسم محدد"""
+    """Display products in a specific category"""
     try:
         category = get_object_or_404(Category, slug=slug)
         products = Product.objects.filter(category=category)
@@ -62,7 +70,15 @@ def category_products(request, slug):
 
 
 def product_detail(request, slug):
-    """عرض تفاصيل منتج"""
+    """
+    Display product details with variants and related products.
+    
+    Args:
+        slug: Product URL slug
+        
+    Returns:
+        Product detail page with images, variants, and related items
+    """
     try:
         product = get_object_or_404(Product, slug=slug)
         
@@ -74,7 +90,7 @@ def product_detail(request, slug):
             is_available=True
         ).select_related('color').prefetch_related('sizes')
         
-        # منتجات ذات صلة (نفس القسم) - مع تحسين الأداء
+        # Related products (same category) with optimized queries
         related_products = Product.objects.filter(
             category=product.category
         ).exclude(id=product.id).select_related('category')[:4]

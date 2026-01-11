@@ -306,9 +306,9 @@
         </div>
 
         <div class="conversation-body">
-            <!-- جميع رسائل العميل مع الردود -->
+            <!-- All customer messages with replies -->
             {% for msg in user_messages %}
-            <!-- رسالة من العميل -->
+            <!-- Message from customer -->
             <div class="conversation-message customer">
                 <div class="message-meta">
                     <span class="message-sender">
@@ -320,7 +320,7 @@
                 <div class="message-text">{{ msg.message }}</div>
             </div>
 
-            <!-- الردود على هذه الرسالة -->
+            <!-- Replies to this message -->
             {% for reply in msg.replies.all %}
             <div class="conversation-message admin">
                 <div class="message-meta">
@@ -361,7 +361,7 @@
                 </div>
             </form>
 
-            <!-- زر الحذف خارج الـ form -->
+            <!-- Delete button outside form -->
             <form method="POST" action="{% url 'admin_support:delete_message' user_messages.first.id %}"
                 style="margin-top: 1rem; text-align: left;">
                 {% csrf_token %}

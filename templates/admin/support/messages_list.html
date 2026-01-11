@@ -267,11 +267,11 @@
         const rows = table.querySelectorAll('tbody tr');
         const tabs = document.querySelectorAll('.filter-tab');
 
-        // تحديث الأزرار
+        // update buttons
         tabs.forEach(tab => tab.classList.remove('active'));
         event.target.classList.add('active');
 
-        // تصفية الصفوف
+        // filter rows
         rows.forEach(row => {
             if (filter === 'all') {
                 row.style.display = '';
