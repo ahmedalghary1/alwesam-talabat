@@ -12,7 +12,6 @@ logger = logging.getLogger(__name__)
 def search_products(request):
     """
     Search products by name, description, or category.
-    
     Returns search results page with matching products.
     """
     query = request.GET.get('q', '').strip()
@@ -36,7 +35,6 @@ def search_products(request):
 def all_categories(request):
     """
     Display all available product categories.
-    
     Returns categories page or redirects to home on error.
     """
     try:
@@ -72,10 +70,8 @@ def category_products(request, slug):
 def product_detail(request, slug):
     """
     Display product details with variants and related products.
-    
     Args:
         slug: Product URL slug
-        
     Returns:
         Product detail page with images, variants, and related items
     """

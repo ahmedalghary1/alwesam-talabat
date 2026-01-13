@@ -197,13 +197,12 @@ class ProductVariant(ImageCompressionMixin, models.Model):
     
     # Availability flag
     is_available = models.BooleanField(default=True)
-    
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
     def save(self, *args, **kwargs):
         # Compress variant image if provided
         self.save_with_compression(image_field_name='image', *args, **kwargs)
-    
+
     class Meta:
         # Ensure each product has unique variant codes
         unique_together = ['product', 'code']
@@ -215,6 +214,6 @@ class ProductVariant(ImageCompressionMixin, models.Model):
             models.Index(fields=['is_available']),
             models.Index(fields=['product', 'is_available']),
         ]
-    
+
     def __str__(self):
         return self.name or f"{self.product.name}"
