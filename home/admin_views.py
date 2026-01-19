@@ -351,9 +351,20 @@ def admin_order_detail(request, order_id):
         if new_status in dict(Order.STATUS_CHOICES).keys():
             order.status = new_status
             order.save()
-            messages.success(request, 'تم تحديث حالة الطلب')
+            
+            # Send order status update email asynchronously using Celery
+            try:
+                from utils.email_tasks import send_order_status_email_task
+                
+                # Queue the email task to be processed in the background
+                send_order_status_email_task.delay(order.id, new_status, order.user.email)
+                
+                messages.success(request, 'تم تحديث حالة الطلب وإضافة إرسال البريد الإلكتروني إلى قائمة الانتظار')
+            except Exception as e:
+                messages.success(request, f'تم تحديث حالة الطلب (فشل جدولة إرسال البريد الإلكتروني: {str(e)})')
     
     return render(request, 'admin/order_detail.html', {'order': order})
+
 
 
 @staff_member_required
@@ -471,38 +482,19 @@ def admin_approve_user(request, user_id):
         user.is_active = True
         user.save()
         
-        # Send activation email
+        # Send activation email asynchronously using Celery
         try:
-            from django.core.mail import EmailMultiAlternatives
-            from django.template.loader import render_to_string
-            from django.utils.html import strip_tags
-            from django.conf import settings
+            from utils.email_tasks import send_activation_email_task
             
-            subject = 'تم تفعيل حسابك - الوسام طلبات'
             login_url = request.build_absolute_uri('/accounts/login/')
             
-            # Context for the email template
-            context = {
-                'username': user.username,
-                'login_url': login_url,
-            }
+            # Queue the email task to be processed in the background
+            send_activation_email_task.delay(user.id, login_url)
             
-            # Render HTML content
-            html_content = render_to_string('emails/activation_email.html', context)
-            text_content = strip_tags(html_content)  # Fallback for plain text
-            
-            from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'info@elwsam.com')
-            recipient_list = [user.email]
-            
-            # Create the email
-            email = EmailMultiAlternatives(subject, text_content, from_email, recipient_list)
-            email.attach_alternative(html_content, "text/html")
-            email.send()
-            
-            messages.success(request, f'تم تفعيل حساب "{user.username}" وإرسال بريد إلكتروني للإشعار بنجاح')
+            messages.success(request, f'تم تفعيل حساب "{user.username}" وتم إضافة إرسال البريد الإلكتروني إلى قائمة الانتظار')
             
         except Exception as e:
-            messages.success(request, f'تم تفعيل حساب "{user.username}" (فشل إرسال البريد الإلكتروني: {str(e)})')
+            messages.success(request, f'تم تفعيل حساب "{user.username}" (فشل جدولة إرسال البريد الإلكتروني: {str(e)})')
     
     return redirect('admin_app:pending_users')
 
@@ -535,34 +527,18 @@ def admin_toggle_user_status(request, user_id):
         
         if user.is_active:
             status_text = "تفعيل"
-            # Send activation email
+            # Send activation email asynchronously using Celery
             try:
-                from django.core.mail import EmailMultiAlternatives
-                from django.template.loader import render_to_string
-                from django.utils.html import strip_tags
-                from django.conf import settings
+                from utils.email_tasks import send_activation_email_task
                 
-                subject = 'تم تفعيل حسابك - الوسام طلبات'
                 login_url = request.build_absolute_uri('/accounts/login/')
                 
-                context = {
-                    'username': user.username,
-                    'login_url': login_url,
-                }
+                # Queue the email task to be processed in the background
+                send_activation_email_task.delay(user.id, login_url)
                 
-                html_content = render_to_string('emails/activation_email.html', context)
-                text_content = strip_tags(html_content)
-                
-                from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'info@elwsam.com')
-                recipient_list = [user.email]
-                
-                email = EmailMultiAlternatives(subject, text_content, from_email, recipient_list)
-                email.attach_alternative(html_content, "text/html")
-                email.send()
-                
-                messages.success(request, f'تم تفعيل حساب "{user.username}" وإرسال بريد إلكتروني للإشعار بنجاح')
+                messages.success(request, f'تم تفعيل حساب "{user.username}" وتم إضافة إرسال البريد الإلكتروني إلى قائمة الانتظار')
             except Exception as e:
-                messages.success(request, f'تم تفعيل حساب "{user.username}" (فشل إرسال البريد الإلكتروني: {str(e)})')
+                messages.success(request, f'تم تفعيل حساب "{user.username}" (فشل جدولة إرسال البريد الإلكتروني: {str(e)})')
         else:
             status_text = "إيقاف"
             messages.success(request, f'تم {status_text} حساب المستخدم "{user.username}" بنجاح')

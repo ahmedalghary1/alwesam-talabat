@@ -47,6 +47,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.sitemaps',  # For SEO sitemap
     'compressor',
+    'django_celery_results',  # Celery results backend
+    'utils',  # Celery email tasks
     'products',
     'orders',
     'cart',
@@ -225,3 +227,37 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = config('EMAIL_HOST_USER','ahmedalghary1@gmail.com')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD','gqey nxwu ryzp rldf')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='Alwesam Talabat <info@elwsam.com>')
+
+
+# ========================================
+# Celery Configuration
+# ========================================
+# Celery is used for asynchronous task processing (e.g. sending emails in the background)
+
+# Redis as message broker
+# For local development: redis://localhost:6379/0
+# For production: Use environment variable CELERY_BROKER_URL
+CELERY_BROKER_URL = config('CELERY_BROKER_URL', default='redis://localhost:6379/0')
+
+# Store task results in Django database using django-celery-results
+CELERY_RESULT_BACKEND = 'django-db'
+
+# Store additional task metadata
+CELERY_CACHE_BACKEND = 'django-cache'
+
+# JSON serialization for security and compatibility
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+
+# Timezone configuration (same as Django)
+CELERY_TIMEZONE = TIME_ZONE
+
+# Task execution settings
+CELERY_TASK_TRACK_STARTED = True  # Track when tasks start
+CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 minutes hard limit
+CELERY_TASK_SOFT_TIME_LIMIT = 25 * 60  # 25 minutes soft limit
+
+# Email task retry settings
+CELERY_TASK_DEFAULT_RETRY_DELAY = 60  # Retry after 60 seconds
+CELERY_TASK_MAX_RETRIES = 3  # Maximum 3 retry attempts

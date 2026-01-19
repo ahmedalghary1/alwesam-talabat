@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تحديث حالة الطلب - الوسام طلبات</title>
+</head>
+
+<body
+    style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5; direction: rtl; text-align: right;">
+
+    <table border="0" cellpadding="0" cellspacing="0" width="100%"
+        style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-top: 20px; margin-bottom: 20px;">
+
+        <!-- Header -->
+        <tr>
+            <td style="background-color: #1a1a1a; padding: 30px; text-align: center;">
+                <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;">
+                    الوسام <span style="color: #FFC400;">طلبات</span>
+                </h1>
+            </td>
+        </tr>
+
+        <!-- Content -->
+        <tr>
+            <td style="padding: 40px 30px;">
+                <h2 style="color: #1a1a1a; margin-top: 0; margin-bottom: 20px; font-size: 24px;">مرحباً {{ username }}،
+                </h2>
+
+                <p style="color: #555555; font-size: 16px; line-height: 1.6; margin-bottom: 25px;">
+                    نود إعلامك بأن حالة طلبك <strong>#{{ order_number }}</strong> قد تم تحديثها.
+                </p>
+
+                <!-- Status Update Box -->
+                <div style="background-color: {% if new_status == 'confirmed' %}#e8f5e9{% elif new_status == 'shipped' %}#e3f2fd{% elif new_status == 'delivered' %}#f1f8e9{% elif new_status == 'cancelled' %}#ffebee{% else %}#f5f5f5{% endif %}; 
+                            border: 2px solid {% if new_status == 'confirmed' %}#4caf50{% elif new_status == 'shipped' %}#2196f3{% elif new_status == 'delivered' %}#8bc34a{% elif new_status == 'cancelled' %}#f44336{% else %}#cccccc{% endif %}; 
+                            border-radius: 8px; padding: 25px; margin-bottom: 25px; text-align: center;">
+
+                    <div style="margin-bottom: 10px;">
+                        {% if new_status == 'confirmed' %}
+                        <div style="font-size: 48px;">✓</div>
+                        {% elif new_status == 'shipped' %}
+                        <div style="font-size: 48px;">🚚</div>
+                        {% elif new_status == 'delivered' %}
+                        <div style="font-size: 48px;">📦</div>
+                        {% elif new_status == 'cancelled' %}
+                        <div style="font-size: 48px;">✕</div>
+                        {% else %}
+                        <div style="font-size: 48px;">⏱</div>
+                        {% endif %}
+                    </div>
+
+                    <h3 style="color: #1a1a1a; margin: 15px 0 5px 0; font-size: 22px;">الحالة الجديدة</h3>
+                    <p style="color: {% if new_status == 'confirmed' %}#2e7d32{% elif new_status == 'shipped' %}#1565c0{% elif new_status == 'delivered' %}#558b2f{% elif new_status == 'cancelled' %}#c62828{% else %}#555555{% endif %}; 
+                              font-size: 24px; font-weight: bold; margin: 0;">
+                        {{ status_text }}
+                    </p>
+                </div>
+
+                <!-- Status Explanation -->
+                <div style="background-color: #f9f9f9; border-radius: 5px; padding: 20px; margin-bottom: 25px;">
+                    {% if new_status == 'confirmed' %}
+                    <p style="color: #555555; font-size: 15px; line-height: 1.6; margin: 0;">
+                        <strong>تم تأكيد طلبك!</strong><br>
+                        نحن الآن نقوم بتجهيز طلبك للشحن. سيتم إشعارك فور شحن الطلب.
+                    </p>
+                    {% elif new_status == 'shipped' %}
+                    <p style="color: #555555; font-size: 15px; line-height: 1.6; margin: 0;">
+                        <strong>تم شحن طلبك!</strong><br>
+                        طلبك الآن في الطريق إليك. سيصل خلال الأيام القليلة القادمة.
+                    </p>
+                    {% elif new_status == 'delivered' %}
+                    <p style="color: #555555; font-size: 15px; line-height: 1.6; margin: 0;">
+                        <strong>تم تسليم طلبك بنجاح!</strong><br>
+                        نأمل أن يكون كل شيء على ما يرام. شكراً لاختيارك الوسام طلبات.
+                    </p>
+                    {% elif new_status == 'cancelled' %}
+                    <p style="color: #555555; font-size: 15px; line-height: 1.6; margin: 0;">
+                        <strong>تم إلغاء الطلب</strong><br>
+                        تم إلغاء طلبك. إذا كان لديك أي استفسار، يرجى التواصل معنا.
+                    </p>
+                    {% else %}
+                    <p style="color: #555555; font-size: 15px; line-height: 1.6; margin: 0;">
+                        تم تحديث حالة طلبك. تابع حسابك لمعرفة آخر التحديثات.
+                    </p>
+                    {% endif %}
+                </div>
+
+                <!-- Order Info -->
+                <div style="border: 1px solid #eeeeee; border-radius: 5px; padding: 15px; margin-bottom: 25px;">
+                    <table width="100%">
+                        <tr>
+                            <td style="color: #888888; font-size: 14px; padding: 5px 0;">رقم الطلب:</td>
+                            <td
+                                style="color: #1a1a1a; font-size: 14px; font-weight: bold; text-align: left; padding: 5px 0;">
+                                #{{ order_number }}</td>
+                        </tr>
+                        <tr>
+                            <td style="color: #888888; font-size: 14px; padding: 5px 0;">رقم الهاتف:</td>
+                            <td style="color: #1a1a1a; font-size: 14px; text-align: left; padding: 5px 0;">{{
+                                order.phone_number }}</td>
+                        </tr>
+                    </table>
+                </div>
+
+                {% if new_status != 'cancelled' and new_status != 'delivered' %}
+                <p style="color: #555555; font-size: 15px; line-height: 1.6; margin-bottom: 20px;">
+                    سنستمر في إبقائك على اطلاع بأي تحديثات جديدة.
+                </p>
+                {% endif %}
+
+                <div style="margin-top: 30px; border-top: 1px solid #eeeeee; padding-top: 20px;">
+                    <p style="color: #888888; font-size: 14px; margin: 0;">
+                        للاستفسار عن طلبك، يمكنك التواصل معنا عبر صفحة الدعم أو الرد على هذا البريد.
+                    </p>
+                </div>
+            </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+            <td style="background-color: #f9f9f9; padding: 20px; text-align: center; border-top: 1px solid #eeeeee;">
+                <p style="color: #999999; font-size: 12px; margin: 0;">
+                    &copy; 2026 الوسام طلبات. جميع الحقوق محفوظة.
+                </p>
+                <p style="color: #888888; font-size: 12px; margin: 10px 0 0 0;">
+                    شكراً لثقتك في الوسام طلبات
+                </p>
+            </td>
+        </tr>
+    </table>
+
+</body>
+
+</html>

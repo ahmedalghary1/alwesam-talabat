@@ -129,6 +129,16 @@ def create_order(request):
             # Clear cart after order creation
             cart.items.all().delete()
             
+            # Send order confirmation email asynchronously using Celery
+            try:
+                from utils.email_tasks import send_order_confirmation_email_task
+                
+                # Queue the email task to be processed in the background
+                send_order_confirmation_email_task.delay(order.id, request.user.email)
+            except Exception as e:
+                # Log error but don't fail the order creation
+                logger.error(f'Failed to queue order confirmation email for order {order.id}: {str(e)}')
+            
             messages.success(request, f'تم إنشاء الطلب #{order.id} بنجاح')
             return redirect('orders:order_detail', order_id=order.id)
             

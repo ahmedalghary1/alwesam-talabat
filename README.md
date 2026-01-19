@@ -11,6 +11,7 @@
 ### المتطلبات
 
 - Python 3.10+
+- Redis (لنظام Celery)
 - التبعيات في `requirements.txt`
 
 ### التثبيت
@@ -21,13 +22,16 @@ cd alwesam-talabat1
 
 # 2. إنشاء بيئة افتراضية
 python -m venv venv
-venv\Scripts\activate
+venv\Scripts\activate  # Windows
+# source venv/bin/activate  # Linux/Mac
 
 # 3. تثبيت المتطلبات
 pip install -r requirements.txt
 
 # 4. نسخ ملف البيئة
-copy .env.example .env
+copy .env.example .env  # Windows
+# cp .env.example .env  # Linux/Mac
+# قم بتعديل .env وضبط القيم المطلوبة
 
 # 5. تطبيق Migrations
 python manage.py migrate
@@ -35,11 +39,32 @@ python manage.py migrate
 # 6. إنشاء superuser
 python manage.py createsuperuser
 
-# 7. تشغيل السيرفر
+# 7. تشغيل Redis
+docker run -d -p 6379:6379 --name redis-server redis
+# أو قم بتشغيل Redis مباشرة إذا كان مثبتاً
+
+# 8. تشغيل السيرفر والخوادم
+# طريقة سريعة (Windows):
+start_servers.bat
+
+# أو يدوياً (افتح 3 terminals منفصلة):
+# Terminal 1: Django Server
 python manage.py runserver
+
+# Terminal 2: Celery Worker (Windows)
+celery -A project worker --loglevel=info --pool=solo
+
+# Terminal 3: Celery Worker (Linux/Mac)
+celery -A project worker --loglevel=info
 ```
 
 افتح المتصفح: `http://localhost:8000`
+
+### 🧪 اختبار نظام الإيميلات
+
+```bash
+python test_email_tasks.py
+```
 
 ---
 
@@ -69,10 +94,13 @@ alwesam-talabat1/
 ### Backend
 
 - Django 5.2.8
+- **Celery 5.3+** (معالجة المهام غير المتزامنة)
+- **Redis 5.0+** (Message broker لـ Celery)
 - Pillow (معالجة الصور)
 - python-decouple (إدارة البيئة)
 - django-ratelimit (تحديد معدل الطلبات)
 - django-debug-toolbar (أدوات التطوير)
+- django-celery-results (حفظ نتائج مهام Celery)
 
 ### قاعدة البيانات
 
@@ -228,6 +256,40 @@ alwesam-talabat1/
 ✅ لوحة تحكم إدارية مخصصة  
 ✅ بحث متقدم  
 ✅ تتبع حالة الطلبات  
+✅ **نظام إيميلات غير متزامن مع Celery**  
+✅ **إيميلات تفعيل + تأكيد طلبات + تحديث حالة**  
+
+---
+
+## 📧 نظام الإيميلات (Celery)
+
+### أنواع الإيميلات
+
+1. **إيميل تفعيل الحساب** - عند موافقة المشرف  
+2. **إيميل تأكيد الطلب** - بعد إنشاء طلب جديد  
+3. **إيميل تحديث الحالة** - عند تغيير حالة الطلب  
+
+### المميزات
+
+- ⚡ معالجة غير متزامنة (لا تؤثر على السرعة)
+- 🔄 Retry تلقائي (3 محاولات)
+- 📊 تسجيل كامل في قاعدة البيانات
+- 📝 قوالب HTML responsive مع RTL
+
+### التشغيل السريع
+
+```bash
+# تشغيل Redis
+docker run -d -p 6379:6379 redis
+
+# تشغيل Celery Worker (Windows)
+celery -A project worker --loglevel=info --pool=solo
+
+# اختبار النظام
+python test_email_tasks.py
+```
+
+📚 **للتفاصيل الكاملة:** راجع [`docs/celery_setup.md`](docs/celery_setup.md)
 
 ---
 
@@ -335,7 +397,9 @@ AUTHENTICATION_BACKENDS = [
 
 ---
 
-**آخر تحديث:** ديسمبر 2025  
-**الإصدار:** 1.0  
+**آخر تحديث:** يناير 2026  
+**الإصدار:** 1.1 (مع دعم Celery)  
 **Django:** 5.2.8  
-**Python:** 3.10+
+**Python:** 3.10+  
+**Celery:** 5.3+  
+**Redis:** 5.0+

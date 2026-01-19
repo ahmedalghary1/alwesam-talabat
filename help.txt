@@ -9,3 +9,10 @@ python manage.py migrate
 
 
 waitress-serve --port=80 project.wsgi:application
+
+
+redis-cli.exe
+ping
+PONG
+
+celery -A project worker --loglevel=info --pool=solo
