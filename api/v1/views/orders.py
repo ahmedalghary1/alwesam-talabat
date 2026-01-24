@@ -1,0 +1,107 @@
+"""
+Views for orders API - Order management.
+"""
+from rest_framework import viewsets, status
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from django.db import transaction
+from orders.models import Order, OrderItem
+from cart.models import Cart
+from ..serializers.orders import (
+    OrderListSerializer, OrderDetailSerializer, CreateOrderSerializer
+)
+from ..permissions import IsOwnerOrAdmin
+
+
+class OrderViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet for orders.
+    List, retrieve, create, and cancel orders.
+    """
+    permission_classes = [IsAuthenticated, IsOwnerOrAdmin]
+    
+    def get_queryset(self):
+        return Order.objects.filter(user=self.request.user)\
+            .select_related('user')\
+            .prefetch_related('items__product')
+    
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return OrderListSerializer
+        return OrderDetailSerializer
+    
+    @action(detail=False, methods=['post'])
+    def create_from_cart(self, request):
+        """Create order from cart items."""
+        serializer = CreateOrderSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        try:
+            cart = Cart.objects.get(user=request.user)
+            if not cart.items.exists():
+                return Response(
+                    {"error": "السلة فارغة"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        except Cart.DoesNotExist:
+            return Response(
+                {"error": "السلة غير موجودة"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        with transaction.atomic():
+            order = Order.objects.create(
+                user=request.user,
+                phone_number=serializer.validated_data['phone_number'],
+                address=serializer.validated_data['address'],
+                notes=serializer.validated_data.get('notes', ''),
+                status='pending'
+            )
+            
+            for cart_item in cart.items.all():
+                color_name = ''
+                size_name = cart_item.size_name
+                
+                if cart_item.variant and cart_item.variant.color:
+                    color_name = cart_item.variant.color.name
+                
+                OrderItem.objects.create(
+                    order=order,
+                    product=cart_item.product,
+                    variant=cart_item.variant,
+                    quantity=cart_item.quantity,
+                    unit_type=cart_item.unit_type,
+                    color_name=color_name,
+                    size_name=size_name
+                )
+            
+            cart.items.all().delete()
+            
+            # Send order confirmation email
+            try:
+                from utils.email_tasks import send_order_confirmation_email_task
+                send_order_confirmation_email_task.delay(order.id, request.user.email)
+            except Exception:
+                pass  # Don't fail order creation if email fails
+        
+        return Response(
+            OrderDetailSerializer(order).data,
+            status=status.HTTP_201_CREATED
+        )
+    
+    @action(detail=True, methods=['post'])
+    def cancel(self, request, pk=None):
+        """Cancel pending order."""
+        order = self.get_object()
+        
+        if order.status != 'pending':
+            return Response(
+                {"error": "لا يمكن إلغاء هذا الطلب"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        order.status = 'cancelled'
+        order.save()
+        
+        return Response(OrderDetailSerializer(order).data)

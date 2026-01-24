@@ -21,6 +21,7 @@ from django.conf.urls.static import static
 from django.contrib.sitemaps.views import sitemap
 from django.views.generic import TemplateView
 from home.sitemaps import StaticViewSitemap, CategorySitemap, ProductSitemap
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 # Sitemaps configuration
 sitemaps = {
@@ -39,6 +40,13 @@ urlpatterns = [
     path('support/', include('support.urls')),  # Customer support
     path('admin-panel/', include('home.admin_urls')),  # Admin panel routes
     path('admin-panel/support/', include('support.admin_urls')),  # Support admin routes
+    
+    # REST API
+    path('api/', include('api.urls')),
+    
+    # API Documentation
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     
     # SEO: Sitemap
     path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),

@@ -54,6 +54,13 @@ INSTALLED_APPS = [
     'cart',
     'home',
     'support',  # Customer support messaging system
+    # REST Framework
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'django_filters',
+    'drf_spectacular',
+    'corsheaders',
+    'api',  # REST API app
 ]
 
 STATICFILES_FINDERS = (
@@ -68,6 +75,7 @@ if DEBUG:
     INSTALLED_APPS += ['debug_toolbar']
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  # CORS must be at the top
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',  # ← NEW: for language switching
@@ -77,7 +85,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'accounts.middleware.CheckUserActiveMiddleware',  # Check if user is active (must be after MessageMiddleware)
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    
 ]
 
 # Debug toolbar middleware
@@ -112,32 +119,30 @@ WSGI_APPLICATION = 'project.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# WARNING: SQLite is NOT recommended for production!
-# SQLite limitations:
-# - Poor performance with concurrent writes
-# - Not suitable for high-traffic applications
-# - Difficult backups and replication
+# Database configuration from environment variables
+# Supports both SQLite (development) and PostgreSQL (production/Docker)
+DB_ENGINE = config('DB_ENGINE', default='django.db.backends.sqlite3')
 
-# Development: SQLite (current)
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+if DB_ENGINE == 'django.db.backends.sqlite3':
+    # SQLite for local development
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-}
-
-# Production: Use PostgreSQL (recommended)
-# Uncomment and configure for production:
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': config('DB_NAME'),
-#         'USER': config('DB_USER'),
-#         'PASSWORD': config('DB_PASSWORD'),
-#         'HOST': config('DB_HOST', default='localhost'),
-#         'PORT': config('DB_PORT', default='5432'),
-#     }
-# }
+else:
+    # PostgreSQL for production/Docker
+    DATABASES = {
+        'default': {
+            'ENGINE': config('DB_ENGINE'),
+            'NAME': config('DB_NAME'),
+            'USER': config('DB_USER'),
+            'PASSWORD': config('DB_PASSWORD'),
+            'HOST': config('DB_HOST', default='localhost'),
+            'PORT': config('DB_PORT', default='5432'),
+        }
+    }
 
 
 # Password validation
@@ -235,8 +240,7 @@ DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='Alwesam Talabat <info
 # Celery is used for asynchronous task processing (e.g. sending emails in the background)
 
 # Redis as message broker
-# For local development: redis://localhost:6379/0
-# For production: Use environment variable CELERY_BROKER_URL
+# Configured from environment variable for Docker compatibility
 CELERY_BROKER_URL = config('CELERY_BROKER_URL', default='redis://localhost:6379/0')
 
 # Store task results in Django database using django-celery-results
@@ -261,3 +265,77 @@ CELERY_TASK_SOFT_TIME_LIMIT = 25 * 60  # 25 minutes soft limit
 # Email task retry settings
 CELERY_TASK_DEFAULT_RETRY_DELAY = 60  # Retry after 60 seconds
 CELERY_TASK_MAX_RETRIES = 3  # Maximum 3 retry attempts
+
+
+# ========================================
+# REST Framework Configuration
+# ========================================
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20,
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+        'rest_framework.filters.SearchFilter',
+        'rest_framework.filters.OrderingFilter',
+    ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+
+# ========================================
+# JWT Configuration
+# ========================================
+
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'UPDATE_LAST_LOGIN': True,
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}
+
+
+# ========================================
+# CORS Configuration
+# ========================================
+
+# For development - allow localhost origins
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",  # React/Next.js
+    "http://localhost:8080",  # Vue
+    "http://localhost:4200",  # Angular
+]
+
+# In production, replace with your actual domains:
+# CORS_ALLOWED_ORIGINS = [
+#     "https://yourdomain.com",
+#     "https://app.yourdomain.com",
+# ]
+
+CORS_ALLOW_CREDENTIALS = True
+
+
+# ========================================
+# Swagger/OpenAPI Documentation
+# ========================================
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Alwesam-Talabat API',
+    'DESCRIPTION': 'REST API for wholesale e-commerce system - نظام الوسام للبيع بالجملة',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_REQUEST': True,
+}
