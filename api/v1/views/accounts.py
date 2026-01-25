@@ -7,9 +7,9 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
-from accounts.models import CustomUser, Profile, Address
+from accounts.models import CustomUser, Profile
 from ..serializers.accounts import (
-    UserSerializer, ProfileSerializer, AddressSerializer,
+    UserSerializer, ProfileSerializer,
     RegisterSerializer, LoginSerializer
 )
 
@@ -63,6 +63,20 @@ class AuthViewSet(viewsets.ViewSet):
             "user": UserSerializer(user).data
         })
 
+    @action(detail=False, methods=['post'])
+    def logout(self, request):
+        """Logout and blacklist the refresh token."""
+        try:
+            refresh_token = request.data["refresh"]
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            return Response({"message": "تم تسجيل الخروج بنجاح"}, status=status.HTTP_205_RESET_CONTENT)
+        except Exception:
+            return Response(
+                {"error": "رمز التحديث غير صالح أو مفقود"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
 
 class UserProfileViewSet(viewsets.ViewSet):
     """
@@ -70,7 +84,7 @@ class UserProfileViewSet(viewsets.ViewSet):
     """
     permission_classes = [IsAuthenticated]
     
-    def retrieve(self, request):
+    def list(self, request):
         """Get current user profile."""
         user = request.user
         profile = getattr(user, 'profile', None)
@@ -82,26 +96,33 @@ class UserProfileViewSet(viewsets.ViewSet):
     
     @action(detail=False, methods=['put', 'patch'])
     def update_profile(self, request):
-        """Update user profile."""
+        """Update user profile and address."""
         user = request.user
         profile, created = Profile.objects.get_or_create(user=user)
         
-        serializer = ProfileSerializer(profile, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
+        # Update Profile data
+        profile_serializer = ProfileSerializer(profile, data=request.data, partial=True)
+        profile_serializer.is_valid(raise_exception=True)
+        profile_serializer.save()
         
-        return Response(serializer.data)
+        # Update User data (phone, address) if provided
+        user_data = {}
+        if 'phone' in request.data:
+            user_data['phone'] = request.data['phone']
+        if 'address' in request.data:
+            user_data['address'] = request.data['address']
+        if 'username' in request.data:
+            user_data['username'] = request.data['username']
+        if 'email' in request.data:
+            user_data['email'] = request.data['email']
 
-
-class AddressViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet for user addresses.
-    """
-    permission_classes = [IsAuthenticated]
-    serializer_class = AddressSerializer
-    
-    def get_queryset(self):
-        return Address.objects.filter(user=self.request.user)
-    
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+            
+        if user_data:
+            user_serializer = UserSerializer(user, data=user_data, partial=True)
+            user_serializer.is_valid(raise_exception=True)
+            user_serializer.save()
+        
+        return Response({
+            "user": UserSerializer(user).data,
+            "profile": profile_serializer.data
+        })

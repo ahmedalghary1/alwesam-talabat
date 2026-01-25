@@ -12,7 +12,6 @@ router = DefaultRouter()
 # Authentication & User
 router.register(r'auth', accounts.AuthViewSet, basename='auth')
 router.register(r'profile', accounts.UserProfileViewSet, basename='profile')
-router.register(r'addresses', accounts.AddressViewSet, basename='address')
 
 # Products
 router.register(r'categories', products.CategoryViewSet, basename='category')

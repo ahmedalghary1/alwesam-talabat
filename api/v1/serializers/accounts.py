@@ -2,7 +2,7 @@
 Serializers for accounts app - User authentication and profiles.
 """
 from rest_framework import serializers
-from accounts.models import CustomUser, Profile, Address
+from accounts.models import CustomUser, Profile
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -23,14 +23,7 @@ class ProfileSerializer(serializers.ModelSerializer):
         fields = ['user', 'bio', 'image']
 
 
-class AddressSerializer(serializers.ModelSerializer):
-    """Serializer for user addresses."""
-    
-    class Meta:
-        model = Address
-        fields = ['id', 'label', 'street', 'city', 'state', 
-                  'postal_code', 'country', 'is_default']
-        read_only_fields = ['id']
+
 
 
 class RegisterSerializer(serializers.ModelSerializer):

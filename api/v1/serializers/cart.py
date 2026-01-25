@@ -24,7 +24,7 @@ class CartItemSerializer(serializers.ModelSerializer):
         if obj.variant:
             return {
                 'color': obj.variant.color.name if obj.variant.color else None,
-                'sku_code': obj.variant.sku_code
+                'sku_code': obj.variant.code
             }
         return None
     
