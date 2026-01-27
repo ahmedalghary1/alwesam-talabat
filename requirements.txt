@@ -2,7 +2,7 @@ Django==5.2.8
 python-decouple==3.8
 Pillow==11.1.0
 django-compressor==4.5.1
-django-ratelimit==4.1.0
+django-ratelimit
 django-debug-toolbar==4.4
 celery==5.4.0
 redis==7.1.0
