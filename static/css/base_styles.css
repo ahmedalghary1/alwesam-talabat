@@ -169,7 +169,6 @@ main {
 
 .nav-link:hover,
 .nav-link.active {
-    background: var(--brand-yellow);
     color: var(--brand-black);
 }
 
