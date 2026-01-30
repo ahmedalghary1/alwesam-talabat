@@ -27,7 +27,7 @@ SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # Default to False for security - explicitly enable in development
-DEBUG = config('DEBUG', default=False, cast=bool)
+DEBUG = config('DEBUG', default=False,cast=bool)
 
 # Only allow specific hosts - configure via environment variable
 # Example: ALLOWED_HOSTS=localhost,127.0.0.1,yourdomain.com
@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'cart',
     'home',
     'support',  # Customer support messaging system
+    
     # REST Framework
     'rest_framework',
     'rest_framework_simplejwt',

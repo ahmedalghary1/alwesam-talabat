@@ -1,7 +1,7 @@
 Django==5.2.8
 python-decouple==3.8
-Pillow==11.1.0
-django-compressor==4.5.1
+Pillow
+django-compressor
 django-ratelimit
 django-debug-toolbar==4.4
 celery==5.4.0
@@ -9,7 +9,7 @@ redis==7.1.0
 django-celery-results==2.5.1
 
 # PostgreSQL adapter
-psycopg2-binary==2.9.9
+psycopg2-binary
 
 # Production server
 gunicorn

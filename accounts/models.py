@@ -47,30 +47,9 @@ class Profile(ImageCompressionMixin, models.Model):
     def save(self, *args, **kwargs):
         # Compress image before saving to reduce file size
         self.save_with_compression(image_field_name='image', *args, **kwargs)
-    
+    class Meta:
+        verbose_name='حساب المستخدم '
+        verbose_name_plural='حسابات المستخدمين'
     def __str__(self):
         return f"ملف {self.user.email}"
     
-
-class Address(models.Model):
-    """
-    Additional shipping addresses for users.
-    
-    Users can have multiple addresses (home, office, warehouse, etc.)
-    with one marked as default for checkout convenience.
-    """
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='addresses')
-    label = models.CharField(max_length=50, default="المنزل", verbose_name="تسمية العنوان")
-    street = models.CharField(max_length=255, verbose_name="الشارع")
-    city = models.CharField(max_length=100, verbose_name="المدينة")
-    state = models.CharField(max_length=100, verbose_name="المحافظة")
-    postal_code = models.CharField(max_length=20, blank=True, verbose_name="الرمز البريدي")
-    country = models.CharField(max_length=100, default="مصر", verbose_name="الدولة")
-    is_default = models.BooleanField(default=False, verbose_name="العنوان الافتراضي")
-
-    def __str__(self):
-        return f"{self.label}: {self.street}, {self.city}, {self.country}"
-    
-    class Meta:
-        verbose_name = "عنوان"
-        verbose_name_plural = "عناوين"

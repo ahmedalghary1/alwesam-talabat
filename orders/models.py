@@ -38,6 +38,8 @@ class Order(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+        verbose_name='الطلب'
+        verbose_name_plural='الطلبات'
 
 class OrderItem(models.Model):
     """
@@ -61,17 +63,16 @@ class OrderItem(models.Model):
     unit_type = models.CharField(max_length=10, choices=UNIT_TYPE_CHOICES, default='carton')
 
     # Preserve variant information at order time for historical accuracy
-    variant_info = models.CharField(max_length=200, blank=True, 
-                                    help_text="معلومات النمط وقت الطلب")
-    variant_pcs_carton = models.PositiveIntegerField(null=True, blank=True,
-                                                     help_text="عدد القطع في الكرتونة وقت الطلب")
+    variant_info = models.CharField(max_length=200, blank=True, help_text="معلومات النمط وقت الطلب")
+    variant_pcs_carton = models.PositiveIntegerField(null=True, blank=True, help_text="عدد القطع في الكرتونة وقت الطلب")
     
     # Preserve color and size information at order time
-    color_name = models.CharField(max_length=100, blank=True, 
-                                  help_text="اسم اللون وقت الطلب")
-    size_name = models.CharField(max_length=100, blank=True,
-                                 help_text="اسم الطول/المقاس وقت الطلب")
+    color_name = models.CharField(max_length=100, blank=True, help_text="اسم اللون وقت الطلب")
+    size_name = models.CharField(max_length=100, blank=True,help_text="اسم الطول/المقاس وقت الطلب")
 
+    class Meta:
+        verbose_name='تفاصيل الطلب'
+        verbose_name_plural='تفاصيل الطلبات'
     def save(self, *args, **kwargs):
         # Automatically preserve variant information when order is created
         if self.variant and not self.variant_info:

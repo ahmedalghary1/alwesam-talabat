@@ -25,8 +25,8 @@ class Category(ImageCompressionMixin, models.Model):
         return self.name
 
     class Meta:
-        verbose_name_plural = "Categories"
-
+        verbose_name = "القسم"
+        verbose_name_plural = "الأقسام"
 
 class Product(ImageCompressionMixin, models.Model):
     """
@@ -60,6 +60,8 @@ class Product(ImageCompressionMixin, models.Model):
     class Meta:
         ordering = ['-created_at']
         # Strategic indexes for common query patterns
+        verbose_name = "المنتج"
+        verbose_name_plural = "المنتجات"
         indexes = [
             models.Index(fields=['category', '-created_at']),  # Category listing
             models.Index(fields=['-created_at']),  # Latest products
@@ -205,10 +207,11 @@ class ProductVariant(ImageCompressionMixin, models.Model):
 
     class Meta:
         # Ensure each product has unique variant codes
+
         unique_together = ['product', 'code']
         ordering = ['variant_type']
-        verbose_name = "Product Variant"
-        verbose_name_plural = "Product Variants"
+        verbose_name = "نمط المنتج"
+        verbose_name_plural = "أنماط المنتجات"
         # Optimize common queries
         indexes = [
             models.Index(fields=['is_available']),

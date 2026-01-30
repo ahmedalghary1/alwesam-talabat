@@ -16,6 +16,9 @@ class Cart(models.Model):
     def __str__(self):
         return f"Cart - {self.user.username}"
 
+    class Meta:
+        verbose_name = 'سلة التسوق'
+        verbose_name_plural='سلات التسوق'
 
 class CartItem(models.Model):
     """
@@ -41,7 +44,10 @@ class CartItem(models.Model):
     class Meta:
         # Prevent duplicate items with same product/variant/unit/size
         unique_together = ['cart', 'product', 'variant', 'unit_type', 'size_name']
+        verbose_name = 'تفاصيل السلة'
+        verbose_name_plural='تفاصيل السلات '
 
+        
     def get_pcs_carton(self):
         """Get pcs_carton from variant or product"""
         if self.variant:
