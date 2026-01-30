@@ -64,7 +64,7 @@ def conversation_detail(request, message_id):
     CustomerMessage.objects.filter(user=user, is_read=False).update(is_read=True)
     
     context = {
-        'user': user,
+        'client': user,
         'user_messages': all_user_messages, 
         'total_messages': all_user_messages.count(),
     }
