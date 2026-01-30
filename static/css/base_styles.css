@@ -221,6 +221,9 @@ body.theme-dark .btn-icon:hover {
     border-color: var(--brand-yellow);
 }
 
+body.theme-dark .nav-link {
+    color: var(--navbar-text);
+}
 /* Primary Yellow Button - Enhanced */
 .btn-yellow {
     position: relative;

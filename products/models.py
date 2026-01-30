@@ -31,7 +31,6 @@ class Category(ImageCompressionMixin, models.Model):
 class Product(ImageCompressionMixin, models.Model):
     """
     Main product model for wholesale items.
-    
     Products are sold by carton with configurable pieces per carton.
     Can have multiple variants (colors, sizes) and additional images.
     """

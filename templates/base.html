@@ -244,14 +244,10 @@
 
             <!-- Nav Menu -->
             <ul class="nav-menu" id="nav-menu">
-                <li><a href="{% url 'home:home' %}" class="nav-link {% block nav_home %}{% endblock %}"><i
-                            class="fas fa-home"></i> الرئيسية</a></li>
-                <li><a href="{% url 'products:all_categories' %}"
-                        class="nav-link {% block nav_products %}{% endblock %}"><i class="fas fa-th-large"></i>
-                        المنتجات</a></li>
+                <li><a href="{% url 'home:home' %}" class="nav-link {% block nav_home %}{% endblock %}"><i class="fas fa-home"></i> الرئيسية</a></li>
+                <li><a href="{% url 'products:all_categories' %}" class="nav-link {% block nav_products %}{% endblock %}"><i class="fas fa-th-large"></i> المنتجات</a></li>
                 {% if user.is_authenticated %}
-                <li><a href="{% url 'orders:order_list' %}" class="nav-link {% block nav_orders %}{% endblock %}"><i
-                            class="fas fa-box"></i> طلباتي</a></li>
+                <li><a href="{% url 'orders:order_list' %}" class="nav-link {% block nav_orders %}{% endblock %}"><i class="fas fa-box"></i> طلباتي</a></li>
                 {% endif %}
 
                 <!-- Admin Links -->
