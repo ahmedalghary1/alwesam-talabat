@@ -4,8 +4,9 @@ Django admin configuration for Accounts app.
 Registers Profile  models with search and filter capabilities.
 """
 from django.contrib import admin
-from .models import Profile
+from .models import Profile , CustomUser
 
+admin.site.register(CustomUser)
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
