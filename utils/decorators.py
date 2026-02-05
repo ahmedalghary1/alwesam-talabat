@@ -12,11 +12,9 @@ logger = logging.getLogger(__name__)
 def handle_exceptions(redirect_url='home:home', error_message='حدث خطأ غير متوقع'):
     """
     Decorator to handle exceptions in views
-    
     Args:
         redirect_url: URL name to redirect to on error
         error_message: Default error message to display
-        
     Usage:
         @handle_exceptions(redirect_url='products:all_categories')
         def my_view(request):

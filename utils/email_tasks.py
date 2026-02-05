@@ -64,12 +64,10 @@ def send_activation_email_task(self, user_id, login_url):
         # Retry the task if it fails
         raise self.retry(exc=e)
 
-
 @shared_task(bind=True, max_retries=3, default_retry_delay=60)
 def send_order_confirmation_email_task(self, order_id, user_email):
     """
     Send order confirmation email to customer.
-    
     Args:
         order_id: ID of the order
         user_email: Email address of the customer
@@ -90,7 +88,7 @@ def send_order_confirmation_email_task(self, order_id, user_email):
         # Calculate order totals
         total_items = order.items.count()
         total_pieces = order.get_total_pieces()
-        
+
         # Context for the email template
         context = {
             'order': order,
@@ -131,12 +129,10 @@ def send_order_confirmation_email_task(self, order_id, user_email):
 def send_order_status_email_task(self, order_id, new_status, user_email):
     """
     Send order status update email to customer.
-    
     Args:
         order_id: ID of the order
         new_status: New status of the order
         user_email: Email address of the customer
-        
     Returns:
         str: Success or error message
     """
