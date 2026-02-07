@@ -67,29 +67,35 @@ def order_detail(request, order_id):
     })
 
 
+
+
 @login_required
 @require_http_methods(["POST"])
 def create_order(request):
     """
     Create new order from shopping cart.
-    
+
     Converts cart items to order items with transaction safety.
     Preserves variant, color, and size information for historical accuracy.
     Clears cart after successful order creation.
     """
-    cart = get_object_or_404(Cart, user=request.user)
-    
-    if not cart.items.exists():
-        messages.error(request, 'السلة فارغة')
-        return redirect('cart:cart_view')
-    
-    phone_number = request.POST.get('phone_number', request.user.phone)
-    address = request.POST.get('address', '')
-    notes = request.POST.get('notes', '')
-    
+
     try:
         with transaction.atomic():
-            # Create order with user contact information
+
+            # 🔐 LOCK the cart to prevent double submission
+            cart = Cart.objects.select_for_update().get(user=request.user)
+
+            # Re-check cart after lock
+            if not cart.items.exists():
+                messages.error(request, 'السلة فارغة')
+                return redirect('cart:cart_view')
+
+            phone_number = request.POST.get('phone_number') or getattr(request.user, 'phone', '')
+            address = request.POST.get('address', '')
+            notes = request.POST.get('notes', '')
+
+            # Create order
             order = Order.objects.create(
                 user=request.user,
                 phone_number=phone_number,
@@ -97,53 +103,55 @@ def create_order(request):
                 notes=notes,
                 status='pending'
             )
-            
-            # Transfer cart items to order
-            cart_items = cart.items.all()
+
+            # Fetch cart items efficiently
+            cart_items = cart.items.select_related(
+                'product',
+                'variant',
+                'variant__color'
+            )
+
             for cart_item in cart_items:
-                # Extract color and size information
-                color_name = ''
-                size_name = cart_item.size_name  # Use saved size_name from cart
-                
-                if cart_item.variant:
-                    # Get color name if variant has color
-                    if cart_item.variant.color:
-                        color_name = cart_item.variant.color.name
-                    
-                    # If size_name not saved in cart, get first size from variant as fallback
-                    if not size_name:
-                        sizes = cart_item.variant.sizes.all()
-                        if sizes.exists():
-                            size_name = sizes.first().name
-                
+                # Preserve size & color exactly as chosen
+                size_name = cart_item.size_name or ''
+                color_name = (
+                    cart_item.variant.color.name
+                    if cart_item.variant and cart_item.variant.color
+                    else ''
+                )
+
                 OrderItem.objects.create(
                     order=order,
                     product=cart_item.product,
                     variant=cart_item.variant,
-                    quantity=cart_item.quantity,  # Already in pieces
-                    unit_type=cart_item.unit_type,  # NEW: preserve unit type
-                    color_name=color_name,  # NEW: preserve color
-                    size_name=size_name  # NEW: preserve size
+                    quantity=cart_item.quantity,
+                    unit_type=cart_item.unit_type,
+                    color_name=color_name,
+                    size_name=size_name
                 )
-            
-            # Clear cart after order creation
+
+            # Clear cart AFTER successful order creation
             cart.items.all().delete()
-            
-            # Send order confirmation email asynchronously using Celery
+
+            # Send confirmation email asynchronously (non-blocking)
             try:
                 from utils.email_tasks import send_order_confirmation_email_task
-                
-                # Queue the email task to be processed in the background
                 send_order_confirmation_email_task.delay(order.id, request.user.email)
             except Exception as e:
-                # Log error but don't fail the order creation
-                logger.error(f'Failed to queue order confirmation email for order {order.id}: {str(e)}')
-            
+                logger.error(
+                    f'Failed to queue order confirmation email for order {order.id}: {str(e)}'
+                )
+
             messages.success(request, f'تم إنشاء الطلب #{order.id} بنجاح')
             return redirect('orders:order_detail', order_id=order.id)
-            
+
+    except Cart.DoesNotExist:
+        messages.error(request, 'لا توجد سلة')
+        return redirect('cart:cart_view')
+
     except Exception as e:
-        messages.error(request, f'حدث خطأ: {str(e)}')
+        messages.error(request, 'حدث خطأ أثناء إنشاء الطلب')
+        logger.exception(e)
         return redirect('cart:checkout')
 
 

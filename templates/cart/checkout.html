@@ -240,7 +240,7 @@
                         <span style="color: #FFC400;">{{ total_quantity|default:0 }}</span>
                     </div>
 
-                    <button type="submit" class="btn-confirm">
+                    <button type="submit" onclick="this.disabled=true; this.form.submit();" class="btn-confirm">
                         <i class="fas fa-paper-plane"></i>
                         تأكيد الطلب
                     </button>
