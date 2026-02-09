@@ -28,12 +28,12 @@
     <meta property="og:description"
         content="{% block og_description %}موزع معتمد للأدوات الكهربائية بالجملة. أسعار تنافسية، توصيل سريع، منتجات أصلية مضمونة{% endblock %}">
     <meta property="og:image"
-        content="{% block og_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'images/ELWSAM.png' %}{% endblock %}">
+        content="{% block og_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'images/ELWSAM.webp' %}{% endblock %}">
     <meta property="og:locale" content="ar_EG">
     <meta property="og:site_name" content="الوسام طلبات">
 
     <!-- Favicon -->
-    <link rel="icon" href="{% static 'images/ELWSAM.png' %}" type="image/png">
+    <link rel="icon" href="{% static 'images/ELWSAM.webp' %}" type="image/webp">
 
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
@@ -235,7 +235,7 @@
             <!-- Logo -->
             <a href="{% url 'home:home' %}" class="logo">
                 <div class="logo-icon">
-                    <img src="{% static 'images/ELWSAM.png' %}" alt="الوسام" class="responsive-img">
+                    <img src="{% static 'images/ELWSAM.webp' %}" alt="الوسام" class="responsive-img">
                 </div>
                 <div class="logo-text">
                     <span class="white">الوسام</span>
@@ -389,7 +389,7 @@
                 <div>
                     <div class="logo" style="margin-bottom: 1rem;">
                         <div class="logo-icon" style="width: 50px; height: 50px;">
-                            <img src="{% static 'images/ELWSAM.png' %}" alt="الوسام">
+                            <img src="{% static 'images/ELWSAM.webp' %}" alt="الوسام">
                         </div>
                         <div class="logo-text">
                             <span class="white">الوسام</span>
@@ -444,8 +444,8 @@
           "name": "الوسام - أدوات كهربائية بالجملة",
           "alternateName": "Alwesam Electrical Wholesale",
           "description": "موزع معتمد للأدوات والمستلزمات الكهربائية بالجملة في مصر. أسعار تنافسية للتجار، توصيل سريع، منتجات أصلية مضمونة.",
-          "image": "{{ request.scheme }}://{{ request.get_host }}{% static 'images/ELWSAM.png' %}",
-          "logo": "{{ request.scheme }}://{{ request.get_host }}{% static 'images/ELWSAM.png' %}",
+          "image": "{{ request.scheme }}://{{ request.get_host }}{% static 'images/ELWSAM.webp' %}",
+          "logo": "{{ request.scheme }}://{{ request.get_host }}{% static 'images/ELWSAM.webp' %}",
           "url": "{{ request.scheme }}://{{ request.get_host }}/",
           "telephone": "01001252900",
           "priceRange": "جملة",

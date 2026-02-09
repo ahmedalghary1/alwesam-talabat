@@ -15,7 +15,7 @@ from datetime import timedelta
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = config('SECRET_KEY')
-DEBUG = config('DEBUG', default=False, cast=bool)
+DEBUG = config('DEBUG', default=True, cast=bool)
 
 ALLOWED_HOSTS = ['*']
 
@@ -73,6 +73,13 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+
+
+# CSRF Sittings
+CSRF_TRUSTED_ORIGINS = [
+    "http://192.168.1.99:8000",
+    "http://localhost:8000",
+]
 if DEBUG:
     MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']
     INTERNAL_IPS = ['*']
@@ -270,10 +277,13 @@ SIMPLE_JWT = {
 # CORS
 # ==================================================
 
+
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:8080",
     "http://localhost:4200",
+    "http://192.168.1.99:8000",
+
 ]
 
 CORS_ALLOW_CREDENTIALS = True
