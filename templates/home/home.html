@@ -1,5 +1,4 @@
 {% extends 'base.html' %}
-{% load cache %}
 
 {% load static %}
 
@@ -70,7 +69,6 @@
 <!-- Categories Section -->
 <section class="section section-animate" id="categories">
 
-    {% cache 3600 home_categories %}
 
         {% if categories %}
         <div class="categories-grid">
@@ -97,7 +95,6 @@
             <p style="color: var(--text-secondary);">نعمل على إضافة المزيد قريباً</p>
         </div>
         {% endif %}
-    {% endcache %}
 
 </section>
 

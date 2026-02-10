@@ -1,3 +1,4 @@
+from django.core.cache import cache
 from django.http import Http404, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
@@ -32,19 +33,25 @@ def search_products(request):
     })
 
 
+CACHE_KEY_ALL_CATEGORIES = "categories:all"
+
 def all_categories(request):
-    """
-    Display all available product categories.
-    Returns categories page or redirects to home on error.
-    """
     try:
-        categories = Category.objects.all()
+        categories = cache.get(CACHE_KEY_ALL_CATEGORIES)
+
+        if categories is None:
+            categories = list(Category.objects.all())
+            cache.set(CACHE_KEY_ALL_CATEGORIES, categories, 60 * 15)
+
         return render(request, 'products/all_categories.html', {
             'categories': categories
         })
+
     except Exception as e:
+        logger.exception("Error loading categories")
         messages.error(request, 'حدث خطأ أثناء تحميل الأقسام')
         return redirect('home:home')
+
 
 
 def category_products(request, slug):
