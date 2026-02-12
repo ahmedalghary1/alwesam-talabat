@@ -19,6 +19,12 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+# ALLOWED_HOSTS = [
+#     "yourdomain.com",
+#     "www.yourdomain.com",
+#     "server_ip"
+# ]
+
 # ==================================================
 # Applications
 # ==================================================
@@ -138,7 +144,7 @@ DATABASES = {
         'NAME': config('DB_NAME'),
         'USER': config('DB_USER'),
         'PASSWORD': config('DB_PASSWORD'),
-        'HOST': config('DB_HOST'),          # alwesam_postgres
+        'HOST': config('DB_HOST','db'),          # alwesam_postgres
         'PORT': config('DB_PORT', '5432'),
     }
 }
