@@ -2,6 +2,8 @@ from django.shortcuts import render
 from products.models import Category
 
 from django.core.cache import cache
+import logging
+logger = logging.getLogger(__name__)
 
 
 CACHE_KEY_ALL_CATEGORIES = "categories:all"

@@ -6,6 +6,8 @@ from django.db.models import Count, Q, Prefetch
 from .models import CustomerMessage, MessageReply
 import json
 
+import logging
+logger = logging.getLogger(__name__)
 
 @staff_member_required
 def messages_list(request):

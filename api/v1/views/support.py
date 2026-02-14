@@ -8,6 +8,8 @@ from rest_framework.permissions import IsAuthenticated
 from support.models import CustomerMessage
 from ..serializers.support import CustomerMessageSerializer, CreateMessageSerializer
 
+import logging
+logger = logging.getLogger(__name__)
 
 class SupportViewSet(viewsets.ViewSet):
     """

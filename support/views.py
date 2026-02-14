@@ -4,6 +4,8 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Prefetch
 from .models import CustomerMessage, MessageReply
 import json
+import logging
+logger = logging.getLogger(__name__)
 
 
 @login_required

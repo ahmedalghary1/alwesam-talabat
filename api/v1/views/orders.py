@@ -13,6 +13,8 @@ from ..serializers.orders import (
 )
 from ..permissions import IsOwnerOrAdmin
 
+import logging
+logger = logging.getLogger(__name__)
 
 class OrderViewSet(viewsets.ReadOnlyModelViewSet):
     """

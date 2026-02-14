@@ -12,6 +12,8 @@ from ..serializers.accounts import (
     UserSerializer, ProfileSerializer,
     RegisterSerializer, LoginSerializer
 )
+import logging
+logger = logging.getLogger(__name__)
 
 
 class AuthViewSet(viewsets.ViewSet):

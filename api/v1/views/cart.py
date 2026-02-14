@@ -8,6 +8,8 @@ from rest_framework.permissions import IsAuthenticated
 from cart.models import Cart, CartItem
 from products.models import Product, ProductVariant
 from ..serializers.cart import CartSerializer, AddToCartSerializer, CartItemSerializer
+import logging
+logger = logging.getLogger(__name__)
 
 
 class CartViewSet(viewsets.ViewSet):
