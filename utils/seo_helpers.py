@@ -181,7 +181,7 @@ def get_page_title(page_type, **kwargs):
     Generate optimized page titles
     """
     templates = {
-        'home': 'الوسام - أدوات كهربائية بالجملة | مستلزمات كهرباء للتجار في مصر 2025',
+        'home': 'الوسام - أدوات كهربائية بالجملة | مستلزمات كهرباء للتجار في مصر 2026',
         'category': '{category_name} بالجملة | أسعار مميزة للتجار - الوسام',
         'product': '{product_name} بالجملة | أسعار مميزة للتجار - الوسام',
         'all_categories': 'جميع الأقسام - أدوات كهربائية بالجملة | الوسام',
