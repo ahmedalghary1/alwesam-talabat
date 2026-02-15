@@ -36,7 +36,6 @@ services:
       --graceful-timeout 30
       --access-logfile /app/logs/gunicorn_access.log
       --error-logfile /app/logs/gunicorn_error.log
-
       "
     volumes:
       - static_volume:/app/staticfiles
