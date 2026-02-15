@@ -66,6 +66,7 @@ services:
       - redis
       - db
     restart: unless-stopped
+    
     networks:
       - backend
 
