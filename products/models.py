@@ -2,24 +2,21 @@ from django.db import models
 from django.utils.text import slugify
 from utils.image_utils import ImageCompressionMixin
 
+
 class Category(ImageCompressionMixin, models.Model):
-    """
-    Product category for organizing products.
-    
-    Automatically generates slug from name and compresses uploaded images.
-    """
     name = models.CharField(max_length=200)
-    # Indexed for faster category lookups and URL routing
     slug = models.CharField(max_length=255, unique=True, blank=True, db_index=True)
     description = models.TextField(blank=True)
     image = models.ImageField(upload_to='category-images')
 
     def save(self, *args, **kwargs):
-        # Auto-generate slug from category name if not provided
+        
         if not self.slug:
             self.slug = slugify(self.name, allow_unicode=True)
-        # Compress image to optimize storage
-        self.save_with_compression(image_field_name='image', *args, **kwargs)
+        
+        super().save(*args, **kwargs)
+        
+        self.save_with_compression(image_field_name='image')
 
     def __str__(self):
         return self.name
