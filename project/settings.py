@@ -198,9 +198,8 @@ USE_TZ = True
 # ==================================================
 # Static / Media
 # ==================================================
-
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles') 
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -228,21 +227,7 @@ DEFAULT_FROM_EMAIL = config(
 )
 
 
-# ==================================================
-# Celery (Redis Docker)
-# ==================================================
 
-CELERY_BROKER_URL = config(
-    'CELERY_BROKER_URL',
-    default='redis://redis:6379/0'
-)
-
-CELERY_RESULT_BACKEND = 'django-db'
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TIMEZONE = TIME_ZONE
-CELERY_TASK_TRACK_STARTED = True
 
 # ==================================================
 # REST Framework
