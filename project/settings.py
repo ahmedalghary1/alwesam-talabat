@@ -78,10 +78,6 @@ INSTALLED_APPS = [
     'api',
 ]
 
-# Debug toolbar only in development
-if DEBUG:
-    INSTALLED_APPS += ['debug_toolbar']
-
 
 # ==================================================
 # Middleware
@@ -90,6 +86,7 @@ if DEBUG:
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -100,21 +97,16 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-if DEBUG:
-    MIDDLEWARE.insert(3, 'debug_toolbar.middleware.DebugToolbarMiddleware')
-
-
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # ==================================================
-# Redis Cache (Docker Service Name)
+#  Cache 
 # ==================================================
+
 
 CACHES = {
     "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://redis:6379/1",
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-        }
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "unique-snowflake",  # أي اسم مؤقت
     }
 }
 
