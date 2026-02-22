@@ -152,6 +152,7 @@ WSGI_APPLICATION = 'project.wsgi.application'
 # Database (PostgreSQL Docker)
 # ==================================================
 
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
@@ -160,10 +161,12 @@ DATABASES = {
         'PASSWORD': 'qnG_McuZiJ?hSU5@',
         'HOST': 'localhost',
         'PORT': '3306',
-        'CONN_MAX_AGE': 60,
+        'OPTIONS': {
+            'charset': 'utf8mb4',
+            'init_command': "SET NAMES 'utf8mb4'"
+        },
     }
 }
-
 # ==================================================
 # Auth
 # ==================================================
