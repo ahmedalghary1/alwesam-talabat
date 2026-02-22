@@ -2,6 +2,8 @@
 Django settings for project - Production Ready
 Django 5.2.8
 """
+import pymysql
+pymysql.install_as_MySQLdb()
 
 from pathlib import Path
 from decouple import config
@@ -158,12 +160,12 @@ WSGI_APPLICATION = 'project.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DB_NAME'),
-        'USER': config('DB_USER'),
-        'PASSWORD': config('DB_PASSWORD'),
-        'HOST': config('DB_HOST', default='db'),
-        'PORT': config('DB_PORT', default='5432'),
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'elwsamst_alwesam_store',
+        'USER': 'elwsamst_alwesam_user',
+        'PASSWORD': 'qnG_McuZiJ?hSU5@',
+        'HOST': 'localhost',
+        'PORT': '3306',
         'CONN_MAX_AGE': 60,
     }
 }
@@ -209,8 +211,7 @@ STATICFILES_STORAGE = (
     'django.contrib.staticfiles.storage.StaticFilesStorage'
 )
 
-COMPRESS_ENABLED = not DEBUG
-
+COMPRESS_ENABLED = False
 # ==================================================
 # Email
 # ==================================================
@@ -274,6 +275,12 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
+STATICFILES_FINDERS = [
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+    'compressor.finders.CompressorFinder',
+
+]
 # ==================================================
 # CORS
 # ==================================================
