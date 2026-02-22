@@ -1,3 +1,4 @@
+from django.core.cache import cache
 from django.http import Http404, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
@@ -32,11 +33,15 @@ def search_products(request):
     })
 
 
+CACHE_KEY_ALL_CATEGORIES = "categories:all"
 
 def all_categories(request):
     try:
+        categories = cache.get(CACHE_KEY_ALL_CATEGORIES)
 
-        categories = list(Category.objects.all())
+        if categories is None:
+            categories = list(Category.objects.all())
+            cache.set(CACHE_KEY_ALL_CATEGORIES, categories, 60 * 15)
 
         return render(request, 'products/all_categories.html', {
             'categories': categories

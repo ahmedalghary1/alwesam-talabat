@@ -105,11 +105,13 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 CACHES = {
     "default": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-        "LOCATION": "unique-snowflake",  # أي اسم مؤقت
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://:pgnh3kDHsI0cOzlJvtM@127.0.0.1:49169/0",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
     }
 }
-
 # ==================================================
 # CSRF / Cloudflare
 # ==================================================
