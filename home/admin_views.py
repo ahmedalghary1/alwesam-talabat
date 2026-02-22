@@ -357,9 +357,8 @@ def admin_order_detail(request, order_id):
                 from utils.email_tasks import send_order_status_email_task
                 
                 # Queue the email task to be processed in the background
-                send_order_status_email_task.delay(order.id, new_status, order.user.email)
+                send_order_status_email_task(order.id, new_status, order.user.email)
                 
-                messages.success(request, 'تم تحديث حالة الطلب وإضافة إرسال البريد الإلكتروني إلى قائمة الانتظار')
             except Exception as e:
                 messages.success(request, f'تم تحديث حالة الطلب (فشل جدولة إرسال البريد الإلكتروني: {str(e)})')
     
@@ -489,7 +488,7 @@ def admin_approve_user(request, user_id):
             login_url = request.build_absolute_uri('/accounts/login/')
             
             # Queue the email task to be processed in the background
-            send_activation_email_task.delay(user.id, login_url)
+            send_activation_email_task(user.id, login_url)
             
             messages.success(request, f'تم تفعيل حساب "{user.username}" وتم إضافة إرسال البريد الإلكتروني إلى قائمة الانتظار')
             
@@ -534,11 +533,11 @@ def admin_toggle_user_status(request, user_id):
                 login_url = request.build_absolute_uri('/accounts/login/')
                 
                 # Queue the email task to be processed in the background
-                send_activation_email_task.delay(user.id, login_url)
+                send_activation_email_task(user.id, login_url)
                 
-                messages.success(request, f'تم تفعيل حساب "{user.username}" وتم إضافة إرسال البريد الإلكتروني إلى قائمة الانتظار')
+                messages.success(request, f'تم تفعيل حساب "{user.username}" تم  إرسال البريد الإلكتروني  ')
             except Exception as e:
-                messages.success(request, f'تم تفعيل حساب "{user.username}" (فشل جدولة إرسال البريد الإلكتروني: {str(e)})')
+                messages.success(request, f'تم تفعيل حساب "{user.username}" (فشل  إرسال البريد الإلكتروني: {str(e)})')
         else:
             status_text = "إيقاف"
             messages.success(request, f'تم {status_text} حساب المستخدم "{user.username}" بنجاح')
