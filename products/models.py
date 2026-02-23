@@ -5,7 +5,7 @@ from utils.image_utils import ImageCompressionMixin
 
 class Category(ImageCompressionMixin, models.Model):
     name = models.CharField(max_length=200)
-    slug = models.SlugField(max_length=255, unique=True, blank=True, db_index=True)
+    slug = models.SlugField(max_length=255, unique=True, blank=True,allow_unicode=True, db_index=True)
     description = models.TextField(blank=True)
     image = models.ImageField(upload_to='category-images')
 

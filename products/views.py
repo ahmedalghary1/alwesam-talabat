@@ -57,7 +57,9 @@ def all_categories(request):
 def category_products(request, slug):
     """Display products in a specific category"""
     try:
-        category = get_object_or_404(Category, slug=slug)
+        slug2 = unquote(slug)  # يفك الترميز من URL
+
+        category = get_object_or_404(Category, slug=slug2)
         products = Product.objects.filter(category=category)
         
         return render(request, 'products/categories.html', {
