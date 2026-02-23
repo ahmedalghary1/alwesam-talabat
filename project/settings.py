@@ -102,7 +102,7 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 #  Cache 
 # ==================================================
 
-
+APPEND_SLASH = True
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
@@ -158,7 +158,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'elwsamst_alwesam_store',
         'USER': 'elwsamst_alwesam_user',
-        'PASSWORD': 'qnG_McuZiJ?hSU5@',
+        'PASSWORD': '3]qi04F*#6{k3]qi04F*#6{k3]qi04F*#6{k',
         'HOST': 'localhost',
         'PORT': '3306',
         'OPTIONS': {
