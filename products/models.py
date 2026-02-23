@@ -1,8 +1,6 @@
 from django.db import models
+from django.utils.text import slugify
 from utils.image_utils import ImageCompressionMixin
-from slugify import  slugify_unicode
-
-
 
 
 class Category(ImageCompressionMixin, models.Model):
@@ -14,7 +12,7 @@ class Category(ImageCompressionMixin, models.Model):
     def save(self, *args, **kwargs):
         
         if not self.slug:
-            self.slug = slugify_unicode(self.name)
+            self.slug = slugify(self.name, allow_unicode=False)
         
         super().save(*args, **kwargs)
         
