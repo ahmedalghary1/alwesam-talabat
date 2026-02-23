@@ -6,6 +6,7 @@ from django.contrib import messages
 from django.db.models import Q
 from products.models import Product, Category
 import logging
+from urllib.parse import unquote
 
 logger = logging.getLogger(__name__)
 
@@ -57,9 +58,9 @@ def all_categories(request):
 def category_products(request, slug):
     """Display products in a specific category"""
     try:
-        slug2 = unquote(slug)  # يفك الترميز من URL
+        slug = unquote(unquote(slug))
 
-        category = get_object_or_404(Category, slug=slug2)
+        category = get_object_or_404(Category, slug=slug)
         products = Product.objects.filter(category=category)
         
         return render(request, 'products/categories.html', {

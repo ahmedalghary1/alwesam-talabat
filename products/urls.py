@@ -4,9 +4,11 @@ from . import views
 app_name = 'products'
 
 class UnicodeSlugConverter:
-    regex = '[\w-]+'  # يشمل العربية واللاتينية والأرقام والشرطات
+    regex = '[-\\w\\u0600-\\u06FF]+'  # \u0600-\u06FF هو نطاق العربية
+
     def to_python(self, value):
         return value
+
     def to_url(self, value):
         return value
 
