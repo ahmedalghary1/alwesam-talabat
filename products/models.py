@@ -1,7 +1,14 @@
 from django.db import models
-from django.utils.text import slugify
 from utils.image_utils import ImageCompressionMixin
 
+
+def slugify(str):
+    str = str.replace(" ", "-")
+    str = str.replace(",", "-")
+    str = str.replace("(", "-")
+    str = str.replace(")", "")
+    str = str.replace("؟", "")
+    return str
 
 class Category(ImageCompressionMixin, models.Model):
     name = models.CharField(max_length=200)
@@ -12,7 +19,7 @@ class Category(ImageCompressionMixin, models.Model):
     def save(self, *args, **kwargs):
         
         if not self.slug:
-            self.slug = slugify(self.name, allow_unicode=True)
+            self.slug = slugify(self.name)
         
         super().save(*args, **kwargs)
         
