@@ -64,10 +64,11 @@ def category_products(request, slug):
             'category': category,
             'products': products
         })
-    except Http404:
-        messages.error(request, 'القسم غير موجود')
-        return redirect('products:all_categories')
+    # except Http404:
+    #     messages.error(request, 'القسم غير موجود')
+    #     return redirect('products:all_categories')
     except Exception as e:
+        messages.error(request,e)
         logger.error(f'Error loading category products for slug {slug}: {str(e)}', exc_info=True)
         # SECURITY: Don't expose internal error details to users
         messages.error(request, 'حدث خطأ أثناء تحميل المنتجات. يرجى المحاولة لاحقاً')
