@@ -58,8 +58,6 @@ def all_categories(request):
 def category_products(request, slug):
     """Display products in a specific category"""
     try:
-        slug = unquote(unquote(slug))
-
         category = get_object_or_404(Category, slug=slug)
         products = Product.objects.filter(category=category)
         
@@ -67,11 +65,10 @@ def category_products(request, slug):
             'category': category,
             'products': products
         })
-    # except Http404:
-    #     messages.error(request, 'القسم غير موجود')
-    #     return redirect('products:all_categories')
+    except Http404:
+        messages.error(request, 'القسم غير موجود')
+        return redirect('products:all_categories')
     except Exception as e:
-        messages.error(request,e)
         logger.error(f'Error loading category products for slug {slug}: {str(e)}', exc_info=True)
         # SECURITY: Don't expose internal error details to users
         messages.error(request, 'حدث خطأ أثناء تحميل المنتجات. يرجى المحاولة لاحقاً')
