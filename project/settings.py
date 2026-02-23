@@ -26,23 +26,6 @@ ALLOWED_HOSTS = config(
     cast=lambda v: [s.strip() for s in v.split(',')]
 )
 
-# ==================================================
-# Security (Production Critical)
-# ==================================================
-
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-USE_X_FORWARDED_HOST = True
-
-SESSION_COOKIE_SECURE = not DEBUG
-CSRF_COOKIE_SECURE = not DEBUG
-
-SECURE_BROWSER_XSS_FILTER = True
-SECURE_CONTENT_TYPE_NOSNIFF = True
-X_FRAME_OPTIONS = "DENY"
-
-SECURE_HSTS_SECONDS = 31536000 if not DEBUG else 0
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_HSTS_PRELOAD = True
 
 # ==================================================
 # Applications
@@ -102,25 +85,21 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 #  Cache 
 # ==================================================
 
-APPEND_SLASH = True
+# CACHES = {
+#     "default": {
+#         "BACKEND": "django_redis.cache.RedisCache",
+#         "LOCATION": "redis://:pgnh3kDHsI0cOzlJvtM@127.0.0.1:49169/0",
+#         "OPTIONS": {
+#             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+#         }
+#     }
+# }
 CACHES = {
     "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://:pgnh3kDHsI0cOzlJvtM@127.0.0.1:49169/0",
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-        }
+        "BACKEND": "django.core.cache.backends.dummy.DummyCache",
     }
 }
-# ==================================================
-# CSRF / Cloudflare
-# ==================================================
 
-CSRF_TRUSTED_ORIGINS = config(
-    'CSRF_TRUSTED_ORIGINS',
-    default='http://localhost:8000',
-    cast=lambda v: [s.strip() for s in v.split(',')]
-)
 
 # ==================================================
 # URLs / Templates
@@ -269,17 +248,7 @@ STATICFILES_FINDERS = [
     'compressor.finders.CompressorFinder',
 
 ]
-# ==================================================
-# CORS
-# ==================================================
 
-CORS_ALLOWED_ORIGINS = config(
-    'CORS_ALLOWED_ORIGINS',
-    default='http://localhost:3000',
-    cast=lambda v: [s.strip() for s in v.split(',')]
-)
-
-CORS_ALLOW_CREDENTIALS = True
 
 # ==================================================
 # Swagger
