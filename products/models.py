@@ -5,14 +5,14 @@ from utils.image_utils import ImageCompressionMixin
 
 class Category(ImageCompressionMixin, models.Model):
     name = models.CharField(max_length=200)
-    slug = models.SlugField(max_length=255, unique=True, blank=True,allow_unicode=True, db_index=True)
+    slug = models.SlugField(max_length=255, unique=True, blank=True, db_index=True)
     description = models.TextField(blank=True)
     image = models.ImageField(upload_to='category-images')
 
     def save(self, *args, **kwargs):
         
         if not self.slug:
-            self.slug = slugify(self.name, allow_unicode=False)
+            self.slug = slugify(self.name, allow_unicode=True)
         
         super().save(*args, **kwargs)
         
@@ -38,6 +38,16 @@ class Product(ImageCompressionMixin, models.Model):
     # Indexed for URL routing and faster queries
     slug = models.CharField(max_length=255, unique=True, blank=True, db_index=True)
     image = models.ImageField(upload_to='product-image')
+    # 👇 أضف هذا الجزء هنا
+    sizes = models.ManyToManyField(
+        Size,
+        blank=True,
+        
+        related_name='products',
+        verbose_name="الأطوال المتاحة للمنتج",
+        help_text="أضف أطوال مباشرة إذا لم يكن للمنتج أنماط"
+    )
+
     category = models.ForeignKey(Category, related_name='products', on_delete=models.SET_NULL, null=True, blank=True)
     is_available = models.BooleanField(default=True, verbose_name="متوفر")
     created_at = models.DateTimeField(auto_now_add=True)

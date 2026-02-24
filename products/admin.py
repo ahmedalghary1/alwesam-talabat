@@ -17,11 +17,12 @@ class ProductImagesInline(admin.TabularInline):
 class ProductVariantInline(admin.TabularInline):
     model = ProductVariant
     extra = 1
-    fields = ['name', 'code', 'variant_type', 
-              'pcs_carton', 'image',  'is_available']
-    readonly_fields = []
-
-
+    fields = [
+        'name', 'code', 'variant_type',
+        'pcs_carton', 'image',
+        'is_available', 'sizes'  
+    ]
+    
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ('name', 'slug')
@@ -34,6 +35,9 @@ class ProductAdmin(admin.ModelAdmin):
     list_filter = ('category', 'created_at')
     search_fields = ('name', 'description')
     prepopulated_fields = {'slug': ('name',)}
+
+    filter_horizontal = ('sizes',)
+
     inlines = [ProductImagesInline, ProductVariantInline]
 
 
@@ -44,6 +48,8 @@ class ProductImagesAdmin(admin.ModelAdmin):
 
 @admin.register(ProductVariant)
 class ProductVariantAdmin(admin.ModelAdmin):
-    list_display = ('product', 'name', 'code', 'variant_type',  'pcs_carton', 'is_available')
+    list_display = ('product', 'name', 'code', 'variant_type', 'pcs_carton', 'is_available')
     list_filter = ('variant_type', 'is_available')
     search_fields = ('product__name', 'name', 'code')
+
+    filter_horizontal = ('sizes',)
