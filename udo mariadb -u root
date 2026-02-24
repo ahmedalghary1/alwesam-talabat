@@ -1,0 +1,26 @@
+[0;1;32m●[0m mariadb.service - MariaDB 12.2.2 database server
+     Loaded: loaded (]8;;file://cachyos-x8664/usr/lib/systemd/system/mariadb.service\/usr/lib/systemd/system/mariadb.service]8;;\; [0;1;38:5:185mdisabled[0m; preset: [0;1;38:5:185mdisabled[0m)
+     Active: [0;1;32mactive (running)[0m since Tue 2026-02-24 10:53:07 EET; 1min 43s ago
+ Invocation: 14660862456e4d3695ec6e1237024804
+       Docs: ]8;;man:mariadbd(8)\man:mariadbd(8)]8;;\
+             ]8;;https://mariadb.com/kb/en/library/systemd/\https://mariadb.com/kb/en/library/systemd/]8;;\
+    Process: 13742 ExecStartPre=/bin/sh -c [ ! -e /usr/bin/galera_recovery ] && VAR= ||   VAR=`/usr/bin/galera_recovery`; [ $? -eq 0 ]   && echo _WSREP_START_POSITION=$VAR > /run/mariadb/wsrep-start-position || exit 1 (code=exited, status=0/SUCCESS)
+    Process: 13780 ExecStartPost=/bin/rm -f /run/mariadb/wsrep-start-position /run/mariadb/wsrep-new-cluster (code=exited, status=0/SUCCESS)
+   Main PID: 13767 (mariadbd)
+     Status: "[0;1;36mTaking your SQL requests now...[0m"
+      Tasks: 10[0;38:5:245m (limit: 250613)[0m
+     Memory: 197.5M (peak: 205.6M)
+        CPU: 375ms
+     CGroup: /system.slice/mariadb.service
+             └─[0;38:5:245m13767 /usr/bin/mariadbd[0m
+
+Feb 24 10:53:07 cachyos-x8664 mariadbd[13767]: 2026-02-24 10:53:07 0 [Note] Plugin 'wsrep-provider' is disabled.
+Feb 24 10:53:07 cachyos-x8664 mariadbd[13767]: 2026-02-24 10:53:07 0 [Note] InnoDB: Buffer pool(s) load completed at 260224 10:53:07
+Feb 24 10:53:07 cachyos-x8664 mariadbd[13767]: 2026-02-24 10:53:07 0 [Note] Server socket created on IP: '0.0.0.0', port: '3306'.
+Feb 24 10:53:07 cachyos-x8664 mariadbd[13767]: 2026-02-24 10:53:07 0 [Note] Server socket created on IP: '::', port: '3306'.
+Feb 24 10:53:07 cachyos-x8664 mariadbd[13767]: 2026-02-24 10:53:07 0 [Note] mariadbd: Event Scheduler: Loaded 0 events
+Feb 24 10:53:07 cachyos-x8664 mariadbd[13767]: 2026-02-24 10:53:07 0 [Note] /usr/bin/mariadbd: ready for connections.
+Feb 24 10:53:07 cachyos-x8664 mariadbd[13767]: Version: '12.2.2-MariaDB'  socket: '/run/mysqld/mysqld.sock'  port: 3306  Arch Linux
+Feb 24 10:53:07 cachyos-x8664 systemd[1]: Started MariaDB 12.2.2 database server.
+Feb 24 10:54:10 cachyos-x8664 mariadbd[13767]: 2026-02-24 10:54:10 3 [Warning] Aborted connection 3 to db: 'unconnected' user: 'root' host: 'localhost' (Got an error reading communication packets)
+Feb 24 10:54:20 cachyos-x8664 mariadbd[13767]: 2026-02-24 10:54:20 4 [Warning] Access denied for user ''@'localhost' to database 'satus'
