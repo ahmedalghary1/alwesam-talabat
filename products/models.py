@@ -40,9 +40,9 @@ class Product(ImageCompressionMixin, models.Model):
     image = models.ImageField(upload_to='product-image')
     # 👇 أضف هذا الجزء هنا
     sizes = models.ManyToManyField(
-        Size,
+        "Size",
         blank=True,
-        
+
         related_name='products',
         verbose_name="الأطوال المتاحة للمنتج",
         help_text="أضف أطوال مباشرة إذا لم يكن للمنتج أنماط"

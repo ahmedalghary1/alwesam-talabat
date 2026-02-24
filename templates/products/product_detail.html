@@ -103,6 +103,23 @@
             </div>
             {% endif %}
 
+            {% if not variants and product.sizes.exists %}
+            <div class="variant-selection-section mt-3">
+                <h4>
+                    <i class="fas fa-ruler"></i>
+                    اختر المقاس
+                </h4>
+
+                <div class="size-selection">
+                    {% for size in product.sizes.all %}
+                    <div class="size-option"
+                        onclick="selectDirectSize('{{ size.name|escapejs }}', this)">
+                        {{ size.name }}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
             <!-- Unit Type Selector -->
             <div class="variant-section">
                 <h4><i class="fas fa-balance-scale"></i> وحدة الطلب</h4>
@@ -206,6 +223,7 @@
 {% block extra_js %}
 <parameter name="StartLine">
     <script>
+        
         // Calculate contrasting text color based on background brightness
         function getContrastColor(hexColor) {
             if (!hexColor || typeof hexColor !== 'string') {
@@ -510,6 +528,17 @@
                 console.log('No variant images, using product images');
                 updateGallery(productImages);
             }
+
+        }
+        function selectDirectSize(sizeName, element) {
+            document.querySelectorAll('.size-option').forEach(el => {
+                el.classList.remove('selected');
+            });
+
+            element.classList.add('selected');
+            selectedSizeName = sizeName;
+
+            console.log('Direct product size selected:', selectedSizeName);
         }
 
         // ==================== Product Detail Page ====================
@@ -521,7 +550,8 @@
         let selectedColorName = null;
         let selectedSizeName = null;
         let selectedUnit = null;
-
+        
+        const productHasSizes = {{ product.sizes.exists|yesno:"true,false" }};
         // Product info
         const PRODUCT_DATA = {
             id: {{ product.id }},
@@ -704,6 +734,10 @@
             // Validation 1: Check for color selection (if product has variants)
             if (ALL_VARIANTS.length > 0 && !selectedVariantId) {
                 showValidationError('⚠️ يرجى اختيار لون المنتج أولاً', '.variant-selection-section');
+                return;
+            }
+            if (ALL_VARIANTS.length === 0 && productHasSizes && !selectedSizeName) {
+                alert("اختر المقاس أولاً");
                 return;
             }
 

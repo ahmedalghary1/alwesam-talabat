@@ -84,16 +84,22 @@ def product_detail(request, slug):
         Product detail page with images, variants, and related items
     """
     try:
-        product = get_object_or_404(Product, slug=slug)
+       product = get_object_or_404(
+            Product.objects.prefetch_related(
+                'sizes',
+                'additional_images',
+                'variants__sizes',
+                'variants__color'
+            ),
+            slug=slug
+            )
         
         # Get product images
         product_images = product.additional_images.all()
         
         # Get product variants with optimized queries
-        variants = product.variants.filter(
-            is_available=True
-        ).select_related('color').prefetch_related('sizes')
-        
+        variants = product.variants.filter(is_available=True)
+
         # Related products (same category) with optimized queries
         related_products = Product.objects.filter(
             category=product.category
