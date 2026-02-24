@@ -1,0 +1,5 @@
+# السماح بالوصول لملفات الوسائط
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^media/(.*)$ media/$1 [L]
+</IfModule>
