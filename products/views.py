@@ -118,4 +118,5 @@ def product_detail(request, slug):
         logger.error(f'Error loading product detail for slug {slug}: {str(e)}', exc_info=True)
         # SECURITY: Don't expose internal error details to users
         messages.error(request, 'حدث خطأ أثناء تحميل تفاصيل المنتج. يرجى المحاولة لاحقاً')
+        messages.error(request, e)
         return redirect('products:all_categories')
