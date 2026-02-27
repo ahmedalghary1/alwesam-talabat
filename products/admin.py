@@ -4,7 +4,7 @@ Django admin configuration for Products app.
 Registers models with customized list displays, filters, and inline editing.
 """
 from django.contrib import admin
-from .models import Product, Category, ProductImages, ProductVariant , Color , Size
+from .models import Product, Category, ProductImages, ProductVariant , Color , Size,VariantImage
 
 admin.site.register(Color)
 admin.site.register(Size)
@@ -20,7 +20,7 @@ class ProductVariantInline(admin.TabularInline):
     fields = [
         'name', 'code', 'variant_type',
         'pcs_carton', 'image',
-        'is_available', 'sizes'  
+        'is_available','color', 'sizes'  
     ]
     
 @admin.register(Category)
@@ -45,11 +45,14 @@ class ProductAdmin(admin.ModelAdmin):
 class ProductImagesAdmin(admin.ModelAdmin):
     list_display = ('product', 'image')
 
-
+class VariantImageInline(admin.TabularInline):
+    model = VariantImage
+    extra = 5 
 @admin.register(ProductVariant)
 class ProductVariantAdmin(admin.ModelAdmin):
     list_display = ('product', 'name', 'code', 'variant_type', 'pcs_carton', 'is_available')
     list_filter = ('variant_type', 'is_available')
     search_fields = ('product__name', 'name', 'code')
+    inlines = [VariantImageInline]  # ← هذا هو المهم
 
     filter_horizontal = ('sizes',)

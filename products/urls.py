@@ -4,7 +4,7 @@ from . import views
 app_name = 'products'
 
 urlpatterns = [
-    path('', views.all_categories, name='all_categories'),
+    path('all_categories', views.all_categories, name='all_categories'),
     path('search/', views.search_products, name='search'),
 
     # يدعم slug عربي وانجليزي بدون مشاكل
