@@ -25,20 +25,20 @@ class ProductVariantInline(admin.TabularInline):
     
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ('name', 'slug')
+    list_display = ('name', 'slug', 'order')  
     prepopulated_fields = {'slug': ('name',)}
+    ordering = ('order',)  
 
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('name', 'category', 'pcs_carton')
+    list_display = ('name', 'category', 'pcs_carton', 'order')  # ← أضف order
     list_filter = ('category', 'created_at')
     search_fields = ('name', 'description')
     prepopulated_fields = {'slug': ('name',)}
-
     filter_horizontal = ('sizes',)
-
     inlines = [ProductImagesInline, ProductVariantInline]
+    ordering = ('order',)  # ← ترتيب المنتجات حسب order
 
 
 @admin.register(ProductImages)
@@ -50,9 +50,9 @@ class VariantImageInline(admin.TabularInline):
     extra = 5 
 @admin.register(ProductVariant)
 class ProductVariantAdmin(admin.ModelAdmin):
-    list_display = ('product', 'name', 'code', 'variant_type', 'pcs_carton', 'is_available')
+    list_display = ('product', 'name', 'code', 'variant_type', 'pcs_carton', 'is_available', 'order')  # ← أضف order
     list_filter = ('variant_type', 'is_available')
     search_fields = ('product__name', 'name', 'code')
-    inlines = [VariantImageInline]  # ← هذا هو المهم
-
+    inlines = [VariantImageInline]
     filter_horizontal = ('sizes',)
+    ordering = ('order',)  
