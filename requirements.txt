@@ -22,4 +22,5 @@ django-filter==25.2
 drf-spectacular==0.29.0
 django-cors-headers==4.9.0
 whitenoise
+django-jazzmin
 pymysql
