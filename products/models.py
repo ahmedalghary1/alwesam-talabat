@@ -8,6 +8,7 @@ class Category(ImageCompressionMixin, models.Model):
     slug = models.SlugField(max_length=255, unique=True, blank=True, db_index=True)
     description = models.TextField(blank=True)
     image = models.ImageField(upload_to='category-images')
+    order = models.PositiveIntegerField(default=0)
 
     def save(self, *args, **kwargs):
         
@@ -38,6 +39,7 @@ class Product(ImageCompressionMixin, models.Model):
     # Indexed for URL routing and faster queries
     slug = models.CharField(max_length=255, unique=True, blank=True, db_index=True)
     image = models.ImageField(upload_to='product-image')
+    order = models.PositiveIntegerField(default=0)
     # 👇 أضف هذا الجزء هنا
     sizes = models.ManyToManyField(
         "Size",
@@ -110,7 +112,7 @@ class Color(models.Model):
         help_text="مثال: #FF0000 للأحمر"
     )
     created_at = models.DateTimeField(auto_now_add=True)
-    
+    order = models.PositiveIntegerField(default=0)
     class Meta:
         ordering = ['name']
         verbose_name = "لون"
@@ -172,7 +174,7 @@ class ProductVariant(ImageCompressionMixin, models.Model):
     ]
     
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='variants')
-    
+    order = models.PositiveIntegerField(default=0)
     # Variant classification
     variant_type = models.CharField(max_length=20, choices=VARIANT_TYPE_CHOICES)
     

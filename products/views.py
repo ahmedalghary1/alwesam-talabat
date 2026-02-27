@@ -25,7 +25,7 @@ def search_products(request):
         Q(name__icontains=query) | 
         Q(description__icontains=query) |
         Q(category__name__icontains=query)
-    ).distinct()
+    ).distinct().order_by('order')
     
     return render(request, 'products/search_results.html', {
         'products': products,
@@ -41,7 +41,7 @@ def all_categories(request):
         categories = cache.get(CACHE_KEY_ALL_CATEGORIES)
 
         if categories is None:
-            categories = list(Category.objects.all())
+            categories = list(Category.objects.all().order_by('order'))
             cache.set(CACHE_KEY_ALL_CATEGORIES, categories, 60 * 15)
 
         return render(request, 'products/all_categories.html', {
@@ -59,7 +59,7 @@ def category_products(request, slug):
     """Display products in a specific category"""
     try:
         category = get_object_or_404(Category, slug=slug)
-        products = Product.objects.filter(category=category)
+        products = Product.objects.filter(category=category).order_by('order')
         
         return render(request, 'products/categories.html', {
             'category': category,
@@ -98,12 +98,12 @@ def product_detail(request, slug):
         product_images = product.additional_images.all()
         
         # Get product variants with optimized queries
-        variants = product.variants.filter(is_available=True)
+        variants = product.variants.filter(is_available=True).order_by('order', 'color__order')
 
         # Related products (same category) with optimized queries
         related_products = Product.objects.filter(
             category=product.category
-        ).exclude(id=product.id).select_related('category')[:4]
+        ).exclude(id=product.id).select_related('category').order_by('order')[:4]
         
         return render(request, 'products/product_detail.html', {
             'product': product,
