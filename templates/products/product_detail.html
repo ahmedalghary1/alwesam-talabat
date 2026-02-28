@@ -289,11 +289,12 @@
     ];
         ALL_VARIANTS.sort((a, b) => a.id - b.id); 
 
-
         function organizeVariantsByColor() {
             const colorMap = {};
+
+            // 1️⃣ تجميع المتغيرات حسب اللون
             ALL_VARIANTS.forEach(variant => {
-                const colorKey = variant.colorId || 'no-color';
+                const colorKey = variant.colorId ?? 'no-color'; // استخدم nullish coalescing
                 if (!colorMap[colorKey]) {
                     colorMap[colorKey] = {
                         colorId: variant.colorId,
@@ -303,11 +304,29 @@
                     };
                 }
                 colorMap[colorKey].variants.push(variant);
-                colorMap[colorKey].variants.sort((a, b) => a.order - b.order); // أو حسب أي حقل آخر مثل order
             });
+
+            // 2️⃣ فرز المتغيرات داخل كل لون حسب order
+            Object.values(colorMap).forEach(colorGroup => {
+                colorGroup.variants.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+            });
+
             return colorMap;
         }
 
+        // === مثال على فرز الألوان نفسها عند العرض ===
+        function getSortedColorGroups() {
+            const colorMap = organizeVariantsByColor();
+
+            // تحويل colorMap إلى مصفوفة وفرز حسب أقل order في كل لون
+            const colorGroups = Object.values(colorMap).sort((a, b) => {
+                const orderA = a.variants[0]?.order ?? 0;
+                const orderB = b.variants[0]?.order ?? 0;
+                return orderA - orderB;
+            });
+
+            return colorGroups;
+        }
         function renderColorSelection() {
             const colorContainer = document.getElementById('color-selection');
             if (!colorContainer) return;
@@ -315,9 +334,15 @@
             const colorMap = organizeVariantsByColor();
             colorContainer.innerHTML = '';
 
-            // Only show colors that have available variants
-            Object.values(colorMap).forEach(colorGroup => {
-                // Check if this color has at least one available variant
+            // تحويل colorMap إلى مصفوفة وفرز حسب أقل order لكل مجموعة لون
+            const sortedColorGroups = Object.values(colorMap).sort((a, b) => {
+                const orderA = a.variants[0]?.order ?? 0;
+                const orderB = b.variants[0]?.order ?? 0;
+                return orderA - orderB;
+            });
+
+            // عرض الألوان بعد الفرز
+            sortedColorGroups.forEach(colorGroup => {
                 const hasAvailableVariant = colorGroup.variants.some(v => v.isAvailable);
 
                 const colorDiv = document.createElement('div');
@@ -325,16 +350,13 @@
                 const bgColor = colorGroup.colorHex || '#cccccc';
                 colorDiv.style.backgroundColor = bgColor;
 
-                // Store color name for display via CSS ::before
                 const colorName = colorGroup.colorName || 'بدون لون';
                 colorDiv.dataset.colorId = colorGroup.colorId || 'no-color';
                 colorDiv.dataset.colorName = colorName;
 
-                // Create a descriptive title showing color name and availability
                 const availabilityText = hasAvailableVariant ? 'متوفر' : 'غير متوفر';
                 colorDiv.title = `${colorName} (${availabilityText})`;
 
-                // Disable if no available variants
                 if (!hasAvailableVariant) {
                     colorDiv.classList.add('disabled');
                 } else {
