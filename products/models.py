@@ -55,14 +55,13 @@ class Product(ImageCompressionMixin, models.Model):
     is_available = models.BooleanField(default=True, verbose_name="متوفر")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
     def save(self, *args, **kwargs):
-        # Auto-generate slug from product name
         if not self.slug:
             self.slug = slugify(self.name, allow_unicode=True)
-        # Compress image before saving
-        self.save_with_compression(image_field_name='image', *args, **kwargs)
 
+        super().save(*args, **kwargs)   # مهم جدًا
+
+        self.save_with_compression(image_field_name='image')
     def __str__(self):
         return self.name
 
@@ -89,8 +88,8 @@ class ProductImages(ImageCompressionMixin, models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
-        # Auto-compress uploaded images
-        self.save_with_compression(image_field_name='image', *args, **kwargs)
+        super().save(*args, **kwargs)
+        self.save_with_compression(image_field_name='image')
 
     class Meta:
         ordering = ['order', 'created_at']
@@ -151,8 +150,8 @@ class VariantImage(ImageCompressionMixin, models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
-        # Compress variant images
-        self.save_with_compression(image_field_name='image', *args, **kwargs)
+        super().save(*args, **kwargs)
+        self.save_with_compression(image_field_name='image')
 
     class Meta:
         ordering = ['order', 'created_at']
@@ -211,9 +210,9 @@ class ProductVariant(ImageCompressionMixin, models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
-        # Compress variant image if provided
-        self.save_with_compression(image_field_name='image', *args, **kwargs)
-
+        super().save(*args, **kwargs)
+        self.save_with_compression(image_field_name='image')
+        
     class Meta:
         # Ensure each product has unique variant codes
 
