@@ -26,7 +26,7 @@ class ProductVariantInline(SortableInlineAdminMixin, admin.TabularInline):
     ]
     
 @admin.register(Category)
-class CategoryAdmin(admin.ModelAdmin):
+class CategoryAdmin(SortableInlineAdminMixin,admin.ModelAdmin):
     list_display = ('name', 'slug', 'order')  
     prepopulated_fields = {'slug': ('name',)}
     ordering = ('order',)  
