@@ -11,14 +11,14 @@ class Category(ImageCompressionMixin, models.Model):
     order = models.PositiveIntegerField(default=0)
 
     def save(self, *args, **kwargs):
-        
-        if not self.slug:
-            self.slug = slugify(self.name, allow_unicode=True)
-        
-        super().save(*args, **kwargs)
-        
-        self.save_with_compression(image_field_name='image')
-
+        update_fields = kwargs.get('update_fields')
+        if update_fields and 'order' in update_fields:
+            super().save(*args, **kwargs)
+        else:
+            if not self.slug:
+                self.slug = slugify(self.name, allow_unicode=True)
+            super().save(*args, **kwargs)
+            self.save_with_compression(image_field_name='image')
     def __str__(self):
         return self.name
 
@@ -55,15 +55,16 @@ class Product(ImageCompressionMixin, models.Model):
     is_available = models.BooleanField(default=True, verbose_name="متوفر")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
     def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = slugify(self.name, allow_unicode=True)
-
-        super().save(*args, **kwargs)   # مهم جدًا
-
-        self.save_with_compression(image_field_name='image')
-    def __str__(self):
-        return self.name
+        update_fields = kwargs.get('update_fields')
+        if update_fields and 'order' in update_fields:
+            super().save(*args, **kwargs)
+        else:
+            if not self.slug:
+                self.slug = slugify(self.name, allow_unicode=True)
+            super().save(*args, **kwargs)
+            self.save_with_compression(image_field_name='image')
 
     class Meta:
         ordering = ['order']
@@ -88,8 +89,12 @@ class ProductImages(ImageCompressionMixin, models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        self.save_with_compression(image_field_name='image')
+        update_fields = kwargs.get('update_fields')
+        if update_fields and 'order' in update_fields:
+            super().save(*args, **kwargs)
+        else:
+            super().save(*args, **kwargs)
+            self.save_with_compression(image_field_name='image')
 
     class Meta:
         ordering = ['order', 'created_at']
@@ -149,7 +154,11 @@ class VariantImage(ImageCompressionMixin, models.Model):
     order = models.PositiveIntegerField(default=0, verbose_name='الترتيب')
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def save(self, *args, **kwargs):
+def save(self, *args, **kwargs):
+    update_fields = kwargs.get('update_fields')
+    if update_fields and 'order' in update_fields:
+        super().save(*args, **kwargs)
+    else:
         super().save(*args, **kwargs)
         self.save_with_compression(image_field_name='image')
 
@@ -210,9 +219,13 @@ class ProductVariant(ImageCompressionMixin, models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        self.save_with_compression(image_field_name='image')
-        
+        update_fields = kwargs.get('update_fields')
+        if update_fields and 'order' in update_fields:
+            super().save(*args, **kwargs)
+        else:
+            super().save(*args, **kwargs)
+            self.save_with_compression(image_field_name='image')
+            
     class Meta:
         # Ensure each product has unique variant codes
 
