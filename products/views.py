@@ -95,7 +95,7 @@ def product_detail(request, slug):
         )
         
         # Get product images
-        product_images = product.additional_images.all()
+        product_images = product.additional_images.all().order_by('order')
         
         # Get product variants with optimized queries
         variants = product.variants.filter(is_available=True).order_by('order', 'color__order')
