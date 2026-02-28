@@ -23,6 +23,7 @@ class Category(ImageCompressionMixin, models.Model):
         return self.name
 
     class Meta:
+        ordering = ['order']
         verbose_name = "القسم"
         verbose_name_plural = "الأقسام"
 
@@ -217,7 +218,7 @@ class ProductVariant(ImageCompressionMixin, models.Model):
         # Ensure each product has unique variant codes
 
         unique_together = ['product', 'code']
-        ordering = ['variant_type']
+        ordering = ['order']
         verbose_name = "نمط المنتج"
         verbose_name_plural = "أنماط المنتجات"
         # Optimize common queries
