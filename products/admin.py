@@ -7,8 +7,16 @@ from django.contrib import admin
 from adminsortable2.admin import SortableAdminMixin, SortableInlineAdminMixin
 from .models import Product, Category, ProductImages, ProductVariant , Color , Size,VariantImage
 
-admin.site.register(Color)
 admin.site.register(Size)
+
+
+
+@admin.register(Color)
+class ColorAdmin(SortableAdminMixin, admin.ModelAdmin):
+    list_display = ('name', 'order')
+    ordering = ('order',)
+    
+
 
 class ProductImagesInline(admin.TabularInline):
     model = ProductImages
