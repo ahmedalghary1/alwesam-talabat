@@ -4,6 +4,7 @@ Django admin configuration for Products app.
 Registers models with customized list displays, filters, and inline editing.
 """
 from django.contrib import admin
+from adminsortable2.admin import SortableAdminMixin, SortableInlineAdminMixin
 from .models import Product, Category, ProductImages, ProductVariant , Color , Size,VariantImage
 
 admin.site.register(Color)
@@ -14,13 +15,14 @@ class ProductImagesInline(admin.TabularInline):
     extra = 1
 
 
-class ProductVariantInline(admin.TabularInline):
+class ProductVariantInline(SortableInlineAdminMixin, admin.TabularInline):
     model = ProductVariant
     extra = 1
     fields = [
         'name', 'code', 'variant_type',
         'pcs_carton', 'image',
-        'is_available','color', 'sizes'  
+        'is_available','color', 'sizes' ,
+        'order'
     ]
     
 @admin.register(Category)
@@ -31,14 +33,14 @@ class CategoryAdmin(admin.ModelAdmin):
 
 
 @admin.register(Product)
-class ProductAdmin(admin.ModelAdmin):
-    list_display = ('name', 'category', 'pcs_carton', 'order')  # ← أضف order
+class ProductAdmin(SortableAdminMixin, admin.ModelAdmin):
+    list_display = ('name', 'category', 'pcs_carton', 'order')  
     list_filter = ('category', 'created_at')
     search_fields = ('name', 'description')
     prepopulated_fields = {'slug': ('name',)}
     filter_horizontal = ('sizes',)
     inlines = [ProductImagesInline, ProductVariantInline]
-    ordering = ('order',)  # ← ترتيب المنتجات حسب order
+    ordering = ('order',)  
 
 
 @admin.register(ProductImages)
@@ -49,8 +51,8 @@ class VariantImageInline(admin.TabularInline):
     model = VariantImage
     extra = 5 
 @admin.register(ProductVariant)
-class ProductVariantAdmin(admin.ModelAdmin):
-    list_display = ('product', 'name', 'code', 'variant_type', 'pcs_carton', 'is_available', 'order')  # ← أضف order
+class ProductVariantAdmin(SortableAdminMixin, admin.ModelAdmin):
+    list_display = ('product', 'name', 'code', 'variant_type', 'pcs_carton', 'is_available', 'order')
     list_filter = ('variant_type', 'is_available')
     search_fields = ('product__name', 'name', 'code')
     inlines = [VariantImageInline]
