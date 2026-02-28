@@ -24,3 +24,4 @@ django-cors-headers==4.9.0
 whitenoise
 django-jazzmin
 pymysql
+django-admin-sortable2
