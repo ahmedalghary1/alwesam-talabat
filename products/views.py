@@ -88,9 +88,9 @@ def product_detail(request, slug):
         product = get_object_or_404(
             Product.objects.prefetch_related(
                 'additional_images',
-                Prefetch('variants', queryset=ProductVariant.objects.filter(is_available=True).order_by('order')),
+                select_related('variants', queryset=ProductVariant.objects.filter(is_available=True).order_by('order')),
                 Prefetch('variants__sizes', queryset=Size.objects.all().order_by('order')),
-                Prefetch('variants__color', queryset=Color.objects.all().order_by('order')),  # إذا استخدمت M2M
+                select_related('variants__color', queryset=Color.objects.all().order_by('order')), 
             ),
             slug=slug
         )
