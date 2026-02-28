@@ -217,7 +217,9 @@ class ProductVariant(ImageCompressionMixin, models.Model):
     # Availability flag
     is_available = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
-
+    def __str__(self):
+        return self.name or f"{self.product.name}"
+        
     def save(self, *args, **kwargs):
         update_fields = kwargs.get('update_fields')
         if update_fields and 'order' in update_fields:
@@ -225,7 +227,7 @@ class ProductVariant(ImageCompressionMixin, models.Model):
         else:
             super().save(*args, **kwargs)
             self.save_with_compression(image_field_name='image')
-            
+
     class Meta:
         # Ensure each product has unique variant codes
 
@@ -239,5 +241,3 @@ class ProductVariant(ImageCompressionMixin, models.Model):
             models.Index(fields=['product', 'is_available']),
         ]
 
-    def __str__(self):
-        return self.name or f"{self.product.name}"
