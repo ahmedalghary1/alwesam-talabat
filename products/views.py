@@ -4,7 +4,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
-from products.models import Product, Category , ProductVariant
+from products.models import Product, Category , ProductVariant , Size
 import logging
 from urllib.parse import unquote
 from django.db.models import Prefetch
