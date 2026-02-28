@@ -888,11 +888,16 @@
             if (ALL_VARIANTS.length > 0) {
                 renderColorSelection();
 
-                // Auto-select if only one color
+                // ✅ ضع هذا الجزء هنا بدل اختيار اللون من Object.keys
                 const colorMap = organizeVariantsByColor();
-                const colors = Object.keys(colorMap);
-                if (colors.length === 1) {
-                    const firstColor = colorMap[colors[0]];
+                const sortedColorGroups = Object.values(colorMap).sort((a, b) => {
+                    const orderA = a.variants[0]?.order ?? 0;
+                    const orderB = b.variants[0]?.order ?? 0;
+                    return orderA - orderB;
+                });
+
+                if (sortedColorGroups.length > 0) {
+                    const firstColor = sortedColorGroups[0];
                     selectColor(firstColor.colorId || 'no-color', firstColor.variants);
                 }
             }
