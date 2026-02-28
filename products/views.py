@@ -7,6 +7,7 @@ from django.db.models import Q
 from products.models import Product, Category
 import logging
 from urllib.parse import unquote
+from django.db.models import Prefetch
 
 logger = logging.getLogger(__name__)
 
@@ -84,41 +85,41 @@ def product_detail(request, slug):
         Product detail page with images, variants, and related items
     """
     try:
+        # تحسين استعلامات قاعدة البيانات مع ترتيب الأنماط والأطوال والألوان
+        variants_qs = ProductVariant.objects.filter(is_available=True).order_by('order').prefetch_related(
+            Prefetch('sizes', queryset=Size.objects.all().order_by('order'))
+        ).select_related('color')
 
         product = get_object_or_404(
             Product.objects.prefetch_related(
                 'additional_images',
-                select_related('variants', queryset=ProductVariant.objects.filter(is_available=True).order_by('order')),
-                Prefetch('variants__sizes', queryset=Size.objects.all().order_by('order')),
-                select_related('variants__color', queryset=Color.objects.all().order_by('order')), 
+                Prefetch('variants', queryset=variants_qs)
             ),
             slug=slug
         )
 
-        
-        # Get product images
+        # صور المنتج مرتبة
         product_images = product.additional_images.all().order_by('order')
-        
-        # Get product variants with optimized queries
-        variants = product.variants.filter(is_available=True)
 
-        # Related products (same category) with optimized queries
+        # الحصول على الأنماط من Prefetch المرتب مسبقًا
+        variants = product.variants.all()  # already prefetch_related & ordered
+
+        # المنتجات المرتبطة بنفس القسم
         related_products = Product.objects.filter(
             category=product.category
         ).exclude(id=product.id).select_related('category').order_by('order')[:4]
-        
+
         return render(request, 'products/product_detail.html', {
             'product': product,
             'product_images': product_images,
             'variants': variants,
             'related_products': related_products
         })
+
     except Http404:
         messages.error(request, 'المنتج غير موجود')
         return redirect('products:all_categories')
     except Exception as e:
         logger.error(f'Error loading product detail for slug {slug}: {str(e)}', exc_info=True)
-        # SECURITY: Don't expose internal error details to users
         messages.error(request, 'حدث خطأ أثناء تحميل تفاصيل المنتج. يرجى المحاولة لاحقاً')
-        messages.error(request, e)
         return redirect('products:all_categories')
