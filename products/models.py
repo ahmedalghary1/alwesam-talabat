@@ -66,7 +66,7 @@ class Product(ImageCompressionMixin, models.Model):
         return self.name
 
     class Meta:
-        ordering = ['-created_at']
+        ordering = ['order']
         # Strategic indexes for common query patterns
         verbose_name = "المنتج"
         verbose_name_plural = "المنتجات"
@@ -114,7 +114,7 @@ class Color(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     order = models.PositiveIntegerField(default=0)
     class Meta:
-        ordering = ['name']
+        ordering = ['order']
         verbose_name = "لون"
         verbose_name_plural = "الألوان"
     
