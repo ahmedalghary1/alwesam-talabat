@@ -217,6 +217,9 @@ class ProductVariant(ImageCompressionMixin, models.Model):
         related_name="variants",
         verbose_name="خصائص النمط"
     )
+    VARIANT_TYPE_CHOICES = [
+    ('color', 'اللون'),]
+    
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='variants')
     order = models.PositiveIntegerField(default=0)
     # Variant classification
