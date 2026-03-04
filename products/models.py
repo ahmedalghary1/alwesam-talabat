@@ -242,7 +242,10 @@ class ProductVariant(ImageCompressionMixin, models.Model):
     # Availability flag
     is_available = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
+    @property
+    def color(self):
+        return self.attributes.filter(attribute__name="لون").first()
 
     def __str__(self):
         return self.name or f"{self.product.name}"
