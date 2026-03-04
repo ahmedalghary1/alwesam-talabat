@@ -154,21 +154,21 @@ class VariantImage(ImageCompressionMixin, models.Model):
     order = models.PositiveIntegerField(default=0, verbose_name='الترتيب')
     created_at = models.DateTimeField(auto_now_add=True)
 
-def save(self, *args, **kwargs):
-    update_fields = kwargs.get('update_fields')
-    if update_fields and 'order' in update_fields:
-        super().save(*args, **kwargs)
-    else:
-        super().save(*args, **kwargs)
-        self.save_with_compression(image_field_name='image')
-
+    def save(self, *args, **kwargs):
+        update_fields = kwargs.get('update_fields')
+        if update_fields and 'order' in update_fields:
+            super().save(*args, **kwargs)
+        else:
+            super().save(*args, **kwargs)
+            self.save_with_compression(image_field_name='image')
+    
     class Meta:
         ordering = ['order', 'created_at']
         verbose_name = 'صورة نمط'
         verbose_name_plural = 'صور الأنماط'
 
-    def __str__(self):
-        return f"صورة لنمط {self.variant.name}"
+        def __str__(self):
+            return f"صورة لنمط {self.variant.name}"
 
 class VariantAttribute(models.Model):
     """
@@ -185,9 +185,6 @@ class VariantAttribute(models.Model):
 
 
 class VariantAttributeValue(models.Model):
-    """
-    قيمة الخاصية: أحمر - XL - قطن ...
-    """
     attribute = models.ForeignKey(
         VariantAttribute,
         related_name="values",
@@ -195,14 +192,17 @@ class VariantAttributeValue(models.Model):
     )
     value = models.CharField(max_length=100)
 
+    hex_code = models.CharField(
+        max_length=7,
+        blank=True,
+        null=True,
+        help_text="يستخدم فقط لو كانت الخاصية لون"
+    )
+
     class Meta:
         unique_together = ("attribute", "value")
-        verbose_name = "قيمة خاصية"
-        verbose_name_plural = "قيم الخصائص"
 
-    def __str__(self):
-        return f"{self.attribute.name}: {self.value}"
-        
+
 class ProductVariant(ImageCompressionMixin, models.Model):
     """
     Product variants with independent specifications.
@@ -210,9 +210,7 @@ class ProductVariant(ImageCompressionMixin, models.Model):
     This allows selling the same product in different configurations.
     Example: Same shirt in different colors or different wire gauges.
     """
-    VARIANT_TYPE_CHOICES = [
-        ('color', 'اللون'),
-    ]
+
     attributes = models.ManyToManyField(
         VariantAttributeValue,
         blank=True,
@@ -222,7 +220,6 @@ class ProductVariant(ImageCompressionMixin, models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='variants')
     order = models.PositiveIntegerField(default=0)
     # Variant classification
-    variant_type = models.CharField(max_length=20, choices=VARIANT_TYPE_CHOICES)
     
     # Variant-specific attributes
     name = models.CharField(max_length=200, help_text="اسم النمط الكامل")
@@ -254,6 +251,8 @@ class ProductVariant(ImageCompressionMixin, models.Model):
     # Availability flag
     is_available = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    
+
     def __str__(self):
         return self.name or f"{self.product.name}"
         
