@@ -170,7 +170,39 @@ def save(self, *args, **kwargs):
     def __str__(self):
         return f"صورة لنمط {self.variant.name}"
 
+class VariantAttribute(models.Model):
+    """
+    نوع المتغير: لون - مقاس - خامة - موديل ...
+    """
+    name = models.CharField(max_length=100, unique=True)
 
+    class Meta:
+        verbose_name = "نوع خاصية"
+        verbose_name_plural = "أنواع الخصائص"
+
+    def __str__(self):
+        return self.name
+
+
+class VariantAttributeValue(models.Model):
+    """
+    قيمة الخاصية: أحمر - XL - قطن ...
+    """
+    attribute = models.ForeignKey(
+        VariantAttribute,
+        related_name="values",
+        on_delete=models.CASCADE
+    )
+    value = models.CharField(max_length=100)
+
+    class Meta:
+        unique_together = ("attribute", "value")
+        verbose_name = "قيمة خاصية"
+        verbose_name_plural = "قيم الخصائص"
+
+    def __str__(self):
+        return f"{self.attribute.name}: {self.value}"
+        
 class ProductVariant(ImageCompressionMixin, models.Model):
     """
     Product variants with independent specifications.
@@ -181,7 +213,12 @@ class ProductVariant(ImageCompressionMixin, models.Model):
     VARIANT_TYPE_CHOICES = [
         ('color', 'اللون'),
     ]
-    
+    attributes = models.ManyToManyField(
+        VariantAttributeValue,
+        blank=True,
+        related_name="variants",
+        verbose_name="خصائص النمط"
+    )
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='variants')
     order = models.PositiveIntegerField(default=0)
     # Variant classification
