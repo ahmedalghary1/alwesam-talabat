@@ -414,7 +414,7 @@
             // Store selected color info
             selectedColorId = colorId !== 'no-color' ? colorId : null;
             selectedColorName = variants[0]?.colorName || null;
-
+            console.log('hi am ahmed :',selectedColorName)
             const sizeWrapper = document.getElementById('size-selection-wrapper');
 
             // Check if any variant has sizes
@@ -774,11 +774,6 @@
             }
 
             const isAuth = document.body.dataset.userAuthenticated === 'true';
-
-            console.log('=== handleAddToCart Debug ===');
-            console.log('selectedSizeName:', selectedSizeName);
-            console.log('selectedVariantId:', selectedVariantId);
-            console.log('selectedColorName:', selectedColorName);
 
             if (window.addToCart) {
                 await window.addToCart(PRODUCT_DATA.id, PRODUCT_DATA.name, quantity, pcsPerCarton, PRODUCT_DATA.image, isAuth, selectedVariantId, selectedUnit, selectedSizeName);
