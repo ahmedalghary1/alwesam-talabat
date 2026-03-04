@@ -217,16 +217,10 @@ class ProductVariant(ImageCompressionMixin, models.Model):
         related_name="variants",
         verbose_name="خصائص النمط"
     )
-    VARIANT_TYPE_CHOICES = [
-    ('color', 'اللون'),]
-    
+
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='variants')
     order = models.PositiveIntegerField(default=0)
     # Variant classification
-    variant_type = models.CharField(
-        max_length=20,
-        choices=VARIANT_TYPE_CHOICES
-    )
     # Variant-specific attributes
     name = models.CharField(max_length=200, help_text="اسم النمط الكامل")
     length_label = models.CharField(max_length=50, blank=True, null=True, verbose_name="نوع الطول", help_text="مثال: مقاس السلك، طول الصابع")
@@ -236,16 +230,7 @@ class ProductVariant(ImageCompressionMixin, models.Model):
     pcs_carton = models.PositiveIntegerField(default=24,help_text="عدد القطع في الكرتونة لهذا النمط")
     image = models.ImageField(upload_to='variant-images', blank=True, null=True,help_text="صورة خاصة بالنمط")
     
-    # Color and size relationships
-    color = models.ForeignKey(
-        Color, 
-        on_delete=models.SET_NULL, 
-        null=True, 
-        blank=True,
-        related_name='variants',
-        verbose_name="اللون",
-        help_text="اللون الخاص بهذا النمط (اختياري)"
-    )
+
     sizes = models.ManyToManyField(
         Size,
         blank=True,
