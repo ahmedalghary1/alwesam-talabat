@@ -27,7 +27,7 @@ class ProductVariantInline(SortableInlineAdminMixin, admin.TabularInline):
     model = ProductVariant
     extra = 1
     fields = [
-        'name', 'code', 'variant_type',
+        'name', 'code', 
         'pcs_carton', 'image',
         'is_available','color', 'sizes' ,
         'order'
@@ -60,8 +60,8 @@ class VariantImageInline(admin.TabularInline):
     extra = 5 
 @admin.register(ProductVariant)
 class ProductVariantAdmin(SortableAdminMixin, admin.ModelAdmin):
-    list_display = ('product', 'name', 'code', 'variant_type', 'pcs_carton', 'is_available', 'order')
-    list_filter = ('variant_type', 'is_available')
+    list_display = ('product', 'name', 'code',  'pcs_carton', 'is_available', 'order')
+    list_filter = ( 'is_available')
     search_fields = ('product__name', 'name', 'code')
     inlines = [VariantImageInline]
     filter_horizontal = ('sizes',)
