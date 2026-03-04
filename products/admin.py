@@ -61,7 +61,7 @@ class VariantImageInline(admin.TabularInline):
 @admin.register(ProductVariant)
 class ProductVariantAdmin(SortableAdminMixin, admin.ModelAdmin):
     list_display = ('product', 'name', 'code',  'pcs_carton', 'is_available', 'order')
-    list_filter = ( 'is_available')
+    list_filter = ( 'is_available',)
     search_fields = ('product__name', 'name', 'code')
     inlines = [VariantImageInline]
     filter_horizontal = ('sizes',)
