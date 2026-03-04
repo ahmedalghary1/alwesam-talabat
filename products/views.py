@@ -4,7 +4,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
-from products.models import Product, Category , ProductVariant , Size
+from products.models import Product, Category , ProductVariant , Size,VariantAttributeValue
 import logging
 from urllib.parse import unquote
 from django.db.models import Prefetch
@@ -87,9 +87,9 @@ def product_detail(request, slug):
     try:
         # تحسين استعلامات قاعدة البيانات مع ترتيب الأنماط والأطوال والألوان
         variants_qs = ProductVariant.objects.filter(is_available=True).order_by('order').prefetch_related(
-            Prefetch('sizes', queryset=Size.objects.all().order_by('order'))
-        ).select_related('color')
-
+        Prefetch('sizes', queryset=Size.objects.all().order_by('order')),
+        Prefetch('attributes', queryset=VariantAttributeValue.objects.select_related('attribute'))
+        )
         product = get_object_or_404(
             Product.objects.prefetch_related(
                 'additional_images',
