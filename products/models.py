@@ -220,7 +220,10 @@ class ProductVariant(ImageCompressionMixin, models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='variants')
     order = models.PositiveIntegerField(default=0)
     # Variant classification
-    
+    variant_type = models.CharField(
+        max_length=20,
+        choices=VARIANT_TYPE_CHOICES
+    )
     # Variant-specific attributes
     name = models.CharField(max_length=200, help_text="اسم النمط الكامل")
     length_label = models.CharField(max_length=50, blank=True, null=True, verbose_name="نوع الطول", help_text="مثال: مقاس السلك، طول الصابع")
