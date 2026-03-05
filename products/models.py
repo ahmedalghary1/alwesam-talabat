@@ -202,7 +202,9 @@ class VariantAttributeValue(models.Model):
     class Meta:
         unique_together = ("attribute", "value")
 
-
+    def __str__(self):
+        return f"{self.attribute.name} : {self.value}"
+        
 class ProductVariant(ImageCompressionMixin, models.Model):
     """
     Product variants with independent specifications.
@@ -246,7 +248,7 @@ class ProductVariant(ImageCompressionMixin, models.Model):
     @property
     def color(self):
         return self.attributes.filter(attribute__name="لون").first()
-        
+
     def __str__(self):
         return self.name or f"{self.product.name}"
         
