@@ -173,7 +173,6 @@ class ProductAdmin(admin.ModelAdmin):
     save_on_top         = True
     inlines             = [ProductImagesInline, ProductVariantInline]
     list_per_page       = 20
-    date_hierarchy      = "created_at"
 
     fieldsets = (
         (_("📋 المعلومات الأساسية"), {
