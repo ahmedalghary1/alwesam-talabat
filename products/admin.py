@@ -9,6 +9,7 @@ from .models import (
     ProductVariant, VariantImage
 )
 
+from adminsortable2.admin import SortableAdminMixin 
 
 class ProductImagesInline(admin.TabularInline):
     """Inline admin for product additional images"""
@@ -76,7 +77,7 @@ class ProductVariantInline(admin.TabularInline):
 
 
 @admin.register(Category)
-class CategoryAdmin(admin.ModelAdmin):
+class CategoryAdmin(SortableAdminMixin,admin.ModelAdmin):
     """Category admin with image preview and auto slug"""
     list_display = ['name', 'order', 'products_count', 'image_preview', 'created_at']
     list_editable = ['order']
