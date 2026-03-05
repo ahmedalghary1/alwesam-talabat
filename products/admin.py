@@ -16,6 +16,10 @@ class ProductImagesInline(admin.TabularInline):
     extra = 1
     fields = ['image', 'order', 'image_preview']
     readonly_fields = ['image_preview']
+    # ✅ إضافة order إلى الحقول القابلة للتعديل
+    list_editable = ['order']
+    # ✅ ترتيب الصور حسب order
+    ordering = ['order']
     
     def image_preview(self, obj):
         if obj.image:
@@ -30,12 +34,16 @@ class VariantImageInline(admin.TabularInline):
     extra = 1
     fields = ['image', 'order', 'image_preview']
     readonly_fields = ['image_preview']
+    # ✅ إضافة order إلى الحقول القابلة للتعديل
+    list_editable = ['order']
+    # ✅ ترتيب الصور حسب order
+    ordering = ['order']
     
     def image_preview(self, obj):
         if obj.image:
             return format_html('<img src="{}" width="50" height="50" style="object-fit: cover;" />', obj.image.url)
         return "لا توجد صورة"
-    image_preview.short_description = "معاينة الصورة"
+    image_preview.short_description = "الصورة"
 
 
 class ProductVariantInline(admin.TabularInline):
@@ -48,6 +56,8 @@ class ProductVariantInline(admin.TabularInline):
     ]
     readonly_fields = ['image_preview', 'view_sizes']
     raw_id_fields = ['sizes']
+    # ✅ ترتيب الأنماط حسب order
+    ordering = ['order']
     
     def image_preview(self, obj):
         if obj.image:
@@ -73,6 +83,8 @@ class CategoryAdmin(admin.ModelAdmin):
     search_fields = ['name', 'description']
     prepopulated_fields = {'slug': ('name',)}
     readonly_fields = ['image_preview', 'created_at']
+    # ✅ ترتيب الأقسام حسب order
+    ordering = ['order']
     fieldsets = (
         ('معلومات القسم', {
             'fields': ('name', 'slug', 'description', 'order')
@@ -105,6 +117,8 @@ class SizeAdmin(admin.ModelAdmin):
     list_display = ['name', 'order', 'products_count', 'variants_count']
     list_editable = ['order']
     search_fields = ['name']
+    # ✅ ترتيب المقاسات حسب order
+    ordering = ['order']
     
     def products_count(self, obj):
         return obj.products.count()
@@ -120,6 +134,8 @@ class VariantAttributeAdmin(admin.ModelAdmin):
     """Variant attribute admin (Color, Size, Material, etc.)"""
     list_display = ['name', 'values_count']
     search_fields = ['name']
+    # ✅ ترتيب الخصائص حسب الاسم (لأنه ليس لديه order)
+    ordering = ['name']
     
     def values_count(self, obj):
         return obj.values.count()
@@ -149,6 +165,8 @@ class VariantAttributeValueAdmin(admin.ModelAdmin):
     list_filter = ['attribute']
     search_fields = ['value']
     list_editable = []
+    # ✅ ترتيب القيم حسب attribute ثم value
+    ordering = ['attribute__name', 'value']
     
     def color_preview(self, obj):
         if obj.hex_code:
@@ -176,6 +194,8 @@ class ProductVariantAdmin(admin.ModelAdmin):
     search_fields = ['name', 'code', 'product__name']
     raw_id_fields = ['product', 'sizes', 'attributes']
     inlines = [VariantImageInline]
+    # ✅ ترتيب الأنماط حسب order
+    ordering = ['order']
     
     fieldsets = (
         ('معلومات أساسية', {
@@ -231,6 +251,8 @@ class ProductAdmin(admin.ModelAdmin):
     prepopulated_fields = {'slug': ('name',)}
     readonly_fields = ['created_at', 'updated_at', 'image_preview']
     raw_id_fields = ['category', 'sizes']
+    # ✅ ترتيب المنتجات حسب order
+    ordering = ['order']
     
     inlines = [ProductImagesInline, ProductVariantInline]
     
@@ -299,6 +321,8 @@ class ProductImagesAdmin(admin.ModelAdmin):
     list_filter = ['product__category']
     search_fields = ['product__name']
     raw_id_fields = ['product']
+    # ✅ ترتيب الصور حسب order
+    ordering = ['order']
     
     def image_preview(self, obj):
         if obj.image:
