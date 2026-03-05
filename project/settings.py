@@ -418,7 +418,7 @@ JAZZMIN_UI_TWEAKS = {
     "body_small_text": False,
     "brand_small_text": False,
     "accent": "indigo",
-    "dark_mode_theme": False,
+    "default_theme_mode": "auto",  
     "button_classes": {
         "primary": "btn-primary",
         "secondary": "btn-secondary",
