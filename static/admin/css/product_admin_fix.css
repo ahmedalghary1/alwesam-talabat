@@ -1,0 +1,53 @@
+/* =====================================================
+   إصلاح مشكلة المساحة الفارغة على اليمين في Jazzmin
+   المسار: static/admin/css/product_admin_fix.css
+   ===================================================== */
+
+/* جعل حاوية الفورم تأخذ العرض الكامل */
+#content-main .form-row,
+#content-main .fieldBox,
+.form-row.field-slug,
+.form-row.field-name,
+.form-row.field-description {
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+/* إزالة العمود الجانبي الفارغ */
+#content .colM,
+.colM {
+    width: 100% !important;
+    float: none !important;
+}
+
+/* جعل حقول النصوص تأخذ العرض الكامل */
+.form-row.wide .vTextField,
+.form-row.wide .vLargeTextField,
+.form-row.wide textarea,
+.form-row.wide input[type="text"],
+.form-row.wide input[type="url"],
+.form-row.wide select {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box;
+}
+
+/* إصلاح fieldset داخل Jazzmin */
+.module.aligned .form-row {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+.module.aligned .form-row > div,
+.module.aligned .form-row > .field-box {
+    flex: 1 1 100%;
+    min-width: 0;
+}
+
+/* تأكيد أن المحتوى الكامل يمتد بدون هامش يميني غير ضروري */
+#content-main {
+    padding-left: 0;
+    padding-right: 0;
+    width: 100% !important;
+}
