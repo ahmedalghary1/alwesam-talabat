@@ -104,27 +104,6 @@ class ProductImages(ImageCompressionMixin, models.Model):
     def __str__(self):
         return f"صورة لـ {self.product.name}"
 
-class Color(models.Model):
-    """
-    Product colors for product variants.
-    
-    Stores color name and hex code for visual display.
-    """
-    name = models.CharField(max_length=50, verbose_name="اسم اللون")
-    hex_code = models.CharField(
-        max_length=7,
-        verbose_name="كود اللون",
-        help_text="مثال: #FF0000 للأحمر"
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
-    order = models.PositiveIntegerField(default=0)
-    class Meta:
-        ordering = ['order']
-        verbose_name = "لون"
-        verbose_name_plural = "الألوان"
-    
-    def __str__(self):
-        return f"{self.name} ({self.hex_code})"
 
 class Size(models.Model):
     """
