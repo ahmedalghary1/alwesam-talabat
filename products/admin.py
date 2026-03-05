@@ -160,7 +160,7 @@ class VariantAttributeValueInline(admin.TabularInline):
 
 
 @admin.register(VariantAttributeValue)
-class VariantAttributeValueAdmin(SortableAdminMixin,admin.ModelAdmin):
+class VariantAttributeValueAdmin(admin.ModelAdmin):
     """Attribute values admin with hex code support"""
     list_display = ['value', 'attribute', 'color_preview', 'variants_count']
     list_filter = ['attribute']
