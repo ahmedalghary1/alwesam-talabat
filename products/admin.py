@@ -7,6 +7,14 @@ from .models import (
 )
 from adminsortable2.admin import SortableAdminMixin, SortableInlineAdminMixin
 
+@admin.register(Size)
+class SizeAdmin(admin.ModelAdmin):
+    search_fields = ('name',)
+
+
+@admin.register(VariantAttribute)
+class VariantAttributeAdmin(admin.ModelAdmin):
+    search_fields = ('name',)
 # -------------------- CATEGORY --------------------
 @admin.register(Category)
 class CategoryAdmin(SortableAdminMixin, admin.ModelAdmin):
