@@ -131,7 +131,7 @@ class SizeAdmin(SortableAdminMixin,admin.ModelAdmin):
 
 
 @admin.register(VariantAttribute)
-class VariantAttributeAdmin(SortableAdminMixin,admin.ModelAdmin):
+class VariantAttributeAdmin(admin.ModelAdmin):
     """Variant attribute admin (Color, Size, Material, etc.)"""
     list_display = ['name', 'values_count']
     search_fields = ['name']
