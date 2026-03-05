@@ -113,7 +113,7 @@ class CategoryAdmin(SortableAdminMixin,admin.ModelAdmin):
 
 
 @admin.register(Size)
-class SizeAdmin(admin.ModelAdmin):
+class SizeAdmin(SortableAdminMixin,admin.ModelAdmin):
     """Size admin with ordering"""
     list_display = ['name', 'order', 'products_count', 'variants_count']
     list_editable = ['order']
@@ -131,7 +131,7 @@ class SizeAdmin(admin.ModelAdmin):
 
 
 @admin.register(VariantAttribute)
-class VariantAttributeAdmin(admin.ModelAdmin):
+class VariantAttributeAdmin(SortableAdminMixin,admin.ModelAdmin):
     """Variant attribute admin (Color, Size, Material, etc.)"""
     list_display = ['name', 'values_count']
     search_fields = ['name']
@@ -160,7 +160,7 @@ class VariantAttributeValueInline(admin.TabularInline):
 
 
 @admin.register(VariantAttributeValue)
-class VariantAttributeValueAdmin(admin.ModelAdmin):
+class VariantAttributeValueAdmin(SortableAdminMixin,admin.ModelAdmin):
     """Attribute values admin with hex code support"""
     list_display = ['value', 'attribute', 'color_preview', 'variants_count']
     list_filter = ['attribute']
@@ -184,7 +184,7 @@ class VariantAttributeValueAdmin(admin.ModelAdmin):
 
 
 @admin.register(ProductVariant)
-class ProductVariantAdmin(admin.ModelAdmin):
+class ProductVariantAdmin(SortableAdminMixin,admin.ModelAdmin):
     """Product variant admin"""
     list_display = [
         'name', 'product_link', 'code', 'pcs_carton', 
@@ -239,7 +239,7 @@ class ProductVariantAdmin(admin.ModelAdmin):
 
 
 @admin.register(Product)
-class ProductAdmin(admin.ModelAdmin):
+class ProductAdmin(SortableAdminMixin,admin.ModelAdmin):
     """Main product admin with all features"""
     list_display = [
         'name', 'category_link', 'pcs_carton', 
@@ -315,7 +315,7 @@ class ProductAdmin(admin.ModelAdmin):
 
 
 @admin.register(ProductImages)
-class ProductImagesAdmin(admin.ModelAdmin):
+class ProductImagesAdmin(SortableAdminMixin,admin.ModelAdmin):
     """Admin for additional product images"""
     list_display = ['product', 'image_preview', 'order', 'created_at']
     list_editable = ['order']
