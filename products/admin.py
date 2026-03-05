@@ -137,13 +137,12 @@ class ProductAdmin(admin.ModelAdmin):
     )
     list_display_links  = ("name",)
     list_editable       = ("order",)
-    list_filter         = ("is_available", "category", "created_at")
+    list_filter         = ("is_available", "category")
     search_fields       = ("name", "slug", "description")
     prepopulated_fields = {"slug": ("name",)}
     readonly_fields     = ("slug", "image_thumb_large", "created_at", "updated_at")
     filter_horizontal   = ("sizes",)
     ordering            = ("order",)
-    date_hierarchy      = "created_at"
     save_on_top         = True
     inlines             = [ProductImagesInline, ProductVariantInline]
 
