@@ -1,275 +1,163 @@
-from django.db import models
-from django.utils.text import slugify
-from utils.image_utils import ImageCompressionMixin
+# admin.py
+from django.contrib import admin
+from django.utils.html import format_html
+from adminsortable2.admin import SortableAdminMixin, SortableInlineAdminMixin
+from django.contrib.auth.models import User
+from .models import (
+    Category, Product, ProductImages, Color, Size,
+    VariantAttribute, VariantAttributeValue, ProductVariant, VariantImage
+)
 
+# ---------------- تسجيل User (حل مشاكل Jazzmin أو أي ثيم) ----------------
+admin.site.register(User)
 
-class Category(ImageCompressionMixin, models.Model):
-    name = models.CharField(max_length=200)
-    slug = models.SlugField(max_length=255, unique=True, blank=True, db_index=True)
-    description = models.TextField(blank=True)
-    image = models.ImageField(upload_to='category-images')
-    order = models.PositiveIntegerField(default=0)
+# ---------------- Category Admin ----------------
+@admin.register(Category)
+class CategoryAdmin(SortableAdminMixin, admin.ModelAdmin):
+    list_display = ('name', 'order', 'image_tag')
+    search_fields = ('name',)
+    prepopulated_fields = {"slug": ("name",)}
 
-    def save(self, *args, **kwargs):
-        update_fields = kwargs.get('update_fields')
-        if update_fields and 'order' in update_fields:
-            super().save(*args, **kwargs)
-        else:
-            if not self.slug:
-                self.slug = slugify(self.name, allow_unicode=True)
-            super().save(*args, **kwargs)
-            self.save_with_compression(image_field_name='image')
-    def __str__(self):
-        return self.name
+    readonly_fields = ('image_tag',)
 
-    class Meta:
-        ordering = ['order']
-        verbose_name = "القسم"
-        verbose_name_plural = "الأقسام"
+    def image_tag(self, obj):
+        if obj.image:
+            return format_html('<img src="{}" width="60" height="60" style="object-fit:cover;"/>', obj.image.url)
+        return "-"
+    image_tag.short_description = "الصورة"
 
-class Product(ImageCompressionMixin, models.Model):
-    """
-    Main product model for wholesale items.
-    Products are sold by carton with configurable pieces per carton.
-    Can have multiple variants (colors, sizes) and additional images.
-    """
-    name = models.CharField(max_length=200)
-    description = models.TextField(blank=True)
-    # Default pieces per carton (can be overridden by variants)
-    pcs_carton = models.PositiveIntegerField(default=24)
-    # Indexed for URL routing and faster queries
-    slug = models.CharField(max_length=255, unique=True, blank=True, db_index=True)
-    image = models.ImageField(upload_to='product-image')
-    order = models.PositiveIntegerField(default=0)
-    # 👇 أضف هذا الجزء هنا
-    sizes = models.ManyToManyField(
-        "Size",
-        blank=True,
+# ---------------- Product Images Inline ----------------
+class ProductImagesInline(SortableInlineAdminMixin, admin.TabularInline):
+    model = ProductImages
+    extra = 1
+    readonly_fields = ("image_tag",)
+    fields = ("image_tag", "image", "order")
+    classes = ("collapse",)
 
-        related_name='products',
-        verbose_name="الأطوال المتاحة للمنتج",
-        help_text="أضف أطوال مباشرة إذا لم يكن للمنتج أنماط"
+    def image_tag(self, obj):
+        if obj.image:
+            return format_html('<img src="{}" width="60" height="60" style="object-fit:cover;"/>', obj.image.url)
+        return "-"
+    image_tag.short_description = "الصورة"
+
+# ---------------- Variant Image Inline ----------------
+class VariantImageInline(SortableInlineAdminMixin, admin.TabularInline):
+    model = VariantImage
+    extra = 1
+    readonly_fields = ("image_tag",)
+    fields = ("image_tag", "image", "order")
+    classes = ("collapse",)
+
+    def image_tag(self, obj):
+        if obj.image:
+            return format_html('<img src="{}" width="60" height="60" style="object-fit:cover;"/>', obj.image.url)
+        return "-"
+    image_tag.short_description = "الصورة"
+
+# ---------------- ProductVariant Inline ----------------
+class ProductVariantInline(SortableInlineAdminMixin, admin.TabularInline):
+    model = ProductVariant
+    extra = 1
+    autocomplete_fields = ("attributes", "sizes")
+    show_change_link = True
+    fields = (
+        "name",
+        "code",
+        "pcs_carton",
+        "image_tag",
+        "image",
+        "is_available",
+        "attributes_display",
+        "sizes_display",
+        "order",
     )
+    readonly_fields = ("image_tag", "attributes_display", "sizes_display")
+    classes = ("collapse",)
 
-    category = models.ForeignKey(Category, related_name='products', on_delete=models.SET_NULL, null=True, blank=True)
-    is_available = models.BooleanField(default=True, verbose_name="متوفر")
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    def image_tag(self, obj):
+        if obj.image:
+            return format_html('<img src="{}" width="60" height="60" style="object-fit:cover;"/>', obj.image.url)
+        return "-"
+    image_tag.short_description = "الصورة"
 
-    def save(self, *args, **kwargs):
-        update_fields = kwargs.get('update_fields')
-        if update_fields and 'order' in update_fields:
-            super().save(*args, **kwargs)
-        else:
-            if not self.slug:
-                self.slug = slugify(self.name, allow_unicode=True)
-            super().save(*args, **kwargs)
-            self.save_with_compression(image_field_name='image')
+    def attributes_display(self, obj):
+        return ", ".join([str(a) for a in obj.attributes.all()])
+    attributes_display.short_description = "خصائص النمط"
 
-    class Meta:
-        ordering = ['order']
-        # Strategic indexes for common query patterns
-        verbose_name = "المنتج"
-        verbose_name_plural = "المنتجات"
-        indexes = [
-            models.Index(fields=['category', '-created_at']),  # Category listing
-            models.Index(fields=['-created_at']),  # Latest products
-            models.Index(fields=['is_available']),  # Availability filtering
-        ]
+    def sizes_display(self, obj):
+        return ", ".join([s.name for s in obj.sizes.all()])
+    sizes_display.short_description = "المقاسات"
 
-class ProductImages(ImageCompressionMixin, models.Model):
-    """
-    Additional product images for gallery/slideshow.
-    
-    Images are ordered by the 'order' field for display control.
-    """
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='additional_images')
-    image = models.ImageField(upload_to='products/additional/')
-    order = models.PositiveIntegerField(default=0)
-    created_at = models.DateTimeField(auto_now_add=True)
+# ---------------- Product Admin ----------------
+@admin.register(Product)
+class ProductAdmin(SortableAdminMixin, admin.ModelAdmin):
+    list_display = ('name', 'category', 'is_available', 'order', 'created_at')
+    search_fields = ('name', 'category__name')
+    list_filter = ('is_available', 'category')
+    inlines = [ProductImagesInline, ProductVariantInline]
+    autocomplete_fields = ('sizes',)
+    prepopulated_fields = {"slug": ("name",)}
 
-    def save(self, *args, **kwargs):
-        update_fields = kwargs.get('update_fields')
-        if update_fields and 'order' in update_fields:
-            super().save(*args, **kwargs)
-        else:
-            super().save(*args, **kwargs)
-            self.save_with_compression(image_field_name='image')
+# ---------------- VariantAttributeValue Admin ----------------
+@admin.register(VariantAttributeValue)
+class VariantAttributeValueAdmin(admin.ModelAdmin):
+    list_display = ('value', 'attribute', 'hex_code')
+    search_fields = ('value', 'attribute__name')
+    autocomplete_fields = ('attribute',)
 
-    class Meta:
-        ordering = ['order', 'created_at']
-        verbose_name = 'صورة إضافية'
-        verbose_name_plural = 'صور إضافية'
-
-    def __str__(self):
-        return f"صورة لـ {self.product.name}"
-
-class Color(models.Model):
-    """
-    Product colors for product variants.
-    
-    Stores color name and hex code for visual display.
-    """
-    name = models.CharField(max_length=50, verbose_name="اسم اللون")
-    hex_code = models.CharField(
-        max_length=7,
-        verbose_name="كود اللون",
-        help_text="مثال: #FF0000 للأحمر"
+# ---------------- ProductVariant Admin ----------------
+@admin.register(ProductVariant)
+class ProductVariantAdmin(SortableAdminMixin, admin.ModelAdmin):
+    list_display = (
+        "product",
+        "name",
+        "code",
+        "pcs_carton",
+        "is_available",
+        "color_display",
+        "sizes_display",
+        "attributes_display",
     )
-    created_at = models.DateTimeField(auto_now_add=True)
-    order = models.PositiveIntegerField(default=0)
-    class Meta:
-        ordering = ['order']
-        verbose_name = "لون"
-        verbose_name_plural = "الألوان"
-    
-    def __str__(self):
-        return f"{self.name} ({self.hex_code})"
+    search_fields = ("product__name", "name", "code")
+    list_filter = ("is_available", "product")
+    autocomplete_fields = ("attributes", "sizes")
+    inlines = [VariantImageInline]
 
-class Size(models.Model):
-    """
-    Product sizes/lengths for product variants.
-    Examples: S, M, L, XL or wire gauges, fabric lengths, etc.
-    Ordered by 'order' field for consistent display.
-    """
-    name = models.CharField(max_length=50, verbose_name="اسم المقاس")
-    order = models.PositiveIntegerField(default=0, verbose_name="الترتيب")
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    class Meta:
-        ordering = ['order', 'name']
-        verbose_name = "مقاس"
-        verbose_name_plural = "المقاسات"
-    
-    def __str__(self):
-        return self.name
+    class Media:
+        css = {'all': ('admin/css/custom_admin.css',)}
 
-class VariantImage(ImageCompressionMixin, models.Model):
-    """
-    Multiple images for product variants.
-    Allows variants to have their own image gallery.
-    """
-    variant = models.ForeignKey('ProductVariant', on_delete=models.CASCADE, related_name='images')
-    image = models.ImageField(upload_to='products/variants/', verbose_name='الصورة')
-    order = models.PositiveIntegerField(default=0, verbose_name='الترتيب')
-    created_at = models.DateTimeField(auto_now_add=True)
+    def color_display(self, obj):
+        color = obj.color
+        if color and color.hex_code:
+            return format_html(
+                '<span style="background:{};color:#fff;padding:2px 6px;border-radius:3px;font-size:12px;">{}</span>',
+                color.hex_code, color.value
+            )
+        return color.value if color else "-"
+    color_display.short_description = "اللون"
 
-    def save(self, *args, **kwargs):
-        update_fields = kwargs.get('update_fields')
-        if update_fields and 'order' in update_fields:
-            super().save(*args, **kwargs)
-        else:
-            super().save(*args, **kwargs)
-            self.save_with_compression(image_field_name='image')
-    
-    class Meta:
-        ordering = ['order', 'created_at']
-        verbose_name = 'صورة نمط'
-        verbose_name_plural = 'صور الأنماط'
+    def sizes_display(self, obj):
+        return ", ".join([s.name for s in obj.sizes.all()])
+    sizes_display.short_description = "المقاسات"
 
-        def __str__(self):
-            return f"صورة لنمط {self.variant.name}"
+    def attributes_display(self, obj):
+        return ", ".join([str(a) for a in obj.attributes.all()])
+    attributes_display.short_description = "خصائص النمط"
 
-class VariantAttribute(models.Model):
-    """
-    نوع المتغير: لون - مقاس - خامة - موديل ...
-    """
-    name = models.CharField(max_length=100, unique=True)
+# ---------------- Color Admin ----------------
+@admin.register(Color)
+class ColorAdmin(admin.ModelAdmin):
+    list_display = ("name", "hex_code", "order")
+    search_fields = ("name", "hex_code")
 
-    class Meta:
-        verbose_name = "نوع خاصية"
-        verbose_name_plural = "أنواع الخصائص"
+# ---------------- Size Admin ----------------
+@admin.register(Size)
+class SizeAdmin(admin.ModelAdmin):
+    list_display = ("name", "order")
+    search_fields = ("name",)
 
-    def __str__(self):
-        return self.name
-
-
-class VariantAttributeValue(models.Model):
-    attribute = models.ForeignKey(
-        VariantAttribute,
-        related_name="values",
-        on_delete=models.CASCADE
-    )
-    value = models.CharField(max_length=100)
-
-    hex_code = models.CharField(
-        max_length=7,
-        blank=True,
-        null=True,
-        help_text="يستخدم فقط لو كانت الخاصية لون"
-    )
-
-    class Meta:
-        unique_together = ("attribute", "value")
-
-    def __str__(self):
-        return f"{self.attribute.name} : {self.value}"
-        
-class ProductVariant(ImageCompressionMixin, models.Model):
-    """
-    Product variants with independent specifications.
-    Each variant can have its own color, sizes, SKU code, and piece count.
-    This allows selling the same product in different configurations.
-    Example: Same shirt in different colors or different wire gauges.
-    """
-
-    attributes = models.ManyToManyField(
-        VariantAttributeValue,
-        blank=True,
-        related_name="variants",
-        verbose_name="خصائص النمط"
-    )
-
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='variants')
-    order = models.PositiveIntegerField(default=0)
-    # Variant classification
-    # Variant-specific attributes
-    name = models.CharField(max_length=200, help_text="اسم النمط الكامل")
-    length_label = models.CharField(max_length=50, blank=True, null=True, verbose_name="نوع الطول", help_text="مثال: مقاس السلك، طول الصابع")
-    # Unique SKU/product code for inventory tracking
-    code = models.CharField(max_length=50, unique=True, blank=True, null=True,help_text="كود/SKU خاص بالنمط")
-    # Variant can override product's default pcs_carton
-    pcs_carton = models.PositiveIntegerField(default=24,help_text="عدد القطع في الكرتونة لهذا النمط")
-    image = models.ImageField(upload_to='variant-images', blank=True, null=True,help_text="صورة خاصة بالنمط")
-    
-
-    sizes = models.ManyToManyField(
-        Size,
-        blank=True,
-        related_name='variants',
-        verbose_name="الأطوال المتاحة",
-        help_text="الأطوال/المقاسات المتاحة لهذا النمط (اختياري)"
-    )
-    
-    # Availability flag
-    is_available = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    @property
-    def color(self):
-        return self.attributes.filter(attribute__name="لون").first()
-
-    def __str__(self):
-        return self.name or f"{self.product.name}"
-        
-    def save(self, *args, **kwargs):
-        update_fields = kwargs.get('update_fields')
-        if update_fields and 'order' in update_fields:
-            super().save(*args, **kwargs)
-        else:
-            super().save(*args, **kwargs)
-            self.save_with_compression(image_field_name='image')
-
-    class Meta:
-        # Ensure each product has unique variant codes
-
-        unique_together = ['product', 'code']
-        ordering = ['order']
-        verbose_name = "نمط المنتج"
-        verbose_name_plural = "أنماط المنتجات"
-        # Optimize common queries
-        indexes = [
-            models.Index(fields=['is_available']),
-            models.Index(fields=['product', 'is_available']),
-        ]
-
+# ---------------- VariantAttribute Admin ----------------
+@admin.register(VariantAttribute)
+class VariantAttributeAdmin(admin.ModelAdmin):
+    list_display = ("name",)
+    search_fields = ("name",)
