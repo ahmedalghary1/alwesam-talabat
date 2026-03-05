@@ -77,6 +77,10 @@ class Product(ImageCompressionMixin, models.Model):
             models.Index(fields=['is_available']),  # Availability filtering
         ]
 
+    def __str__(self):
+        return self.name 
+        
+
 class ProductImages(ImageCompressionMixin, models.Model):
     """
     Additional product images for gallery/slideshow.
@@ -140,14 +144,14 @@ class VariantImage(ImageCompressionMixin, models.Model):
         else:
             super().save(*args, **kwargs)
             self.save_with_compression(image_field_name='image')
-    
+
     class Meta:
         ordering = ['order', 'created_at']
         verbose_name = 'صورة نمط'
         verbose_name_plural = 'صور الأنماط'
 
-        def __str__(self):
-            return f"صورة لنمط {self.variant.name}"
+    def __str__(self):
+        return f"صورة لنمط {self.variant.name}"
 
 class VariantAttribute(models.Model):
     """
@@ -226,9 +230,6 @@ class ProductVariant(ImageCompressionMixin, models.Model):
     def color(self):
         return self.attributes.filter(attribute__name="لون").first()
 
-    def __str__(self):
-        return self.name or f"{self.product.name}"
-        
     def save(self, *args, **kwargs):
         update_fields = kwargs.get('update_fields')
         if update_fields and 'order' in update_fields:
@@ -250,3 +251,7 @@ class ProductVariant(ImageCompressionMixin, models.Model):
             models.Index(fields=['product', 'is_available']),
         ]
 
+
+    def __str__(self):
+        return self.name or f"{self.product.name}"
+        
