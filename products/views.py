@@ -89,7 +89,6 @@ def product_detail(request, slug):
         variants_qs = ProductVariant.objects.filter(is_available=True).order_by('order').prefetch_related(
         Prefetch('sizes', queryset=Size.objects.all().order_by('order')),
         Prefetch('attributes', queryset=VariantAttributeValue.objects.select_related('attribute'))
-        Prefetch('attributes', queryset=VariantAttributeValue.objects.select_related('attribute'))
         )
         product = get_object_or_404(
             Product.objects.prefetch_related(
