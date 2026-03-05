@@ -1,18 +1,24 @@
-/* جعل محتوى admin scrollable بدل القص */
-body.admin-site {
+/* يجعل الحقول الطويلة scrollable أفقيًا */
+.inline-related, .form-row {
     overflow-x: auto;
-    min-width: 1200px;
+    display: block;
+    max-width: 100%;
+    white-space: nowrap;
 }
 
-/* تحسين عرض الجداول */
-.change-list table {
-    width: 100%;
+/* تحسين multi-select و autocomplete */
+select[multiple] {
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+/* تحسين عرض الجدول بشكل عام */
+table {
     table-layout: auto;
+    width: 100% !important;
 }
 
-/* الصور المصغرة داخل inlines */
-.inline-group img {
-    max-width: 100px;
-    height: auto;
-    margin-right: 5px;
+/* تحسين overflow داخل collapse */
+.collapse {
+    overflow-x: auto;
 }

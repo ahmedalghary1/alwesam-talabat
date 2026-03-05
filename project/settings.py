@@ -379,34 +379,37 @@ LOGGING = {
 
 
 JAZZMIN_SETTINGS = {
-    "site_title": "لوحة إدارة المتجر",
-    "site_header": "Elwsam Store Admin",
-    "site_brand": "Elwsam Store",
-    "site_logo": "/static/images/logo2020.png",
-    "welcome_sign": "مرحبًا بك في لوحة إدارة المتجر",
-    "search_model": "auth.User",
-    "user_avatar": None,
+    "site_title": "متجر الوسام",
+    "site_header": "متجر الوسام",
+    "site_brand": "الوسام",
+    "welcome_sign": "مرحباً بك في لوحة الإدارة",
+    "show_ui_builder": True,
     "topmenu_links": [
-        {"name": "الصفحة الرئيسية", "url": "/", "new_window": True},
-        {"model": "products.product", "name": "المنتجات"},
-        {"app": "auth"},
+        {"name": "المنتجات", "url": "admin:products_product_changelist", "permissions": ["products.view_product"]},
+        {"name": "الأقسام", "url": "admin:products_category_changelist", "permissions": ["products.view_category"]},
     ],
+    "icons": {
+        "auth.user": "fas fa-user",
+        "products.product": "fas fa-box",
+        "products.category": "fas fa-tags",
+    },
     "show_sidebar": True,
     "navigation_expanded": True,
-    "hide_apps": [],
-    "hide_models": [],
-    "order_with_respect_to": ["products.category", "products.product"],
-    "icons": {
-        "products.category": "fas fa-folder",
-        "products.product": "fas fa-box",
-        "products.productvariant": "fas fa-cubes",
-        "products.size": "fas fa-ruler",
-        "products.variantattribute": "fas fa-tag",
-        "products.variantattributevalue": "fas fa-palette",
+    "list_per_page": 30,
+    "order_with_respect_to": ["products.Product", "products.Category"],
+}
+
+JAZZMIN_UI_TWEAKS = {
+    "theme": "darkly",  # أو flatly, cerulean
+    "navbar_small_text": False,
+    "footer_small_text": True,
+    "body_small_text": False,
+    "brand_color": "#ff6f00",
+    "accent": "#ffc107",
+    "button_classes": {
+        "primary": "btn btn-warning",
+        "secondary": "btn btn-outline-light",
     },
-    "related_modal_active": True,
-    "custom_css": None,
-    "custom_js": None,
 }
 
 JAZZMIN_UI_TWEAKS = {
