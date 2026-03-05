@@ -125,10 +125,7 @@ class ProductVariantAdmin(SortableAdminMixin, admin.ModelAdmin):
     autocomplete_fields = ("attributes", "sizes")
     inlines = [VariantImageInline]
 
-    class Media:
-        css = {
-            'all': ('admin/css/custom_admin.css',)
-        }
+
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
