@@ -7,6 +7,7 @@ from .models import (
 )
 from adminsortable2.admin import SortableAdminMixin, SortableInlineAdminMixin
 
+
 # -------------------- SIZE ADMIN --------------------
 @admin.register(Size)
 class SizeAdmin(admin.ModelAdmin):
@@ -38,35 +39,40 @@ class CategoryAdmin(SortableAdminMixin, admin.ModelAdmin):
 
 # -------------------- INLINE IMAGE Mixin --------------------
 class InlineImageMixin:
+    readonly_fields = ('image_tag',)
+
     def image_tag(self, obj):
-        if obj.image:
-            return format_html('<img src="{}" width="60" height="60" style="object-fit:cover;border-radius:4px;"/>', obj.image.url)
+        if getattr(obj, 'image', None):
+            return format_html(
+                '<img src="{}" width="60" height="60" style="object-fit:cover;border-radius:4px;"/>',
+                obj.image.url
+            )
         return "-"
     image_tag.short_description = "الصورة"
 
 
 # -------------------- PRODUCT IMAGES INLINE --------------------
-class ProductImagesInline(InlineImageMixin, SortableInlineAdminMixin, admin.TabularInline):
+class ProductImagesInline(InlineImageMixin, SortableInlineAdminMixin, admin.StackedInline):
     model = ProductImages
-    extra = 1
-    readonly_fields = ("image_tag",)
+    extra = 0
     fields = ("image_tag", "image", "order")
-    classes = ("collapse",)
+    classes = ("grp-collapse grp-closed",)  # Collapsible with default closed
+    verbose_name_plural = "صور إضافية للمنتج"
 
 
 # -------------------- VARIANT IMAGE INLINE --------------------
-class VariantImageInline(InlineImageMixin, SortableInlineAdminMixin, admin.TabularInline):
+class VariantImageInline(InlineImageMixin, SortableInlineAdminMixin, admin.StackedInline):
     model = VariantImage
-    extra = 1
-    readonly_fields = ("image_tag",)
+    extra = 0
     fields = ("image_tag", "image", "order")
-    classes = ("collapse",)
+    classes = ("grp-collapse grp-closed",)
+    verbose_name_plural = "صور النمط"
 
 
 # -------------------- PRODUCT VARIANT INLINE --------------------
-class ProductVariantInline(InlineImageMixin, SortableInlineAdminMixin, admin.TabularInline):
+class ProductVariantInline(InlineImageMixin, SortableInlineAdminMixin, admin.StackedInline):
     model = ProductVariant
-    extra = 1
+    extra = 0
     autocomplete_fields = ("attributes", "sizes")
     show_change_link = True
     fields = (
@@ -74,7 +80,8 @@ class ProductVariantInline(InlineImageMixin, SortableInlineAdminMixin, admin.Tab
         "is_available", "attributes_display", "sizes_display", "order"
     )
     readonly_fields = ("image_tag", "attributes_display", "sizes_display")
-    classes = ("collapse",)
+    classes = ("grp-collapse grp-closed",)
+    verbose_name_plural = "أنماط المنتج"
 
     def attributes_display(self, obj):
         return ", ".join([str(a) for a in obj.attributes.all()])
@@ -95,7 +102,7 @@ class ProductAdmin(SortableAdminMixin, admin.ModelAdmin):
     autocomplete_fields = ('sizes',)
     prepopulated_fields = {"slug": ("name",)}
 
-    # تحسين الأداء عند جلب بيانات كبيرة
+    # تحسين الأداء عند جلب بيانات كبيرة جدًا
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs.select_related('category').prefetch_related(
@@ -125,8 +132,7 @@ class ProductVariantAdmin(SortableAdminMixin, admin.ModelAdmin):
     autocomplete_fields = ("attributes", "sizes")
     inlines = [VariantImageInline]
 
-
-
+    # تحسين الأداء
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs.select_related('product').prefetch_related('attributes', 'sizes', 'images')
