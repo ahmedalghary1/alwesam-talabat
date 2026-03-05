@@ -202,9 +202,7 @@ class VariantAttributeValue(models.Model):
     class Meta:
         unique_together = ("attribute", "value")
 
-    def __str__(self):
-        return f"{self.attribute.name} : {self.value}"
-        
+
 class ProductVariant(ImageCompressionMixin, models.Model):
     """
     Product variants with independent specifications.
