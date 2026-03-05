@@ -1,10 +1,13 @@
 from django.contrib import admin
+from django.contrib.auth.models import User
 from django.utils.html import format_html
 from .models import (
     Category, Product, ProductImages, Color, Size,
     VariantAttribute, VariantAttributeValue, ProductVariant, VariantImage
 )
 from adminsortable2.admin import SortableAdminMixin, SortableInlineAdminMixin
+
+admin.site.register(User)
 
 # ---------------- Category ----------------
 @admin.register(Category)
