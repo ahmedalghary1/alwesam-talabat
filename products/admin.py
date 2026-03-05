@@ -4,7 +4,7 @@ from django.utils.translation import gettext_lazy as _
 from django.db.models import Count
 from .models import (
     Category, Product, ProductImages,
-    Color, Size, VariantImage,
+    Size, VariantImage,
     VariantAttribute, VariantAttributeValue, ProductVariant,
 )
 
@@ -14,7 +14,6 @@ from .models import (
 # ─────────────────────────────────────────────
 
 def image_preview(image_field, width: int = 60, height: int = 60) -> str:
-    """Return a safe <img> tag or a dash when no image is set."""
     if image_field:
         return format_html(
             '<img src="{}" width="{}" height="{}" '
@@ -28,7 +27,6 @@ def image_preview(image_field, width: int = 60, height: int = 60) -> str:
 
 
 def colored_badge(text: str, color: str = "#198754") -> str:
-    """Pill-shaped coloured badge."""
     return format_html(
         '<span style="background:{};color:#fff;padding:2px 10px;'
         'border-radius:12px;font-size:12px;font-weight:600;">{}</span>',
@@ -42,17 +40,20 @@ def colored_badge(text: str, color: str = "#198754") -> str:
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    list_display   = ("image_thumb", "name", "slug", "product_count", "order")
-    list_display_links = ("name",)
-    list_editable  = ("order",)
-    search_fields  = ("name", "slug")
-    prepopulated_fields = {"slug": ("name",)}
-    readonly_fields = ("slug", "image_thumb_large")
-    ordering       = ("order",)
+    list_display        = ("image_thumb", "name", "slug", "product_count", "order")
+    list_display_links  = ("name",)
+    list_editable       = ("order",)
+    search_fields       = ("name", "slug")
+    readonly_fields     = ("slug", "image_thumb_large")
+    ordering            = ("order",)
 
     fieldsets = (
         (_("المعلومات الأساسية"), {
-            "fields": ("name", "slug", "description"),
+            "fields": ("name", "description"),
+        }),
+        (_("الرابط التعريفي"), {
+            "fields": ("slug",),
+            "classes": ("collapse",),
         }),
         (_("الصورة"), {
             "fields": ("image", "image_thumb_large"),
@@ -62,8 +63,6 @@ class CategoryAdmin(admin.ModelAdmin):
             "fields": ("order",),
         }),
     )
-
-    # ---- display helpers ----
 
     @admin.display(description=_("الصورة"))
     def image_thumb(self, obj):
@@ -75,8 +74,7 @@ class CategoryAdmin(admin.ModelAdmin):
 
     @admin.display(description=_("عدد المنتجات"))
     def product_count(self, obj):
-        count = obj.products.count()
-        return colored_badge(str(count), "#0d6efd")
+        return colored_badge(str(obj.products.count()), "#0d6efd")
 
     def get_queryset(self, request):
         return super().get_queryset(request).annotate(
@@ -89,11 +87,11 @@ class CategoryAdmin(admin.ModelAdmin):
 # ─────────────────────────────────────────────
 
 class ProductImagesInline(admin.TabularInline):
-    model   = ProductImages
-    extra   = 1
-    fields  = ("image", "image_thumb", "order")
-    readonly_fields = ("image_thumb",)
-    ordering = ("order",)
+    model               = ProductImages
+    extra               = 1
+    fields              = ("image", "image_thumb", "order")
+    readonly_fields     = ("image_thumb",)
+    ordering            = ("order",)
     verbose_name        = _("صورة إضافية")
     verbose_name_plural = _("الصور الإضافية")
 
@@ -103,9 +101,9 @@ class ProductImagesInline(admin.TabularInline):
 
 
 class ProductVariantInline(admin.StackedInline):
-    model   = ProductVariant
-    extra   = 0
-    fields  = (
+    model               = ProductVariant
+    extra               = 0
+    fields              = (
         ("name", "code"),
         ("pcs_carton", "is_available", "order"),
         ("image", "variant_thumb"),
@@ -113,8 +111,8 @@ class ProductVariantInline(admin.StackedInline):
         "attributes",
         "length_label",
     )
-    readonly_fields = ("variant_thumb",)
-    filter_horizontal = ("sizes", "attributes")
+    readonly_fields     = ("variant_thumb",)
+    filter_horizontal   = ("sizes", "attributes")
     verbose_name        = _("نمط")
     verbose_name_plural = _("الأنماط")
     show_change_link    = True
@@ -130,7 +128,7 @@ class ProductVariantInline(admin.StackedInline):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display    = (
+    list_display        = (
         "image_thumb", "name", "category_link",
         "pcs_carton", "variant_count", "availability_badge",
         "order", "created_at",
@@ -139,7 +137,6 @@ class ProductAdmin(admin.ModelAdmin):
     list_editable       = ("order",)
     list_filter         = ("is_available", "category")
     search_fields       = ("name", "slug", "description")
-    prepopulated_fields = {"slug": ("name",)}
     readonly_fields     = ("slug", "image_thumb_large", "created_at", "updated_at")
     filter_horizontal   = ("sizes",)
     ordering            = ("order",)
@@ -148,7 +145,11 @@ class ProductAdmin(admin.ModelAdmin):
 
     fieldsets = (
         (_("المعلومات الأساسية"), {
-            "fields": ("name", "slug", "description", "category"),
+            "fields": ("name", "description", "category"),
+        }),
+        (_("الرابط التعريفي"), {
+            "fields": ("slug",),
+            "classes": ("collapse",),
         }),
         (_("الصورة الرئيسية"), {
             "fields": ("image", "image_thumb_large"),
@@ -165,8 +166,6 @@ class ProductAdmin(admin.ModelAdmin):
             "classes": ("collapse",),
         }),
     )
-
-    # ---- display helpers ----
 
     @admin.display(description=_("الصورة"))
     def image_thumb(self, obj):
@@ -187,10 +186,9 @@ class ProductAdmin(admin.ModelAdmin):
 
     @admin.display(description=_("الأنماط"))
     def variant_count(self, obj):
-        count = obj.variants.count()
-        return colored_badge(str(count), "#6f42c1")
+        return colored_badge(str(obj.variants.count()), "#6f42c1")
 
-    @admin.display(description=_("الحالة"), boolean=False)
+    @admin.display(description=_("الحالة"))
     def availability_badge(self, obj):
         if obj.is_available:
             return colored_badge(_("متوفر"), "#198754")
@@ -208,12 +206,12 @@ class ProductAdmin(admin.ModelAdmin):
 
 @admin.register(ProductImages)
 class ProductImagesAdmin(admin.ModelAdmin):
-    list_display  = ("image_thumb", "product", "order", "created_at")
-    list_editable = ("order",)
-    list_filter   = ("product",)
-    search_fields = ("product__name",)
+    list_display    = ("image_thumb", "product", "order", "created_at")
+    list_editable   = ("order",)
+    list_filter     = ("product",)
+    search_fields   = ("product__name",)
     readonly_fields = ("image_thumb_large", "created_at")
-    ordering      = ("product", "order")
+    ordering        = ("product", "order")
 
     fieldsets = (
         (None, {
@@ -228,27 +226,6 @@ class ProductImagesAdmin(admin.ModelAdmin):
     @admin.display(description=_("معاينة"))
     def image_thumb_large(self, obj):
         return image_preview(obj.image, 200, 200)
-
-
-# ─────────────────────────────────────────────
-#  Color
-# ─────────────────────────────────────────────
-
-@admin.register(Color)
-class ColorAdmin(admin.ModelAdmin):
-    list_display  = ("color_swatch", "name", "hex_code", "order", "created_at")
-    list_editable = ("order",)
-    search_fields = ("name", "hex_code")
-    ordering      = ("order",)
-
-    @admin.display(description=_("اللون"))
-    def color_swatch(self, obj):
-        return format_html(
-            '<div style="width:32px;height:32px;border-radius:50%;'
-            'background:{};border:2px solid #ccc;display:inline-block;'
-            'vertical-align:middle;"></div>&nbsp;<strong>{}</strong>',
-            obj.hex_code, obj.name,
-        )
 
 
 # ─────────────────────────────────────────────
@@ -268,10 +245,10 @@ class SizeAdmin(admin.ModelAdmin):
 # ─────────────────────────────────────────────
 
 class VariantAttributeValueInline(admin.TabularInline):
-    model   = VariantAttributeValue
-    extra   = 1
-    fields  = ("value", "hex_code", "color_preview")
-    readonly_fields = ("color_preview",)
+    model               = VariantAttributeValue
+    extra               = 1
+    fields              = ("value", "hex_code", "color_preview")
+    readonly_fields     = ("color_preview",)
     verbose_name        = _("قيمة")
     verbose_name_plural = _("القيم")
 
@@ -294,8 +271,7 @@ class VariantAttributeAdmin(admin.ModelAdmin):
 
     @admin.display(description=_("عدد القيم"))
     def values_count(self, obj):
-        count = obj.values.count()
-        return colored_badge(str(count), "#fd7e14")
+        return colored_badge(str(obj.values.count()), "#fd7e14")
 
     def get_queryset(self, request):
         return super().get_queryset(request).annotate(
@@ -315,22 +291,22 @@ class VariantAttributeValueAdmin(admin.ModelAdmin):
             return format_html(
                 '<div style="width:24px;height:24px;border-radius:4px;'
                 'background:{};border:1px solid #ccc;display:inline-block;'
-                'margin-right:6px;"></div>{}',
+                'margin-right:6px;"></div> {}',
                 obj.hex_code, obj.hex_code,
             )
         return "—"
 
 
 # ─────────────────────────────────────────────
-#  VariantImage inline (used inside ProductVariantAdmin)
+#  VariantImage inline
 # ─────────────────────────────────────────────
 
 class VariantImageInline(admin.TabularInline):
-    model   = VariantImage
-    extra   = 1
-    fields  = ("image", "image_thumb", "order")
-    readonly_fields = ("image_thumb",)
-    ordering = ("order",)
+    model               = VariantImage
+    extra               = 1
+    fields              = ("image", "image_thumb", "order")
+    readonly_fields     = ("image_thumb",)
+    ordering            = ("order",)
     verbose_name        = _("صورة النمط")
     verbose_name_plural = _("صور النمط")
 
@@ -345,7 +321,7 @@ class VariantImageInline(admin.TabularInline):
 
 @admin.register(ProductVariant)
 class ProductVariantAdmin(admin.ModelAdmin):
-    list_display    = (
+    list_display        = (
         "image_thumb", "name", "product_link",
         "code", "pcs_carton", "availability_badge", "order",
     )
@@ -377,8 +353,6 @@ class ProductVariantAdmin(admin.ModelAdmin):
             "fields": ("is_available", "order"),
         }),
     )
-
-    # ---- display helpers ----
 
     @admin.display(description=_("الصورة"))
     def image_thumb(self, obj):
