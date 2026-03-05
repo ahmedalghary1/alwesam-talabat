@@ -44,23 +44,23 @@ class CategoryAdmin(admin.ModelAdmin):
     list_display_links  = ("name",)
     list_editable       = ("order",)
     search_fields       = ("name", "slug")
-    readonly_fields     = ("slug", "image_thumb_large")
+    # slug قابل للتعديل — لا يوجد في readonly_fields
+    readonly_fields     = ("image_thumb_large",)
+    prepopulated_fields = {"slug": ("name",)}
     ordering            = ("order",)
 
     fieldsets = (
         (_("المعلومات الأساسية"), {
-            "fields": ("name", "description"),
-        }),
-        (_("الرابط التعريفي"), {
-            "fields": ("slug",),
-            "classes": ("collapse",),
+            "fields": ("name", "slug", "description"),
+            "classes": ("wide",),
         }),
         (_("الصورة"), {
             "fields": ("image", "image_thumb_large"),
-            "classes": ("collapse",),
+            "classes": ("collapse", "wide",),
         }),
         (_("الترتيب"), {
             "fields": ("order",),
+            "classes": ("wide",),
         }),
     )
 
@@ -137,35 +137,43 @@ class ProductAdmin(admin.ModelAdmin):
     list_editable       = ("order",)
     list_filter         = ("is_available", "category")
     search_fields       = ("name", "slug", "description")
-    readonly_fields     = ("slug", "image_thumb_large", "created_at", "updated_at")
+    # slug قابل للتعديل — محذوف من readonly_fields
+    readonly_fields     = ("image_thumb_large", "created_at", "updated_at")
+    prepopulated_fields = {"slug": ("name",)}
     filter_horizontal   = ("sizes",)
     ordering            = ("order",)
     save_on_top         = True
     inlines             = [ProductImagesInline, ProductVariantInline]
 
+    # "wide" على كل fieldset يجعل المحتوى يمتد لعرض كامل
+    # ويزيل المساحة الفارغة على اليمين في Jazzmin
     fieldsets = (
         (_("المعلومات الأساسية"), {
-            "fields": ("name", "description", "category"),
-        }),
-        (_("الرابط التعريفي"), {
-            "fields": ("slug",),
-            "classes": ("collapse",),
+            "fields": ("name", "slug", "description", "category"),
+            "classes": ("wide",),
         }),
         (_("الصورة الرئيسية"), {
             "fields": ("image", "image_thumb_large"),
-            "classes": ("collapse",),
+            "classes": ("collapse", "wide",),
         }),
         (_("المواصفات"), {
             "fields": ("pcs_carton", "sizes"),
+            "classes": ("wide",),
         }),
         (_("الإعدادات"), {
             "fields": ("is_available", "order"),
+            "classes": ("wide",),
         }),
         (_("التواريخ"), {
             "fields": ("created_at", "updated_at"),
-            "classes": ("collapse",),
+            "classes": ("collapse", "wide",),
         }),
     )
+
+    class Media:
+        css = {
+            "all": ("admin/css/product_admin_fix.css",),
+        }
 
     @admin.display(description=_("الصورة"))
     def image_thumb(self, obj):
@@ -216,6 +224,7 @@ class ProductImagesAdmin(admin.ModelAdmin):
     fieldsets = (
         (None, {
             "fields": ("product", "image", "image_thumb_large", "order"),
+            "classes": ("wide",),
         }),
     )
 
@@ -338,19 +347,23 @@ class ProductVariantAdmin(admin.ModelAdmin):
     fieldsets = (
         (_("المعلومات الأساسية"), {
             "fields": ("product", "name", "code"),
+            "classes": ("wide",),
         }),
         (_("الصورة"), {
             "fields": ("image", "image_thumb_large"),
-            "classes": ("collapse",),
+            "classes": ("collapse", "wide",),
         }),
         (_("المواصفات"), {
             "fields": ("pcs_carton", "length_label", "sizes"),
+            "classes": ("wide",),
         }),
         (_("الخصائص"), {
             "fields": ("attributes",),
+            "classes": ("wide",),
         }),
         (_("الإعدادات"), {
             "fields": ("is_available", "order"),
+            "classes": ("wide",),
         }),
     )
 

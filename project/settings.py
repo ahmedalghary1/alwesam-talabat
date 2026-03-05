@@ -379,6 +379,8 @@ LOGGING = {
 
 
 JAZZMIN_SETTINGS = {
+    "changeform_format": "single", 
+
     "site_title": "متجر الوسام",
     "site_header": "متجر الوسام",
     "site_brand": "الوسام",
