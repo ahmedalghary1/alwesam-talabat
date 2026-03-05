@@ -245,7 +245,8 @@ class ProductVariant(ImageCompressionMixin, models.Model):
 
     @property
     def color(self):
-        return self.attributes.filter(attribute__name="لون").first()
+        
+        return self.attributes.filter(attribute__name="لون")
 
     def __str__(self):
         return self.name or f"{self.product.name}"
