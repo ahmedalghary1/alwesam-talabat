@@ -277,7 +277,7 @@
             pcsCarton: {{ v.pcs_carton }},
             isAvailable: {{ v.is_available | yesno:"true,false" }},
             colorId: {% if v.color %} {{ v.color.id }} {% else %} null{% endif %},
-            colorName: '{% if v.color %}{{v.color.attribute.value.|escapejs}}{% endif %}',
+            colorName: '{% if v.color %}{{v.color.attribute.value|escapejs}}{% endif %}',
             colorHex: '{% if v.color %}{{v.color.hex_code }}{% endif %}',
             lengthLabel: '{{ v.length_label|default:""|escapejs }}',
             sizes: [{% for size in v.sizes.all %} {{ size.id }} {% if not forloop.last %}, {% endif %} {% endfor %}],
