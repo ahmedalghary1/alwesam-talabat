@@ -1,24 +1,15 @@
 from django.contrib import admin
-from django.urls import reverse
-from django.utils.html import format_html
 from adminsortable2.admin import SortableAdminMixin, SortableInlineAdminMixin
-
 from .models import (
-    Product,
-    Category,
-    ProductImages,
-    ProductVariant,
-    Size,
-    VariantImage,
-    VariantAttribute,
-    VariantAttributeValue
+    Product, Category, ProductImages,
+    ProductVariant, Size,
+    VariantImage, VariantAttribute, VariantAttributeValue
 )
 
 
-# -------------------------------------------------
-# Size
-# -------------------------------------------------
-
+# -----------------------------
+# Size Admin
+# -----------------------------
 @admin.register(Size)
 class SizeAdmin(admin.ModelAdmin):
     list_display = ("name", "order")
@@ -26,20 +17,21 @@ class SizeAdmin(admin.ModelAdmin):
     search_fields = ("name",)
 
 
-# -------------------------------------------------
-# Variant Attributes
-# -------------------------------------------------
-
+# -----------------------------
+# Variant Attribute System
+# -----------------------------
 class VariantAttributeValueInline(admin.TabularInline):
     model = VariantAttributeValue
     extra = 1
+    fields = ("value", "hex_code")
+    show_change_link = True
 
 
 @admin.register(VariantAttribute)
 class VariantAttributeAdmin(admin.ModelAdmin):
     list_display = ("name",)
-    search_fields = ("name",)
     inlines = [VariantAttributeValueInline]
+    search_fields = ("name",)
 
 
 @admin.register(VariantAttributeValue)
@@ -47,52 +39,76 @@ class VariantAttributeValueAdmin(admin.ModelAdmin):
     list_display = ("attribute", "value", "hex_code")
     list_filter = ("attribute",)
     search_fields = ("value",)
+    ordering = ("attribute", "value")
 
 
-# -------------------------------------------------
-# Product Images
-# -------------------------------------------------
-
+# -----------------------------
+# Product Images Inline
+# -----------------------------
 class ProductImagesInline(admin.TabularInline):
     model = ProductImages
     extra = 1
-    fields = ("image", "order")
+    readonly_fields = ("image_tag",)
+    fields = ("image_tag", "image", "order")
+    show_change_link = True
+
+    def image_tag(self, obj):
+        if obj.image:
+            return f'<img src="{obj.image.url}" style="width: 60px; height:auto;" />'
+        return "-"
+    image_tag.allow_tags = True
+    image_tag.short_description = "صورة"
 
 
-# -------------------------------------------------
-# Variant Images
-# -------------------------------------------------
-
+# -----------------------------
+# Variant Image Inline
+# -----------------------------
 class VariantImageInline(admin.TabularInline):
     model = VariantImage
-    extra = 2
-    fields = ("image", "order")
+    extra = 3
+    readonly_fields = ("image_tag",)
+    fields = ("image_tag", "image", "order")
+    show_change_link = True
+
+    def image_tag(self, obj):
+        if obj.image:
+            return f'<img src="{obj.image.url}" style="width: 60px; height:auto;" />'
+        return "-"
+    image_tag.allow_tags = True
+    image_tag.short_description = "صورة"
 
 
-# -------------------------------------------------
-# Product Variant Inline داخل المنتج
-# -------------------------------------------------
-
+# -----------------------------
+# Product Variant Inline (داخل المنتج)
+# -----------------------------
 class ProductVariantInline(SortableInlineAdminMixin, admin.TabularInline):
     model = ProductVariant
     extra = 1
     filter_horizontal = ("sizes", "attributes")
-
     fields = (
         "name",
         "code",
         "pcs_carton",
+        "image_tag",
+        "image",
         "is_available",
         "attributes",
         "sizes",
         "order",
     )
+    readonly_fields = ("image_tag",)
+
+    def image_tag(self, obj):
+        if obj.image:
+            return f'<img src="{obj.image.url}" style="width: 60px; height:auto;" />'
+        return "-"
+    image_tag.allow_tags = True
+    image_tag.short_description = "صورة النمط"
 
 
-# -------------------------------------------------
-# Category
-# -------------------------------------------------
-
+# -----------------------------
+# Category Admin
+# -----------------------------
 @admin.register(Category)
 class CategoryAdmin(SortableAdminMixin, admin.ModelAdmin):
     list_display = ("name", "slug", "order")
@@ -101,192 +117,51 @@ class CategoryAdmin(SortableAdminMixin, admin.ModelAdmin):
     search_fields = ("name",)
 
 
-# -------------------------------------------------
-# Product
-# -------------------------------------------------
-
+# -----------------------------
+# Product Admin
+# -----------------------------
 @admin.register(Product)
 class ProductAdmin(SortableAdminMixin, admin.ModelAdmin):
-
-    list_display = (
-        "name",
-        "category",
-        "variants_count",
-        "variants_link",
-        "pcs_carton",
-        "order",
-    )
-
-    list_filter = ("category", "created_at")
+    list_display = ("name", "category", "pcs_carton", "order", "is_available", "created_at")
+    list_filter = ("category", "is_available", "created_at")
     search_fields = ("name", "description")
     prepopulated_fields = {"slug": ("name",)}
-
     filter_horizontal = ("sizes",)
-
-    inlines = [
-        ProductImagesInline,
-        ProductVariantInline
-    ]
-
+    inlines = [ProductImagesInline, ProductVariantInline]
     ordering = ("order",)
-
-    fieldsets = (
-        ("معلومات المنتج", {
-            "fields": (
-                "name",
-                "slug",
-                "category",
-                "description",
-            )
-        }),
-
-        ("الصورة الرئيسية", {
-            "fields": ("image",)
-        }),
-
-        ("التعبئة", {
-            "fields": ("pcs_carton",)
-        }),
-
-        ("المقاسات العامة", {
-            "fields": ("sizes",)
-        }),
-
-        ("الحالة", {
-            "fields": ("is_available",)
-        }),
-    )
-
-    def variants_count(self, obj):
-        return obj.variants.count()
-    variants_count.short_description = "عدد الأنماط"
-
-    def variants_link(self, obj):
-        url = (
-            reverse("admin:products_productvariant_changelist")
-            + f"?product__id__exact={obj.id}"
-        )
-
-        return format_html(
-            '<a class="button" href="{}">عرض الأنماط</a>',
-            url
-        )
-
-    variants_link.short_description = "الأنماط"
+    # تحسين عرض الصفحة الكبيرة
+    class Media:
+        css = {
+            "all": ("admin/css/custom_admin.css",)
+        }
 
 
-# -------------------------------------------------
-# Product Variant
-# -------------------------------------------------
-
+# -----------------------------
+# Product Variant Admin (صفحة مستقلة)
+# -----------------------------
 @admin.register(ProductVariant)
 class ProductVariantAdmin(SortableAdminMixin, admin.ModelAdmin):
-
     list_display = (
         "product",
         "name",
-        "color_display",
-        "attributes_display",
+        "code",
         "pcs_carton",
         "is_available",
         "order",
+        "color_name_display",
+        "sizes_list_display",
     )
-
-    list_filter = (
-        "product",
-        "is_available",
-    )
-
-    search_fields = (
-        "product__name",
-        "name",
-        "code",
-    )
-
-    autocomplete_fields = ("product",)
-
-    filter_horizontal = (
-        "sizes",
-        "attributes",
-    )
-
-    inlines = [
-        VariantImageInline
-    ]
-
+    list_filter = ("is_available", "product")
+    search_fields = ("product__name", "name", "code")
+    filter_horizontal = ("sizes", "attributes")
+    inlines = [VariantImageInline]
     ordering = ("order",)
 
-    list_select_related = ("product",)
-
-    list_per_page = 40
-
-    fieldsets = (
-        ("معلومات النمط", {
-            "fields": (
-                "product",
-                "name",
-                "code",
-                "is_available",
-            )
-        }),
-
-        ("الخصائص", {
-            "fields": (
-                "attributes",
-                "sizes",
-                "length_label",
-            )
-        }),
-
-        ("التعبئة", {
-            "fields": (
-                "pcs_carton",
-            )
-        }),
-
-        ("الصورة", {
-            "fields": (
-                "image",
-            )
-        }),
-    )
-
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        return qs.prefetch_related("attributes__attribute")
-
-    # ----------------------
-    # عرض اللون
-    # ----------------------
-
-    def color_display(self, obj):
+    def color_name_display(self, obj):
         color = obj.color
+        return color.value if color else "-"
+    color_name_display.short_description = "اللون"
 
-        if not color:
-            return "-"
-
-        return format_html(
-            '<span style="display:inline-block;width:16px;height:16px;background:{};border-radius:50%;margin-right:6px;"></span>{}',
-            color.hex_code or "#ccc",
-            color.value
-        )
-
-    color_display.short_description = "اللون"
-
-    # ----------------------
-    # عرض الخصائص
-    # ----------------------
-
-    def attributes_display(self, obj):
-
-        attrs = obj.attributes.all()
-
-        if not attrs:
-            return "-"
-
-        return ", ".join(
-            f"{a.attribute.name}: {a.value}"
-            for a in attrs
-        )
-
-    attributes_display.short_description = "الخصائص"
+    def sizes_list_display(self, obj):
+        return ", ".join([size.name for size in obj.sizes.all()])
+    sizes_list_display.short_description = "المقاسات"

@@ -1,0 +1,18 @@
+/* جعل محتوى admin scrollable بدل القص */
+body.admin-site {
+    overflow-x: auto;
+    min-width: 1200px;
+}
+
+/* تحسين عرض الجداول */
+.change-list table {
+    width: 100%;
+    table-layout: auto;
+}
+
+/* الصور المصغرة داخل inlines */
+.inline-group img {
+    max-width: 100px;
+    height: auto;
+    margin-right: 5px;
+}

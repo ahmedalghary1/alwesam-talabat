@@ -376,3 +376,53 @@ LOGGING = {
         },
     },
 }
+
+
+JAZZMIN_SETTINGS = {
+    "site_title": "لوحة إدارة المتجر",
+    "site_header": "Elwsam Store Admin",
+    "site_brand": "Elwsam Store",
+    "site_logo": "/static/images/logo2020.png",
+    "welcome_sign": "مرحبًا بك في لوحة إدارة المتجر",
+    "search_model": "auth.User",
+    "user_avatar": None,
+    "topmenu_links": [
+        {"name": "الصفحة الرئيسية", "url": "/", "new_window": True},
+        {"model": "products.product", "name": "المنتجات"},
+        {"app": "auth"},
+    ],
+    "show_sidebar": True,
+    "navigation_expanded": True,
+    "hide_apps": [],
+    "hide_models": [],
+    "order_with_respect_to": ["products.category", "products.product"],
+    "icons": {
+        "products.category": "fas fa-folder",
+        "products.product": "fas fa-box",
+        "products.productvariant": "fas fa-cubes",
+        "products.size": "fas fa-ruler",
+        "products.variantattribute": "fas fa-tag",
+        "products.variantattributevalue": "fas fa-palette",
+    },
+    "related_modal_active": True,
+    "custom_css": None,
+    "custom_js": None,
+}
+
+JAZZMIN_UI_TWEAKS = {
+    "navbar_small_text": False,
+    "footer_small_text": False,
+    "body_small_text": False,
+    "brand_small_text": False,
+    "accent": "indigo",
+    "dark_mode_theme": False,
+    "button_classes": {
+        "primary": "btn-primary",
+        "secondary": "btn-secondary",
+        "info": "btn-info",
+        "warning": "btn-warning",
+        "danger": "btn-danger",
+        "success": "btn-success"
+    },
+    "actions_sticky_top": True,
+}
