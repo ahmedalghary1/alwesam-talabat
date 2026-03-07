@@ -352,7 +352,7 @@
                 // =============================
                 // CASE 1 : COLOR ATTRIBUTE
                 // =============================
-                
+
                 if (group.colorHex && group.colorHex.trim() !== '') {
                     // اللون موجود: عرض المربع باللون
                     div.style.backgroundColor = group.colorHex;
@@ -364,7 +364,7 @@
                 }
 
                 div.onclick = () => selectColor(group.colorId || 'no-color', group.variants);
-
+                div.className = 'color-option';
                 container.appendChild(div);
 
             });
