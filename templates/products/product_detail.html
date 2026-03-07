@@ -344,20 +344,22 @@
             sortedGroups.forEach(group => {
                 const variant = group.variants[0];
 
-                // Wrapper صغير للمربع والاسم
+                // إنشاء div للون
                 const divWrapper = document.createElement('div');
                 divWrapper.className = 'color-option-wrapper';
                 divWrapper.style.display = 'inline-block';
                 divWrapper.style.textAlign = 'center';
-                divWrapper.style.margin = '3px';
+                divWrapper.style.margin = '5px';
 
-                // مربع اللون نفسه (لا تغيير في الحجم)
                 const div = document.createElement('div');
                 div.dataset.colorId = group.colorId || 'no-color';
                 div.className = 'color-option';
+                div.style.width = '30px';
+                div.style.height = '30px';
+                div.style.borderRadius = '4px';
                 div.style.cursor = 'pointer';
+                div.style.marginBottom = '4px';
 
-                // اللون
                 if (group.colorHex && group.colorHex.trim() !== '') {
                     div.style.backgroundColor = group.colorHex;
                 } else {
@@ -368,12 +370,11 @@
                 div.onclick = () => selectColor(group.colorId || 'no-color', group.variants);
                 divWrapper.appendChild(div);
 
-                // الاسم أسفل المربع بدون التأثير على حجم المربع
+                // إنشاء span لاسم اللون تحت المربع
                 const label = document.createElement('span');
                 label.textContent = group.colorName || 'اختيار';
-                label.style.fontSize = '0.7em';
+                label.style.fontSize = '0.75em';
                 label.style.display = 'block';
-                label.style.marginTop = '2px';
                 label.style.color = '#333';
                 divWrapper.appendChild(label);
 
