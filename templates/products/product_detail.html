@@ -962,9 +962,39 @@
             return val;
         }
 
+                // تحسين أحداث اللمس للمعرض
+        function initGalleryTouch() {
+            const thumbBtns = document.querySelectorAll('.thumb-btn');
+            const isTouchDevice = 'ontouchstart' in window;
+
+            thumbBtns.forEach(btn => {
+                // إزالة onmouseover القديم
+                btn.removeAttribute('onmouseover');
+
+                // إضافة حدث مناسب
+                if (isTouchDevice) {
+                    btn.addEventListener('touchstart', (e) => {
+                        e.preventDefault(); // منع السلوك الافتراضي فقط للنقر، مع السماح بالتمرير
+                        const img = btn.querySelector('img');
+                        if (img) {
+                            switchImage(img.src, btn);
+                        }
+                    }, { passive: false }); // نستخدم passive:false للسماح بـ preventDefault
+                } else {
+                    btn.addEventListener('mouseover', (e) => {
+                        const img = btn.querySelector('img');
+                        if (img) {
+                            switchImage(img.src, btn);
+                        }
+                    });
+                }
+            });
+        }
         // === EVENT LISTENERS ===
         document.addEventListener('DOMContentLoaded', function () {
             updateDisplay();
+            initGalleryTouch();
+
 
             // Initialize variant selection - فقط عرض الخيارات بدون تحديد تلقائي
             if (ALL_VARIANTS.length > 0) {

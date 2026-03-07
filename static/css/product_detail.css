@@ -1169,22 +1169,16 @@ body.theme-dark .related-card img {
 }
 
 
-/* تحسين تجربة اللمس للهواتف */
-.color-option,
-.text-option,
-.size-option,
-.variant-btn,
-.qty-btn,
-.btn-add-to-cart {
+/* تحسين تمرير اللمس */
+.thumbs-scroll {
+    touch-action: pan-y;  /* يسمح بالتمرير العمودي مع الحفاظ على التفاعل الأفقي */
+    -webkit-overflow-scrolling: touch; /* تمرير سلس في iOS */
+}
+.thumb-btn {
     touch-action: manipulation; /* يسمح بالتمرير مع منع التكبير/التصغير */
     cursor: pointer;
-    -webkit-tap-highlight-color: transparent; /* إزالة التظليل عند النقر */
-    user-select: none; /* منع تحديد النص */
+    -webkit-tap-highlight-color: transparent;
 }
-
-/* منع أي سلوك غير مرغوب عند اللمس */
-.color-option,
-.text-option,
-.size-option {
-    -webkit-touch-callout: none; /* منع قائمة السياق في iOS */
+.thumb-btn img {
+    pointer-events: none; /* يمنع الصورة من اعتراض أحداث اللمس */
 }
