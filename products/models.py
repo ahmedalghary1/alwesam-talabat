@@ -244,7 +244,6 @@ class ProductVariant(ImageCompressionMixin, models.Model):
     class Meta:
         # Ensure each product has unique variant codes
 
-        unique_together = ['product', 'code']
         ordering = ['order']
         verbose_name = "نمط المنتج"
         verbose_name_plural = "أنماط المنتجات"
