@@ -228,7 +228,7 @@ class ProductVariant(ImageCompressionMixin, models.Model):
 
     @property
     def color(self):
-        return self.attributes.filter(attribute__name="لون").first()
+        return self.attributes.filter(attribute__name__iexact="لون").first()
 
     def save(self, *args, **kwargs):
         update_fields = kwargs.get('update_fields')

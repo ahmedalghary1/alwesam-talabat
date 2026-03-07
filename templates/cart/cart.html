@@ -603,10 +603,13 @@
                         </a>
                     </h3>
                     {% if item.variant %}
-                    <p class="item-variant">
-                        <i class="fas fa-tag"></i>
-                        <span>{{ item.variant.get_variant_type_display }}: {{ item.variant.variant_value }}</span>
-                    </p>
+                    <div class="badges-container">
+                        {% for attr in item.variant.attributes.all %}
+                        <span class="badge">
+                            {{ attr.attribute.name }} : {{ attr.value }}
+                        </span>
+                        {% endfor %}
+                    </div>
                     {% endif %}
 
                     <!-- Color and Size Badges -->
