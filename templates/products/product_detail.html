@@ -284,6 +284,7 @@
             sizeNames: [{% for size in v.sizes.all %}'{{size.name|escapejs}}'{% if not forloop.last %}, {% endif %} {% endfor %}],
             image: '{% if v.image %}{{v.image.url}}{% endif %}',
             attributeType: '{% if v.color %}color{% else %}text{% endif %}',
+            variantName:'{{ v.name|escapejs }}'
         }
         {% if not forloop.last %}, {% endif %}
         {% endfor %}
@@ -293,23 +294,29 @@
         function organizeVariantsByColor() {
             const colorMap = {};
 
-            // 1️⃣ تجميع المتغيرات حسب اللون
             ALL_VARIANTS.forEach(variant => {
-                const colorKey = variant.colorId ?? 'no-color'; // استخدم nullish coalescing
-                if (!colorMap[colorKey]) {
-                    colorMap[colorKey] = {
-                        colorId: variant.colorId,
-                        colorName: variant.colorName,
-                        colorHex: variant.colorHex,
+                let key;
+                if (variant.attributeType === 'color') {
+                    key = variant.colorId ?? 'no-color';
+                } else {
+                    key = 'text_' + variant.id;   // مفتاح فريد لكل variant نصي
+                }
+
+                if (!colorMap[key]) {
+                    colorMap[key] = {
+                        colorId: variant.attributeType === 'color' ? variant.colorId : null,
+                        colorName: variant.attributeType === 'color' ? variant.colorName : variant.variantName,
+                        colorHex: variant.attributeType === 'color' ? variant.colorHex : null,
+                        attributeType: variant.attributeType,
                         variants: []
                     };
                 }
-                colorMap[colorKey].variants.push(variant);
+                colorMap[key].variants.push(variant);
             });
 
-            // 2️⃣ فرز المتغيرات داخل كل لون حسب order
-            Object.values(colorMap).forEach(colorGroup => {
-                colorGroup.variants.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+            // ترتيب المتغيرات داخل كل مجموعة حسب order
+            Object.values(colorMap).forEach(group => {
+                group.variants.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
             });
 
             return colorMap;
@@ -335,50 +342,60 @@
             const colorMap = organizeVariantsByColor();
             container.innerHTML = '';
 
-            const sortedGroups = Object.values(colorMap).sort((a,b)=>{
+            const sortedGroups = Object.values(colorMap).sort((a, b) => {
                 const orderA = a.variants[0]?.order ?? 0;
                 const orderB = b.variants[0]?.order ?? 0;
                 return orderA - orderB;
             });
 
             sortedGroups.forEach(group => {
-                const variant = group.variants[0];
+                if (group.attributeType === 'color') {
+                    // ------------------ عرض الخيارات اللونية (كما هي) ------------------
+                    const variant = group.variants[0];
+                    const divWrapper = document.createElement('div');
+                    divWrapper.className = 'color-option-wrapper';
+                    divWrapper.style.cssText = 'display:inline-block; text-align:center; margin:5px';
 
-                // إنشاء div للون
-                const divWrapper = document.createElement('div');
-                divWrapper.className = 'color-option-wrapper';
-                divWrapper.style.display = 'inline-block';
-                divWrapper.style.textAlign = 'center';
-                divWrapper.style.margin = '5px';
+                    const div = document.createElement('div');
+                    div.dataset.colorId = group.colorId || 'no-color';
+                    div.className = 'color-option';
+                    div.style.cssText = 'width:30px; height:30px; border-radius:4px; cursor:pointer; margin-bottom:4px';
+                    if (group.colorHex && group.colorHex.trim() !== '') {
+                        div.style.backgroundColor = group.colorHex;
+                    } else {
+                        div.style.backgroundColor = '#ffffff';
+                        div.style.border = '1px solid #ccc';
+                    }
+                    div.onclick = () => selectColor(group.colorId || 'no-color', group.variants);
+                    divWrapper.appendChild(div);
 
-                const div = document.createElement('div');
-                div.dataset.colorId = group.colorId || 'no-color';
-                div.className = 'color-option';
-                div.style.width = '30px';
-                div.style.height = '30px';
-                div.style.borderRadius = '4px';
-                div.style.cursor = 'pointer';
-                div.style.marginBottom = '4px';
+                    const label = document.createElement('span');
+                    label.textContent = group.colorName || 'اختيار';
+                    label.style.cssText = 'font-size:0.75em; display:block; color:#333';
+                    divWrapper.appendChild(label);
 
-                if (group.colorHex && group.colorHex.trim() !== '') {
-                    div.style.backgroundColor = group.colorHex;
+                    container.appendChild(divWrapper);
                 } else {
-                    div.style.backgroundColor = '#ffffff';
-                    div.style.border = '1px solid #ccc';
+                    // ------------------ عرض الخيارات النصية (مستطيل + اسم) ------------------
+                    const variant = group.variants[0]; // يوجد متغير واحد فقط لأن المفتاح فريد
+                    const divWrapper = document.createElement('div');
+                    divWrapper.className = 'text-option-wrapper';
+                    divWrapper.style.cssText = 'display:inline-block; margin:5px';
+
+                    const div = document.createElement('div');
+                    div.dataset.variantId = variant.id;
+                    div.className = 'text-option';
+                    div.style.cssText = `
+                        padding:8px 12px; border:1px solid #ccc; border-radius:4px;
+                        cursor:pointer; background:#f9f9f9; color:#333;
+                        font-size:14px; text-align:center; min-width:60px;
+                    `;
+                    div.textContent = variant.variantName || variant.colorName || 'اختيار';
+
+                    div.onclick = () => selectTextVariant(variant);
+                    divWrapper.appendChild(div);
+                    container.appendChild(divWrapper);
                 }
-
-                div.onclick = () => selectColor(group.colorId || 'no-color', group.variants);
-                divWrapper.appendChild(div);
-
-                // إنشاء span لاسم اللون تحت المربع
-                const label = document.createElement('span');
-                label.textContent = group.colorName || 'اختيار';
-                label.style.fontSize = '0.75em';
-                label.style.display = 'block';
-                label.style.color = '#333';
-                divWrapper.appendChild(label);
-
-                container.appendChild(divWrapper);
             });
         }
         function selectColor(colorId, variants) {
@@ -466,7 +483,38 @@
 
             console.log('✓ تم تحديد اللون:', selectedColorName);
         }
+        function selectTextVariant(variant) {
+            // إزالة التحديد من جميع الخيارات النصية
+            document.querySelectorAll('.text-option').forEach(el => el.classList.remove('selected'));
+            // تحديد الخيار الحالي
+            const currentEl = document.querySelector(`[data-variant-id="${variant.id}"]`);
+            if (currentEl) currentEl.classList.add('selected');
 
+            // تعيين المتغير المختار
+            selectedVariantId = variant.id;
+            pcsPerCarton = variant.pcsCarton;
+
+            // عرض المقاسات إذا وجدت
+            const sizeWrapper = document.getElementById('size-selection-wrapper');
+            if (variant.sizeNames && variant.sizeNames.length > 0) {
+                sizeWrapper.style.display = 'block';
+                renderSizeSelection([variant]);  // نمرر مصفوفة تحتوي على هذا المتغير فقط
+            } else {
+                sizeWrapper.style.display = 'none';
+            }
+
+            // تحديث الصور
+            const variantImages = variantImagesData[variant.id];
+            if (variantImages && variantImages.length > 0) {
+                updateGallery(variantImages);
+            } else if (variant.image && variant.image.length > 0) {
+                const mainImg = document.getElementById('main-product-img');
+                if (mainImg) mainImg.src = variant.image;
+            } else {
+                updateGallery(productImages);
+            }
+        }
+        
         function renderSizeSelection(variants) {
             const sizeContainer = document.getElementById('size-selection');
             const labelSpan = document.getElementById('dynamic-length-label');
