@@ -43,14 +43,18 @@ class VariantImageInline(admin.TabularInline):
     image_preview.short_description = "معاينة"
 
 
-class ProductVariantInline(admin.TabularInline):
-    """أنماط المنتج - عرض مبسط مع رابط للتعديل"""
+class ProductVariantInline(admin.StackedInline):
+    """أنماط المنتج - عرض رأسي (مكدس) مع معلومات مختصرة"""
     model = ProductVariant
     extra = 1
-    fields = ['name', 'code', 'pcs_carton', 'is_available', 'order', 'image_preview']
+    fields = [
+        ('name', 'code'),
+        ('pcs_carton', 'is_available'),
+        ('order', 'image_preview'),
+    ]
     readonly_fields = ['image_preview']
     ordering = ['order']
-    show_change_link = True  # رابط يذهب إلى صفحة تحرير النمط المنفصلة
+    show_change_link = True  # رابط لتعديل النمط في صفحة منفصلة
 
     def image_preview(self, obj):
         if obj.image:
