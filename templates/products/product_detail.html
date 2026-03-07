@@ -343,30 +343,42 @@
 
             sortedGroups.forEach(group => {
                 const variant = group.variants[0];
-                const div = document.createElement('div');
 
+                // إنشاء div للون
+                const divWrapper = document.createElement('div');
+                divWrapper.className = 'color-option-wrapper';
+                divWrapper.style.display = 'inline-block';
+                divWrapper.style.textAlign = 'center';
+                divWrapper.style.margin = '5px';
+
+                const div = document.createElement('div');
                 div.dataset.colorId = group.colorId || 'no-color';
                 div.className = 'color-option';
+                div.style.width = '30px';
+                div.style.height = '30px';
+                div.style.borderRadius = '4px';
+                div.style.cursor = 'pointer';
+                div.style.marginBottom = '4px';
 
                 if (group.colorHex && group.colorHex.trim() !== '') {
-                    // اللون موجود: عرض المربع باللون
                     div.style.backgroundColor = group.colorHex;
-                    div.title = group.colorName || 'اختيار';
-                    div.textContent = ''; // لا يظهر نص على اللون
                 } else {
-                    // لا يوجد لون: مربع أبيض + نص في الوسط
                     div.style.backgroundColor = '#ffffff';
-                    div.style.display = 'flex';
-                    div.style.alignItems = 'center';
-                    div.style.justifyContent = 'center';
-                    div.style.fontSize = '0.85em';
-                    div.style.fontWeight = 'bold';
-                    div.style.color = '#000000';
-                    div.textContent = group.colorName || 'اختيار'; // اسم النمط أو "اختيار" افتراضي
+                    div.style.border = '1px solid #ccc';
                 }
 
                 div.onclick = () => selectColor(group.colorId || 'no-color', group.variants);
-                container.appendChild(div);
+                divWrapper.appendChild(div);
+
+                // إنشاء span لاسم اللون تحت المربع
+                const label = document.createElement('span');
+                label.textContent = group.colorName || 'اختيار';
+                label.style.fontSize = '0.75em';
+                label.style.display = 'block';
+                label.style.color = '#333';
+                divWrapper.appendChild(label);
+
+                container.appendChild(divWrapper);
             });
         }
         function selectColor(colorId, variants) {
