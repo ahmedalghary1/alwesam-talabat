@@ -108,6 +108,30 @@ class ProductImages(ImageCompressionMixin, models.Model):
     def __str__(self):
         return f"صورة لـ {self.product.name}"
 
+class VariantSize(models.Model):
+    variant = models.ForeignKey(
+        'ProductVariant',
+        on_delete=models.CASCADE,
+        related_name='size_prices'
+    )
+    size = models.ForeignKey(
+        Size,
+        on_delete=models.CASCADE,
+        related_name='variant_prices'
+    )
+    pcs_carton = models.PositiveIntegerField(
+        default=24,
+        verbose_name="عدد القطع في الكرتونة"
+    )
+
+    class Meta:
+        unique_together = ('variant', 'size')
+        verbose_name = "مقاس النمط"
+        verbose_name_plural = "مقاسات النمط"
+
+    def __str__(self):
+        return f"{self.variant} - {self.size.name}: {self.pcs_carton} قطعة"
+
 
 class Size(models.Model):
     """
@@ -189,6 +213,8 @@ class VariantAttributeValue(models.Model):
         if self.hex_code:
             return f"{self.attribute.name}: {self.value} ({self.hex_code})"
         return f"{self.attribute.name}: {self.value}"
+
+
 class ProductVariant(ImageCompressionMixin, models.Model):
     """
     Product variants with independent specifications.
@@ -216,15 +242,16 @@ class ProductVariant(ImageCompressionMixin, models.Model):
     pcs_carton = models.PositiveIntegerField(default=24,help_text="عدد القطع في الكرتونة لهذا النمط")
     image = models.ImageField(upload_to='variant-images', blank=True, null=True,help_text="صورة خاصة بالنمط")
     
-
     sizes = models.ManyToManyField(
         Size,
+        through='VariantSize',
+        through_fields=('variant', 'size'),
         blank=True,
         related_name='variants',
-        verbose_name="الأطوال المتاحة",
-        help_text="الأطوال/المقاسات المتاحة لهذا النمط (اختياري)"
+        verbose_name="المقاسات المتاحة",
+        help_text="اختر المقاسات وحدد الكمية لكل مقاس عبر الواجهة المخصصة"
     )
-    
+
     # Availability flag
     is_available = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
