@@ -240,17 +240,16 @@ class ProductVariant(ImageCompressionMixin, models.Model):
     # Variant can override product's default pcs_carton
     pcs_carton = models.PositiveIntegerField(default=24,help_text="عدد القطع في الكرتونة لهذا النمط")
     image = models.ImageField(upload_to='variant-images', blank=True, null=True,help_text="صورة خاصة بالنمط")
-    
+
     sizes = models.ManyToManyField(
         Size,
-        through='VariantSize',
+        through='products.VariantSize',  # استخدم اسم التطبيق + اسم النموذج كنص
         through_fields=('variant', 'size'),
         blank=True,
         related_name='variants',
         verbose_name="المقاسات المتاحة",
         help_text="اختر المقاسات وحدد الكمية لكل مقاس عبر الواجهة المخصصة"
     )
-
     # Availability flag
     is_available = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
