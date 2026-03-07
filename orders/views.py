@@ -3,8 +3,10 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 from django.db import transaction
 from django.contrib import messages
+from django.db.models import Sum, Count
 from .models import Order, OrderItem
 from cart.models import Cart
+from products.models import VariantSize  # لإستخراج عدد القطع حسب المقاس
 import logging
 
 logger = logging.getLogger(__name__)
@@ -13,9 +15,7 @@ logger = logging.getLogger(__name__)
 @login_required
 def order_list(request):
     """
-    Display list of user's orders.
-    
-    Shows all orders with optimized database queries.
+    عرض قائمة طلبات المستخدم مع تحسين الأداء.
     """
     orders = Order.objects.filter(user=request.user)\
         .select_related('user')\
@@ -28,10 +28,8 @@ def order_list(request):
 @login_required
 def order_detail(request, order_id):
     """
-    Display detailed order information.
-    
-    Shows order items, quantities, and calculated totals.
-    Uses database aggregation for performance.
+    عرض تفاصيل الطلب مع حساب العدد الإجمالي للكراتين والقطع.
+    يستخدم القيم المخزنة وقت الطلب لضمان الدقة.
     """
     order = Order.objects.filter(id=order_id, user=request.user)\
         .select_related('user')\
@@ -42,60 +40,51 @@ def order_detail(request, order_id):
         messages.error(request, 'الطلب غير موجود')
         return redirect('orders:order_list')
     
-    # Calculate totals using aggregation (performance optimization)
-    from django.db.models import Sum, F, Count
-    
+    # إحصائيات سريعة باستخدام التجميع
     totals = order.items.aggregate(
         total_items=Count('id'),
         total_pieces=Sum('quantity')
     )
-    
     total_items = totals['total_items']
     total_pieces = totals['total_pieces'] or 0
     
-    # Calculate cartons based on unit_type
+    # حساب عدد الكراتين بناءً على العناصر التي تم طلبها ككراتين
+    # نستخدم حقل pcs_carton المخزن في كل عنصر (تم إضافته حديثاً)
     total_cartons = 0
-    for item in order.items.select_related('product'):
+    for item in order.items.all():
         if item.unit_type == 'carton':
             total_cartons += item.get_quantity_in_cartons()
     
     return render(request, 'orders/order_detail.html', {
         'order': order,
         'total_items': total_items,
-        'total_cartons': total_cartons,
+        'total_cartons': int(total_cartons),
         'total_pieces': total_pieces,
     })
-
-
 
 
 @login_required
 @require_http_methods(["POST"])
 def create_order(request):
     """
-    Create new order from shopping cart.
-
-    Converts cart items to order items with transaction safety.
-    Preserves variant, color, and size information for historical accuracy.
-    Clears cart after successful order creation.
+    إنشاء طلب جديد من السلة مع حفظ جميع التفاصيل (المقاس، اللون، عدد القطع الفعلي في الكرتونة).
+    يتم قفل السلة لمنع التكرار، ويتم مسحها بعد النجاح.
     """
-
     try:
         with transaction.atomic():
-
-            # 🔐 LOCK the cart to prevent double submission
+            # قفل السلة لمنع أي عملية متزامنة
             cart = Cart.objects.select_for_update().get(user=request.user)
 
-            # Re-check cart after lock
             if not cart.items.exists():
                 messages.error(request, 'السلة فارغة')
                 return redirect('cart:cart_view')
 
+            # جمع بيانات العنوان والملاحظات
             phone_number = request.POST.get('phone_number') or getattr(request.user, 'phone', '')
             address = request.POST.get('address', '')
             notes = request.POST.get('notes', '')
 
-            # Create order
+            # إنشاء الطلب الرئيسي
             order = Order.objects.create(
                 user=request.user,
                 phone_number=phone_number,
@@ -104,54 +93,64 @@ def create_order(request):
                 status='pending'
             )
 
-            # Fetch cart items efficiently
-            cart_items = cart.items.select_related(
-                'product',
-                'variant',
-                'variant__color'
-            )
+            # جلب عناصر السلة مع المنتج والـ variant فقط (لا يوجد علاقة مباشرة للون)
+            cart_items = cart.items.select_related('product', 'variant')
 
             for cart_item in cart_items:
-                # Preserve size & color exactly as chosen
-                size_name = cart_item.size_name or ''
-                color_name = (
-                    cart_item.variant.color.name
-                    if cart_item.variant and cart_item.variant.color
-                    else ''
-                )
+                # ---- 1. استخراج اسم اللون بشكل صحيح ----
+                color_name = ''
+                if cart_item.variant:
+                    color_obj = cart_item.variant.color  # property ترجع VariantAttributeValue أو None
+                    if color_obj:
+                        color_name = color_obj.value   # الحقل الصحيح هو value وليس name
 
+                # ---- 2. تحديد عدد القطع في الكرتونة لهذا العنصر ----
+                # القاعدة: إذا كان هناك مقاس محدد، نأخذ القيمة من VariantSize
+                # وإلا نستخدم pcs_carton الخاص بالـ variant أو المنتج
+                pcs_carton_value = None
+                if cart_item.variant:
+                    if cart_item.size_name:
+                        try:
+                            vs = VariantSize.objects.get(variant=cart_item.variant, size__name=cart_item.size_name)
+                            pcs_carton_value = vs.pcs_carton
+                        except VariantSize.DoesNotExist:
+                            # إذا لم يجد المقاس في جدول المقاسات (نادر) نستخدم قيمة الـ variant
+                            pcs_carton_value = cart_item.variant.pcs_carton
+                    else:
+                        pcs_carton_value = cart_item.variant.pcs_carton
+                else:
+                    pcs_carton_value = cart_item.product.pcs_carton
+
+                # ---- 3. إنشاء عنصر الطلب مع حفظ pcs_carton الفعلي ----
                 OrderItem.objects.create(
                     order=order,
                     product=cart_item.product,
                     variant=cart_item.variant,
-                    quantity=cart_item.quantity,
+                    quantity=cart_item.quantity,           # الكمية مخزنة بالقطع دائماً
                     unit_type=cart_item.unit_type,
                     color_name=color_name,
-                    size_name=size_name
+                    size_name=cart_item.size_name or '',
+                    pcs_carton=pcs_carton_value,           # ⬅️ حقل جديد يجب إضافته في نموذج OrderItem
                 )
 
-            # Clear cart AFTER successful order creation
+            # مسح السلة بعد نجاح العملية
             cart.items.all().delete()
 
-            # Send confirmation email asynchronously (non-blocking)
+            # إرسال إيميل التأكيد بشكل غير متزامن (اختياري)
             try:
                 from utils.email_tasks import send_order_confirmation_email_task
                 send_order_confirmation_email_task.delay(order.id, request.user.email)
             except Exception as e:
-                logger.error(
-                    f'Failed to queue order confirmation email for order {order.id}: {str(e)}'
-                )
+                logger.error(f'فشل في إرسال إيميل التأكيد للطلب {order.id}: {str(e)}')
 
-            messages.success(request, f'تم إنشاء الطلب #{order.id} بنجاح')
+            messages.success(request, f'✅ تم إنشاء الطلب #{order.id} بنجاح')
             return redirect('orders:order_detail', order_id=order.id)
 
     except Cart.DoesNotExist:
-        messages.error(request, 'لا توجد سلة')
+        messages.error(request, '❌ لا توجد سلة')
         return redirect('cart:cart_view')
-
     except Exception as e:
-        messages.error(request, 'حدث خطأ أثناء إنشاء الطلب')
-        messages.error(request, e)
+        messages.error(request, '❌ حدث خطأ أثناء إنشاء الطلب')
         logger.exception(e)
         return redirect('cart:checkout')
 
@@ -160,17 +159,15 @@ def create_order(request):
 @require_http_methods(["POST"])
 def cancel_order(request, order_id):
     """
-    Cancel pending order.
-
-    Only allows cancellation of orders with 'pending' status.
+    إلغاء الطلب إذا كان لا يزال قيد الانتظار.
     """
     order = get_object_or_404(Order, id=order_id, user=request.user)
     
     if order.status == 'pending':
         order.status = 'cancelled'
         order.save()
-        messages.success(request, 'تم إلغاء الطلب بنجاح')
+        messages.success(request, '✅ تم إلغاء الطلب بنجاح')
     else:
-        messages.error(request, 'لا يمكن إلغاء هذا الطلب')
+        messages.error(request, '❌ لا يمكن إلغاء هذا الطلب')
     
     return redirect('orders:order_detail', order_id=order.id)
