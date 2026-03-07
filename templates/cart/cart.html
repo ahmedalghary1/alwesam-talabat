@@ -615,9 +615,6 @@
 
                     <!-- Color and Size Badges -->
                     <div class="badges-container">
-                        {% if item.variant.color %}
-                        <span class="badge badge-color" style="background-color: {{ item.variant.color.hex_code }}; color: {{ item.variant.color.hex_code|contrast_color }};"> {{ item.variant.color.name }} </span>
-                        {% endif %}
 
                         {% if item.size_name %}
                         <span class="badge badge-size">
