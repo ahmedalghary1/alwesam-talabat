@@ -63,7 +63,6 @@ class ProductVariantInline(admin.TabularInline):
     ]
     filter_horizontal = ['sizes', 'attributes']
     readonly_fields = ['image_preview', 'view_sizes']
-    filter_horizontal = ['sizes']
     # ✅ ترتيب الأنماط حسب order
     ordering = ['order']
     
