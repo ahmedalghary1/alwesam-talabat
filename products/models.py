@@ -186,7 +186,7 @@ class VariantAttributeValue(models.Model):
         unique_together = ("attribute", "value")
 
     def __str__(self):
-        returl f"{self.attribute.name}:{self.value}: {self.hex_code}"
+        return f"{self.attribute.name}:{self.value}: {self.hex_code}"
 class ProductVariant(ImageCompressionMixin, models.Model):
     """
     Product variants with independent specifications.
