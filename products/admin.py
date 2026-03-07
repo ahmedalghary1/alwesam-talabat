@@ -44,15 +44,17 @@ class VariantImageInline(admin.TabularInline):
 
 
 class ProductVariantInline(admin.StackedInline):
-    """أنماط المنتج - عرض رأسي (مكدس) مع معلومات مختصرة"""
+    """أنماط المنتج - عرض رأسي مع الخصائص الأساسية"""
     model = ProductVariant
     extra = 1
     fields = [
         ('name', 'code'),
         ('pcs_carton', 'is_available'),
         ('order', 'image_preview'),
+        'attributes_display',
+        'sizes_display',
     ]
-    readonly_fields = ['image_preview']
+    readonly_fields = ['image_preview', 'attributes_display', 'sizes_display']
     ordering = ['order']
     show_change_link = True  # رابط لتعديل النمط في صفحة منفصلة
 
@@ -61,6 +63,32 @@ class ProductVariantInline(admin.StackedInline):
             return format_html('<img src="{}" width="50" height="50" style="object-fit: cover;" />', obj.image.url)
         return "-"
     image_preview.short_description = "الصورة"
+
+    def attributes_display(self, obj):
+        """عرض الخصائص (مع الألوان إن وجدت) بشكل مقروء"""
+        if not obj.pk:
+            return "احفظ النمط أولاً لإضافة الخصائص"
+        parts = []
+        for a in obj.attributes.all():
+            if a.hex_code:
+                parts.append(format_html(
+                    '<span style="display:inline-block; margin:2px 5px 2px 0; padding:2px 5px; background:{}; color:#fff; border-radius:3px;">{}: {}</span>',
+                    a.hex_code, a.attribute.name, a.value
+                ))
+            else:
+                parts.append(f"{a.attribute.name}: {a.value}")
+        return format_html(' '.join(parts)) if parts else "-"
+    attributes_display.short_description = "الخصائص"
+
+    def sizes_display(self, obj):
+        """عرض المقاسات المرتبطة بالنمط"""
+        if not obj.pk:
+            return "احفظ النمط أولاً لإضافة المقاسات"
+        sizes = obj.sizes.all()
+        if sizes:
+            return ", ".join([s.name for s in sizes])
+        return "-"
+    sizes_display.short_description = "المقاسات"
 
 
 class VariantAttributeValueInline(admin.TabularInline):
