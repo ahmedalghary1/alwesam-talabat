@@ -56,7 +56,7 @@ class ProductVariantInline(admin.TabularInline):
         'is_available', 'image_preview', 'view_sizes'
     ]
     readonly_fields = ['image_preview', 'view_sizes']
-    raw_id_fields = ['sizes']
+    filter_horizontal = ['sizes']
     # ✅ ترتيب الأنماط حسب order
     ordering = ['order']
     
@@ -190,10 +190,11 @@ class ProductVariantAdmin(SortableAdminMixin,admin.ModelAdmin):
         'name', 'product_link', 'code', 'pcs_carton', 
         'order', 'is_available', 'color_preview', 'sizes_list'
     ]
-    list_editable = ['order', 'is_available']
+    list_editable = ['order', 'is_available','attributes_list']
     list_filter = ['is_available', 'product__category', 'attributes__attribute']
     search_fields = ['name', 'code', 'product__name']
-    raw_id_fields = ['product', 'sizes', 'attributes']
+    raw_id_fields = ['product']
+    filter_horizontal = ['sizes', 'attributes']
     inlines = [VariantImageInline]
     # ✅ ترتيب الأنماط حسب order
     ordering = ['order']
@@ -236,6 +237,10 @@ class ProductVariantAdmin(SortableAdminMixin,admin.ModelAdmin):
             return ", ".join([size.name for size in sizes])
         return "-"
     sizes_list.short_description = "المقاسات"
+
+    def attributes_list(self, obj):
+        return ", ".join([a.value for a in obj.attributes.all()])
+    attributes_list.short_description = "الخصائص"
 
 
 @admin.register(Product)
