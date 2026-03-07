@@ -606,7 +606,8 @@
                     <div class="badges-container">
                         {% for attr in item.variant.attributes.all %}
                         <span class="badge">
-                            {{ attr.attribute.name }} : {{ attr.value }}
+                            <h2>{{ attr.attribute.name }} : {{ attr.value }}</h2>
+                            
                         </span>
                         {% endfor %}
                     </div>
