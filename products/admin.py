@@ -52,9 +52,16 @@ class ProductVariantInline(admin.TabularInline):
     model = ProductVariant
     extra = 1
     fields = [
-        'name', 'code', 'pcs_carton', 'order', 
-        'is_available', 'image_preview', 'view_sizes'
+        'name',
+        'code',
+        'attributes',
+        'sizes',
+        'pcs_carton',
+        'order',
+        'is_available',
+        'image_preview',
     ]
+    filter_horizontal = ['sizes', 'attributes']
     readonly_fields = ['image_preview', 'view_sizes']
     filter_horizontal = ['sizes']
     # ✅ ترتيب الأنماط حسب order
@@ -190,7 +197,18 @@ class ProductVariantAdmin(SortableAdminMixin,admin.ModelAdmin):
         'name', 'product_link', 'code', 'pcs_carton', 
         'order', 'is_available', 'color_preview', 'sizes_list'
     ]
-    list_editable = ['order', 'is_available','attributes_list']
+    list_editable = ['order', 'is_available']
+    list_display = [
+        'name',
+        'product_link',
+        'code',
+        'pcs_carton',
+        'attributes_list',
+        'order',
+        'is_available',
+        'color_preview',
+        'sizes_list'
+    ]
     list_filter = ['is_available', 'product__category', 'attributes__attribute']
     search_fields = ['name', 'code', 'product__name']
     raw_id_fields = ['product']
@@ -216,6 +234,14 @@ class ProductVariantAdmin(SortableAdminMixin,admin.ModelAdmin):
         }),
     )
     
+    def attributes_list(self, obj):
+        return ", ".join(
+            f"{a.attribute.name}: {a.value}" 
+            for a in obj.attributes.all()
+        )
+    attributes_list.short_description = "الخصائص"
+
+
     def product_link(self, obj):
         url = reverse('admin:products_product_change', args=[obj.product.id])
         return format_html('<a href="{}">{}</a>', url, obj.product.name)
@@ -237,10 +263,6 @@ class ProductVariantAdmin(SortableAdminMixin,admin.ModelAdmin):
             return ", ".join([size.name for size in sizes])
         return "-"
     sizes_list.short_description = "المقاسات"
-
-    def attributes_list(self, obj):
-        return ", ".join([a.value for a in obj.attributes.all()])
-    attributes_list.short_description = "الخصائص"
 
 
 @admin.register(Product)
