@@ -344,38 +344,52 @@
             sortedGroups.forEach(group => {
                 const variant = group.variants[0];
 
-                // Wrapper صغير للمربع والاسم
+                // Wrapper صغير للمربع والنص
                 const divWrapper = document.createElement('div');
                 divWrapper.className = 'color-option-wrapper';
                 divWrapper.style.display = 'inline-block';
                 divWrapper.style.textAlign = 'center';
                 divWrapper.style.margin = '3px';
 
-                // مربع اللون نفسه (لا تغيير في الحجم)
                 const div = document.createElement('div');
                 div.dataset.colorId = group.colorId || 'no-color';
                 div.className = 'color-option';
                 div.style.cursor = 'pointer';
+                div.style.display = 'flex';
+                div.style.alignItems = 'center';
+                div.style.justifyContent = 'center';
+                div.style.fontSize = '0.8em';
+                div.style.color = '#333';
+                div.style.textAlign = 'center';
 
-                // اللون
-                if (group.colorHex && group.colorHex.trim() !== '') {
+                if (variant.attributeType === 'color' && group.colorHex && group.colorHex.trim() !== '') {
+                    // مربع اللون الحقيقي
                     div.style.backgroundColor = group.colorHex;
-                } else {
-                    div.style.backgroundColor = '#ffffff';
                     div.style.border = '1px solid #ccc';
+                    div.style.width = '30px';
+                    div.style.height = '30px';
+                } else {
+                    // نمط نصي أو غير لون: مربع فارغ أو مستطيل
+                    div.style.backgroundColor = '#f9f9f9'; // لون خلفية خفيف
+                    div.style.border = '1px solid #ccc';
+                    div.style.width = '60px'; // يمكن تعديل العرض حسب النص
+                    div.style.height = '30px';
                 }
+
+                div.textContent = variant.attributeType === 'color' ? '' : group.colorName || 'اختيار';
 
                 div.onclick = () => selectColor(group.colorId || 'no-color', group.variants);
                 divWrapper.appendChild(div);
 
-                // الاسم أسفل المربع بدون التأثير على حجم المربع
-                const label = document.createElement('span');
-                label.textContent = group.colorName || 'اختيار';
-                label.style.fontSize = '0.7em';
-                label.style.display = 'block';
-                label.style.marginTop = '2px';
-                label.style.color = '#333';
-                divWrapper.appendChild(label);
+                // الاسم أسفل المربع (إذا كان لونًا فقط)
+                if (variant.attributeType === 'color') {
+                    const label = document.createElement('span');
+                    label.textContent = group.colorName || '';
+                    label.style.fontSize = '0.7em';
+                    label.style.display = 'block';
+                    label.style.marginTop = '2px';
+                    divWrapper.appendChild(label);
+                }
 
                 container.appendChild(divWrapper);
             });
