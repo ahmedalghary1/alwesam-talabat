@@ -1122,8 +1122,8 @@ body.theme-dark .related-card img {
 
 /* تكبير مربعات الألوان */
 .color-option {
-    width: 60px !important;
-    height: 60px !important;
+    width: 55px !important;
+    height: 55px !important;
     border-radius: 8px !important;
     transition: all 0.2s ease;
 }
