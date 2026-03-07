@@ -352,25 +352,24 @@
                 // =============================
                 // CASE 1 : COLOR ATTRIBUTE
                 // =============================
-                if (variant.colorHex) {
 
-                    div.className = 'color-option';
+                div.className = 'color-option';
 
-                    div.style.backgroundColor = group.colorHex || '#ccc';
+                // استخدم الأبيض كخلفية افتراضية إذا لم يوجد hex
+                div.style.backgroundColor = group.colorHex && group.colorHex.trim() !== '' ? group.colorHex : '#ffffff';
 
-                    div.title = group.colorName;
-
-                }
+                div.title = group.colorName || 'اختيار';
 
                 // =============================
                 // CASE 2 : TEXT ATTRIBUTE
                 // =============================
                 else {
-
-                    div.className = 'size-option variant-text-option';
-
-                    div.textContent = group.colorName || 'اختيار';
-
+                    div.className = 'color-option';  // استخدم نفس الكلاس ليظهر كخانة اللون
+                    div.style.backgroundColor = '#ffffff';  // افتراضي أبيض
+                    if (group.colorName && group.colorName.trim() !== '') {
+                        div.title = group.colorName; // ضع الاسم في tooltip
+                    }
+                    // لا تضع نص داخل div ليظهر المربع فقط
                 }
 
                 div.onclick = () => selectColor(group.colorId || 'no-color', group.variants);
