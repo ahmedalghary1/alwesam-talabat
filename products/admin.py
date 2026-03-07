@@ -44,21 +44,18 @@ class VariantImageInline(admin.TabularInline):
 
 
 class ProductVariantInline(admin.TabularInline):
-    """أنماط المنتج (تظهر داخل صفحة المنتج)"""
+    """أنماط المنتج - عرض مبسط مع رابط للتعديل"""
     model = ProductVariant
     extra = 1
-    fields = [
-        'name', 'code', 'attributes', 'sizes',
-        'pcs_carton', 'order', 'is_available', 'image_preview'
-    ]
-    filter_horizontal = ['sizes', 'attributes']
+    fields = ['name', 'code', 'pcs_carton', 'is_available', 'order', 'image_preview']
     readonly_fields = ['image_preview']
     ordering = ['order']
+    show_change_link = True  # رابط يذهب إلى صفحة تحرير النمط المنفصلة
 
     def image_preview(self, obj):
         if obj.image:
             return format_html('<img src="{}" width="50" height="50" style="object-fit: cover;" />', obj.image.url)
-        return "لا توجد صورة"
+        return "-"
     image_preview.short_description = "الصورة"
 
 
@@ -160,7 +157,7 @@ class VariantAttributeValueAdmin(admin.ModelAdmin):
 
 @admin.register(ProductVariant)
 class ProductVariantAdmin(SortableAdminMixin, admin.ModelAdmin):
-    """أنماط المنتجات"""
+    """أنماط المنتجات - صفحة التفاصيل الكاملة"""
     list_display = [
         'name', 'product_link', 'code', 'pcs_carton',
         'attributes_colored', 'order', 'is_available', 'color_preview', 'sizes_list'
@@ -238,7 +235,6 @@ class ProductAdmin(SortableAdminMixin, admin.ModelAdmin):
     prepopulated_fields = {'slug': ('name',)}
     readonly_fields = ['created_at', 'updated_at', 'image_preview']
     raw_id_fields = ['category', 'sizes']
-    filter_horizontal = []  # أضف أي ManyToField إن وجدت
     inlines = [ProductImagesInline, ProductVariantInline]
     fieldsets = (
         ('معلومات المنتج', {
