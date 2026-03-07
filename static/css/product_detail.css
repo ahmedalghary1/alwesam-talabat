@@ -1100,3 +1100,22 @@ body.theme-dark .related-card img {
         font-size: 0.85rem;
     }
 }
+.variant-text-option{
+    padding:10px 16px;
+    border:2px solid #ddd;
+    border-radius:10px;
+    cursor:pointer;
+    background:#fff;
+    font-weight:600;
+    transition:0.2s;
+}
+
+.variant-text-option:hover{
+    border-color:#111;
+}
+
+.variant-text-option.selected{
+    border-color:#111;
+    background:#111;
+    color:#fff;
+}
