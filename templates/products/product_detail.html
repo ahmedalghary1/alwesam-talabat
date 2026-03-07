@@ -936,22 +936,10 @@
         document.addEventListener('DOMContentLoaded', function () {
             updateDisplay();
 
-            // Initialize variant selection
+            // Initialize variant selection - فقط عرض الخيارات بدون تحديد تلقائي
             if (ALL_VARIANTS.length > 0) {
-                renderVariantOptions();
-
-                // ✅ ضع هذا الجزء هنا بدل اختيار اللون من Object.keys
-                const colorMap = organizeVariantsByColor();
-                const sortedColorGroups = Object.values(colorMap).sort((a, b) => {
-                    const orderA = a.variants[0]?.order ?? 0;
-                    const orderB = b.variants[0]?.order ?? 0;
-                    return orderA - orderB;
-                });
-
-                if (sortedColorGroups.length > 0) {
-                    const firstColor = sortedColorGroups[0];
-                    selectColor(firstColor.colorId || 'no-color', firstColor.variants);
-                }
+                renderVariantOptions();  // يتم عرض الخيارات فقط، لا تحديد تلقائي
+                // تم إزالة الكود الذي كان يختار أول مجموعة تلقائيًا
             }
 
             const addBtn = document.getElementById('add-to-cart-btn');
