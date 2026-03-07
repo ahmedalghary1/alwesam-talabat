@@ -329,7 +329,6 @@
             return colorGroups;
         }
         function renderVariantOptions() {
-
             const container = document.getElementById('color-selection');
             if (!container) return;
 
@@ -343,32 +342,32 @@
             });
 
             sortedGroups.forEach(group => {
-
                 const variant = group.variants[0];
                 const div = document.createElement('div');
 
                 div.dataset.colorId = group.colorId || 'no-color';
-
-                // =============================
-                // CASE 1 : COLOR ATTRIBUTE
-                // =============================
+                div.className = 'color-option';
 
                 if (group.colorHex && group.colorHex.trim() !== '') {
                     // اللون موجود: عرض المربع باللون
                     div.style.backgroundColor = group.colorHex;
                     div.title = group.colorName || 'اختيار';
+                    div.textContent = ''; // لا يظهر نص على اللون
                 } else {
-                    // لا يوجد لون: مربع أبيض بدون نص
+                    // لا يوجد لون: مربع أبيض + نص في الوسط
                     div.style.backgroundColor = '#ffffff';
-                    div.title = group.colorName || '';
+                    div.style.display = 'flex';
+                    div.style.alignItems = 'center';
+                    div.style.justifyContent = 'center';
+                    div.style.fontSize = '0.85em';
+                    div.style.fontWeight = 'bold';
+                    div.style.color = '#000000';
+                    div.textContent = group.colorName || 'اختيار'; // اسم النمط أو "اختيار" افتراضي
                 }
 
                 div.onclick = () => selectColor(group.colorId || 'no-color', group.variants);
-                div.className = 'color-option';
                 container.appendChild(div);
-
             });
-
         }
         function selectColor(colorId, variants) {
             const selectedColor = document.querySelector(`[data-color-id="${colorId}"]`);
