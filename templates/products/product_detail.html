@@ -282,7 +282,8 @@
             lengthLabel: '{{ v.length_label|default:""|escapejs }}',
             sizes: [{% for size in v.sizes.all %} {{ size.id }} {% if not forloop.last %}, {% endif %} {% endfor %}],
             sizeNames: [{% for size in v.sizes.all %}'{{size.name|escapejs}}'{% if not forloop.last %}, {% endif %} {% endfor %}],
-            image: '{% if v.image %}{{v.image.url}}{% endif %}'
+            image: '{% if v.image %}{{v.image.url}}{% endif %}',
+            attributeType: '{% if v.color %}color{% else %}text{% endif %}',
         }
         {% if not forloop.last %}, {% endif %}
         {% endfor %}
@@ -327,46 +328,58 @@
 
             return colorGroups;
         }
-        function renderColorSelection() {
-            const colorContainer = document.getElementById('color-selection');
-            if (!colorContainer) return;
+        function renderVariantOptions() {
+
+            const container = document.getElementById('color-selection');
+            if (!container) return;
 
             const colorMap = organizeVariantsByColor();
-            colorContainer.innerHTML = '';
+            container.innerHTML = '';
 
-            // تحويل colorMap إلى مصفوفة وفرز حسب أقل order لكل مجموعة لون
-            const sortedColorGroups = Object.values(colorMap).sort((a, b) => {
+            const sortedGroups = Object.values(colorMap).sort((a,b)=>{
                 const orderA = a.variants[0]?.order ?? 0;
                 const orderB = b.variants[0]?.order ?? 0;
                 return orderA - orderB;
             });
 
-            // عرض الألوان بعد الفرز
-            sortedColorGroups.forEach(colorGroup => {
-                const hasAvailableVariant = colorGroup.variants.some(v => v.isAvailable);
+            sortedGroups.forEach(group => {
 
-                const colorDiv = document.createElement('div');
-                colorDiv.className = 'color-option';
-                const bgColor = colorGroup.colorHex || '#cccccc';
-                colorDiv.style.backgroundColor = bgColor;
+                const variant = group.variants[0];
+                const div = document.createElement('div');
 
-                const colorName = colorGroup.colorName || 'بدون لون';
-                colorDiv.dataset.colorId = colorGroup.colorId || 'no-color';
-                colorDiv.dataset.colorName = colorName;
+                div.dataset.colorId = group.colorId || 'no-color';
 
-                const availabilityText = hasAvailableVariant ? 'متوفر' : 'غير متوفر';
-                colorDiv.title = `${colorName} (${availabilityText})`;
+                // =============================
+                // CASE 1 : COLOR ATTRIBUTE
+                // =============================
+                if (variant.colorHex) {
 
-                if (!hasAvailableVariant) {
-                    colorDiv.classList.add('disabled');
-                } else {
-                    colorDiv.onclick = () => selectColor(colorGroup.colorId || 'no-color', colorGroup.variants);
+                    div.className = 'color-option';
+
+                    div.style.backgroundColor = group.colorHex || '#ccc';
+
+                    div.title = group.colorName;
+
                 }
 
-                colorContainer.appendChild(colorDiv);
-            });
-        }
+                // =============================
+                // CASE 2 : TEXT ATTRIBUTE
+                // =============================
+                else {
 
+                    div.className = 'size-option variant-text-option';
+
+                    div.textContent = group.colorName || 'اختيار';
+
+                }
+
+                div.onclick = () => selectColor(group.colorId || 'no-color', group.variants);
+
+                container.appendChild(div);
+
+            });
+
+        }
         function selectColor(colorId, variants) {
             const selectedColor = document.querySelector(`[data-color-id="${colorId}"]`);
 
@@ -881,7 +894,7 @@
 
             // Initialize variant selection
             if (ALL_VARIANTS.length > 0) {
-                renderColorSelection();
+                renderVariantOptions();
 
                 // ✅ ضع هذا الجزء هنا بدل اختيار اللون من Object.keys
                 const colorMap = organizeVariantsByColor();
