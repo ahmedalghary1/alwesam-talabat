@@ -223,7 +223,6 @@
 {% block extra_js %}
 <parameter name="StartLine">
     <script>
-        let pcsPerCarton = {{ product.pcs_carton }};
         // Calculate contrasting text color based on background brightness
         function getContrastColor(hexColor) {
             if (!hexColor || typeof hexColor !== 'string') {
