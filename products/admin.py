@@ -7,7 +7,7 @@ from adminsortable2.admin import SortableAdminMixin
 from .models import (
     Category, Product, ProductImages, Size,
     VariantAttribute, VariantAttributeValue,
-    ProductVariant, VariantImage
+    ProductVariant, VariantImage, VariantSize  # أضفنا VariantSize
 )
 
 
@@ -43,8 +43,16 @@ class VariantImageInline(admin.TabularInline):
     image_preview.short_description = "معاينة"
 
 
+class VariantSizeInline(admin.TabularInline):
+    """إدارة مقاسات النمط مع الكمية"""
+    model = VariantSize
+    extra = 1
+    fields = ['size', 'pcs_carton']
+    autocomplete_fields = ['size']  # إن كنت تستخدم autocomplete_fields في SizeAdmin
+
+
 class ProductVariantInline(admin.StackedInline):
-    """أنماط المنتج - جميع الحقول الأساسية قابلة للتعديل مباشرة"""
+    """أنماط المنتج - عرض مع معلومات مختصرة وإمكانية التعديل عبر الرابط"""
     model = ProductVariant
     extra = 1
     fields = [
@@ -52,14 +60,23 @@ class ProductVariantInline(admin.StackedInline):
         ('pcs_carton', 'is_available'),
         ('order', 'image'),
         'attributes',
-        'sizes',
+        'sizes_display',  # نعرض المقاسات بشكل readonly
     ]
-    filter_horizontal = ['attributes', 'sizes']  # واجهة سهلة لاختيار الخصائص والمقاسات
+    filter_horizontal = ['attributes']  # 'sizes' ليس هنا لأنه أصبح عبر through
+    readonly_fields = ['sizes_display']
     ordering = ['order']
-    show_change_link = True  # رابط لصفحة التحرير الكاملة (لإدارة الصور المتعددة)
+    show_change_link = True  # رابط لتعديل النمط في صفحة منفصلة (حيث توجد VariantSizeInline)
 
-    # يمكن إضافة معاينة للصورة إذا رغبت، لكن حقل image يكفي لرفع صورة واحدة
-    # يمكن إضافته كحقل readonly للعرض فقط، لكنه ليس ضرورياً
+    def sizes_display(self, obj):
+        """عرض المقاسات مع الكمية الخاصة بكل منها (للقراءة فقط)"""
+        if not obj.pk:
+            return "احفظ النمط أولاً لإضافة المقاسات"
+        size_info = []
+        # استخدم related_name 'size_prices' كما عرفنا في VariantSize
+        for vs in obj.size_prices.select_related('size').all():
+            size_info.append(f"{vs.size.name}: {vs.pcs_carton} قطعة")
+        return format_html('<br>'.join(size_info) if size_info else "-")
+    sizes_display.short_description = "المقاسات (مع الكمية)"
 
 
 class VariantAttributeValueInline(admin.TabularInline):
@@ -169,8 +186,8 @@ class ProductVariantAdmin(SortableAdminMixin, admin.ModelAdmin):
     list_filter = ['is_available', 'product__category', 'attributes__attribute']
     search_fields = ['name', 'code', 'product__name']
     raw_id_fields = ['product']
-    filter_horizontal = ['sizes', 'attributes']
-    inlines = [VariantImageInline]
+    filter_horizontal = ['attributes']  # أزلنا 'sizes' من هنا
+    inlines = [VariantImageInline, VariantSizeInline]  # أضفنا VariantSizeInline
     fieldsets = (
         ('معلومات أساسية', {
             'fields': ('product', 'name', 'code', 'order')
@@ -182,10 +199,11 @@ class ProductVariantAdmin(SortableAdminMixin, admin.ModelAdmin):
             'fields': ('image',)
         }),
         ('الخصائص', {
-            'fields': ('attributes', 'sizes'),
+            'fields': ('attributes',),  # أزلنا 'sizes' من هنا
             'classes': ('wide',),
-            'description': 'اختر الخصائص (الألوان) والمقاسات المتاحة'
+            'description': 'اختر الخصائص (الألوان)'
         }),
+        # ملاحظة: المقاسات تدار عبر VariantSizeInline
     )
 
     def product_link(self, obj):
@@ -217,11 +235,10 @@ class ProductVariantAdmin(SortableAdminMixin, admin.ModelAdmin):
     color_preview.short_description = "اللون"
 
     def sizes_list(self, obj):
-        sizes = obj.sizes.all()
-        if sizes:
-            return ", ".join([s.name for s in sizes])
-        return "-"
-    sizes_list.short_description = "المقاسات"
+        # تعرض المقاسات مع الكمية (اختصاراً)
+        size_info = [f"{vs.size.name} ({vs.pcs_carton})" for vs in obj.size_prices.all()]
+        return ", ".join(size_info) if size_info else "-"
+    sizes_list.short_description = "المقاسات (الكمية)"
 
 
 @admin.register(Product)
