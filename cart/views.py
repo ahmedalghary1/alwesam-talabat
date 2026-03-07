@@ -9,7 +9,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 
 from core.constants import MAX_QUANTITY_PER_ITEM
-from products.models import Product, ProductVariant
+from products.models import Product, ProductVariant, VariantSize  # ✅ أضفنا VariantSize
 
 from .models import Cart, CartItem
 
@@ -78,7 +78,7 @@ def add_to_cart(request, product_id):
         messages.error(request, "عذراً، هذا المنتج غير متوفر حالياً")
         return redirect("products:product_detail", slug=product.slug)
 
-    # Get unit type from request (NEW)
+    # Get unit type from request
     unit_type = request.POST.get("unit_type", "carton")
 
     # Validate quantity
@@ -97,7 +97,7 @@ def add_to_cart(request, product_id):
         messages.error(request, f"كمية غير صحيحة: {str(e)}")
         return redirect(request.META.get("HTTP_REFERER", "products:all_categories"))
 
-    variant_id = request.POST.get("variant_id")  # NEW: variant support
+    variant_id = request.POST.get("variant_id")
     size_name = request.POST.get("size_name", "")  # NEW: get selected size name
 
     logger.info(f"=== add_to_cart Debug ===")
@@ -107,56 +107,66 @@ def add_to_cart(request, product_id):
     logger.info(f"size_name type: {type(size_name)}")
     logger.info(f"size_name length: {len(size_name) if size_name else 0}")
 
-    # Calculate quantity in pieces based on unit type (NEW)
-    quantity_in_pieces = quantity
-    if unit_type == "carton":
-        # Get variant if exists
-        variant = None
-        if variant_id:
-            try:
-                variant = ProductVariant.objects.get(id=variant_id)
+    # ========== حساب عدد القطع في الكرتونة بناءً على المقاس ==========
+    pcs_carton = None
+    variant = None
 
-                # Check if variant is available
-                if not variant.is_available:
-                    logger.warning(
-                        f"Attempt to add unavailable variant {variant_id} to cart"
+    if variant_id:
+        try:
+            variant = ProductVariant.objects.get(id=variant_id)
+            # Check if variant is available
+            if not variant.is_available:
+                logger.warning(f"Attempt to add unavailable variant {variant_id} to cart")
+                if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                    return JsonResponse(
+                        {"success": False, "message": "عذراً، هذا النمط غير متوفر حالياً"},
+                        status=400,
                     )
-                    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-                        return JsonResponse(
-                            {
-                                "success": False,
-                                "message": "عذراً، هذا النمط غير متوفر حالياً",
-                            },
-                            status=400,
-                        )
-                    messages.error(request, "عذراً، هذا النمط غير متوفر حالياً")
-                    return redirect("products:product_detail", slug=product.slug)
+                messages.error(request, "عذراً، هذا النمط غير متوفر حالياً")
+                return redirect("products:product_detail", slug=product.slug)
 
+            # إذا تم تحديد مقاس، نأخذ الكمية من VariantSize
+            if size_name:
+                try:
+                    variant_size = VariantSize.objects.get(variant=variant, size__name=size_name)
+                    pcs_carton = variant_size.pcs_carton
+                except VariantSize.DoesNotExist:
+                    # إذا لم يوجد المقاس المحدد في VariantSize، نستخدم القيمة الافتراضية للنمط
+                    pcs_carton = variant.pcs_carton
+                    logger.warning(f"Size '{size_name}' not found for variant {variant.id}, using default pcs_carton={pcs_carton}")
+            else:
+                # لا يوجد مقاس محدد، نستخدم القيمة الافتراضية للنمط
                 pcs_carton = variant.pcs_carton
-            except ProductVariant.DoesNotExist:
-                pcs_carton = product.pcs_carton
-        else:
-            pcs_carton = product.pcs_carton
 
+        except ProductVariant.DoesNotExist:
+            # إذا لم يوجد النمط، نستخدم قيمة المنتج
+            pcs_carton = product.pcs_carton
+            logger.warning(f"Variant {variant_id} not found, using product pcs_carton={pcs_carton}")
+    else:
+        # لا يوجد نمط، نستخدم قيمة المنتج
+        pcs_carton = product.pcs_carton
+
+    # حساب الكمية بالقطع بناءً على الوحدة
+    if unit_type == "carton":
         quantity_in_pieces = quantity * pcs_carton
+    else:
+        quantity_in_pieces = quantity
 
     cart, created = Cart.objects.get_or_create(user=request.user)
 
     logger.info(f"Before get_or_create - size_name: '{size_name}'")
 
-    # Get or create cart item with variant, unit_type, and size_name (UPDATED)
+    # Get or create cart item with variant, unit_type, and size_name
     cart_item, item_created = CartItem.objects.get_or_create(
         cart=cart,
         product=product,
-        variant_id=variant_id if variant_id else None,
-        unit_type=unit_type,  # Include unit_type in lookup
-        size_name=size_name,  # NEW: Include size_name in lookup to treat different sizes as separate items
+        variant=variant,
+        unit_type=unit_type,
+        size_name=size_name,
         defaults={"quantity": quantity_in_pieces},
     )
 
-    logger.info(
-        f"After get_or_create - item_created: {item_created}, cart_item.size_name: '{cart_item.size_name}'"
-    )
+    logger.info(f"After get_or_create - item_created: {item_created}, cart_item.size_name: '{cart_item.size_name}'")
 
     if not item_created:
         # Item already exists, increase quantity (in pieces)
@@ -267,15 +277,9 @@ def sync_cart_from_local(request):
         for item in cart_items:
             product_id = item.get("product_id")
             quantity = item.get("quantity", 1)
-            variant_id = item.get(
-                "variant_id"
-            )  # Assuming variant_id might be in local storage
-            unit_type = item.get(
-                "unit_type", "carton"
-            )  # Assuming unit_type might be in local storage
-            size_name = item.get(
-                "size_name", ""
-            )  # NEW: Get size_name from localStorage
+            variant_id = item.get("variant_id")
+            unit_type = item.get("unit_type", "carton")
+            size_name = item.get("size_name", "")  # NEW: get size_name from localStorage
 
             try:
                 product = Product.objects.get(id=product_id)
@@ -288,16 +292,32 @@ def sync_cart_from_local(request):
                     continue
 
                 variant = None
+                pcs_carton = product.pcs_carton  # القيمة الافتراضية
+
                 if variant_id:
                     try:
-                        variant = ProductVariant.objects.get(
-                            id=variant_id, product=product
-                        )
+                        variant = ProductVariant.objects.get(id=variant_id, product=product)
                         if not variant.is_available:
                             logger.warning(
                                 f"Variant {variant.id} for product {product.id} is not available, skipping sync."
                             )
                             continue
+
+                        # إذا كان هناك مقاس محدد، نأخذ الكمية من VariantSize
+                        if size_name:
+                            try:
+                                variant_size = VariantSize.objects.get(variant=variant, size__name=size_name)
+                                pcs_carton = variant_size.pcs_carton
+                            except VariantSize.DoesNotExist:
+                                # إذا لم يوجد المقاس، نستخدم القيمة الافتراضية للنمط
+                                pcs_carton = variant.pcs_carton
+                                logger.warning(
+                                    f"Size '{size_name}' not found for variant {variant.id} during sync, using default pcs_carton={pcs_carton}"
+                                )
+                        else:
+                            # لا يوجد مقاس محدد، نستخدم القيمة الافتراضية للنمط
+                            pcs_carton = variant.pcs_carton
+
                     except ProductVariant.DoesNotExist:
                         logger.warning(
                             f"Variant {variant_id} for product {product.id} not found, skipping sync."
@@ -305,25 +325,22 @@ def sync_cart_from_local(request):
                         continue
 
                 # Calculate quantity in pieces based on unit type
-                quantity_in_pieces = quantity
                 if unit_type == "carton":
-                    if variant:
-                        pcs_carton = variant.pcs_carton
-                    else:
-                        pcs_carton = product.pcs_carton
                     quantity_in_pieces = quantity * pcs_carton
+                else:
+                    quantity_in_pieces = quantity
 
                 cart_item, created = CartItem.objects.get_or_create(
                     cart=cart,
                     product=product,
-                    variant=variant,  # Use the variant object
-                    unit_type=unit_type,  # Include unit_type in lookup
-                    size_name=size_name,  # NEW: Include size_name in lookup
+                    variant=variant,
+                    unit_type=unit_type,
+                    size_name=size_name,
                     defaults={"quantity": quantity_in_pieces},
                 )
 
                 if not created:
-                    cart_item.quantity += quantity_in_pieces  # Add in pieces
+                    cart_item.quantity += quantity_in_pieces
                     cart_item.save()
 
                 synced_count += 1
