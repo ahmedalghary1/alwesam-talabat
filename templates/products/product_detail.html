@@ -362,26 +362,26 @@
                 div.style.color = '#333';
                 div.style.textAlign = 'center';
 
+                // حجم المربعات كما هي (مثلاً 40x40 px)
+                div.style.width = '40px';
+                div.style.height = '40px';
+
                 if (variant.attributeType === 'color' && group.colorHex && group.colorHex.trim() !== '') {
                     // مربع اللون الحقيقي
                     div.style.backgroundColor = group.colorHex;
                     div.style.border = '1px solid #ccc';
-                    div.style.width = '30px';
-                    div.style.height = '30px';
+                    div.textContent = ''; // لا يظهر نص داخل مربع اللون
                 } else {
-                    // نمط نصي أو غير لون: مربع فارغ أو مستطيل
+                    // نمط نصي أو غير لون: مربع فارغ بنفس الحجم
                     div.style.backgroundColor = '#f9f9f9'; // لون خلفية خفيف
                     div.style.border = '1px solid #ccc';
-                    div.style.width = '60px'; // يمكن تعديل العرض حسب النص
-                    div.style.height = '30px';
+                    div.textContent = group.colorName || ''; // الاسم داخل المربع
                 }
-
-                div.textContent = variant.attributeType === 'color' ? '' : group.colorName || 'اختيار';
 
                 div.onclick = () => selectColor(group.colorId || 'no-color', group.variants);
                 divWrapper.appendChild(div);
 
-                // الاسم أسفل المربع (إذا كان لونًا فقط)
+                // الاسم أسفل المربع فقط للألوان
                 if (variant.attributeType === 'color') {
                     const label = document.createElement('span');
                     label.textContent = group.colorName || '';
