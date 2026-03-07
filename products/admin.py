@@ -84,6 +84,7 @@ class VariantAttributeValueInline(admin.TabularInline):
     model = VariantAttributeValue
     extra = 2
     fields = ['value', 'hex_code', 'color_preview']
+    readonly_fields = ['color_preview']
 
     def color_preview(self, obj):
         if obj.hex_code:
