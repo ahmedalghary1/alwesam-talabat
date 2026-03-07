@@ -110,12 +110,12 @@ class ProductImages(ImageCompressionMixin, models.Model):
 
 class VariantSize(models.Model):
     variant = models.ForeignKey(
-        'ProductVariant',
+        'ProductVariant',  # استخدام نص
         on_delete=models.CASCADE,
         related_name='size_prices'
     )
     size = models.ForeignKey(
-        Size,
+        'Size',  # استخدام نص
         on_delete=models.CASCADE,
         related_name='variant_prices'
     )
@@ -131,7 +131,6 @@ class VariantSize(models.Model):
 
     def __str__(self):
         return f"{self.variant} - {self.size.name}: {self.pcs_carton} قطعة"
-
 
 class Size(models.Model):
     """
