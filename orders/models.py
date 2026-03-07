@@ -42,13 +42,6 @@ class Order(models.Model):
         verbose_name_plural='الطلبات'
 
 class OrderItem(models.Model):
-    """
-    Individual item within an order.
-    
-    Preserves product/variant information at time of order to maintain
-    accurate historical records even if product details change later.
-    Quantity always stored in pieces for consistency.
-    """
     UNIT_TYPE_CHOICES = [
         ('piece', 'قطعة'),
         ('carton', 'كرتونة'),
@@ -57,75 +50,36 @@ class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     variant = models.ForeignKey(ProductVariant, on_delete=models.SET_NULL, null=True, blank=True)
-    # Quantity always stored in pieces for accurate inventory tracking
-    quantity = models.PositiveIntegerField(default=1)
-    # User's preferred display unit (carton or piece)
+    quantity = models.PositiveIntegerField(default=1)  # مخزنة بالقطع دائماً
     unit_type = models.CharField(max_length=10, choices=UNIT_TYPE_CHOICES, default='carton')
 
-    # Preserve variant information at order time for historical accuracy
-    variant_info = models.CharField(max_length=200, blank=True, help_text="معلومات النمط وقت الطلب")
-    variant_pcs_carton = models.PositiveIntegerField(null=True, blank=True, help_text="عدد القطع في الكرتونة وقت الطلب")
-    
-    # Preserve color and size information at order time
-    color_name = models.CharField(max_length=100, blank=True, help_text="اسم اللون وقت الطلب")
-    size_name = models.CharField(max_length=100, blank=True,help_text="اسم الطول/المقاس وقت الطلب")
+    # بيانات محفوظة وقت الطلب
+    color_name = models.CharField(max_length=100, blank=True)
+    size_name = models.CharField(max_length=100, blank=True)
+    pcs_carton = models.PositiveIntegerField(default=24, verbose_name="عدد القطع في الكرتونة وقت الطلب")
 
     class Meta:
-        verbose_name='تفاصيل الطلب'
-        verbose_name_plural='تفاصيل الطلبات'
-    def save(self, *args, **kwargs):
-        # Automatically preserve variant information when order is created
-        if self.variant and not self.variant_info:
-            self.variant_info = f"{self.variant.get_variant_type_display()}"
-        if self.variant and not self.variant_pcs_carton:
-            self.variant_pcs_carton = self.variant.pcs_carton
-        super().save(*args, **kwargs)
-
-    def get_pcs_carton(self):
-        """Get pcs_carton from preserved value, variant, or product"""
-        if self.variant_pcs_carton:
-            return self.variant_pcs_carton
-        if self.variant:
-            return self.variant.pcs_carton
-        return self.product.pcs_carton
+        verbose_name = 'تفاصيل الطلب'
+        verbose_name_plural = 'تفاصيل الطلبات'
 
     def get_quantity_in_cartons(self):
-        """Get quantity in cartons (for display)"""
-        pcs_carton = self.get_pcs_carton()
-        if pcs_carton > 0:
-            return self.quantity / pcs_carton
+        if self.unit_type == 'carton' and self.pcs_carton:
+            return self.quantity // self.pcs_carton
         return 0
 
-    def get_quantity_in_pieces(self):
-        """Get quantity in pieces"""
-        return self.quantity
-
-    def get_total_pieces(self):
-        """Calculate total pieces in this order item (same as quantity)"""
-        return self.quantity
-
     def get_display_name(self):
-        """Display name with variant, color, and size"""
-        name_parts = [self.product.name]
-        
-        # Add color if available
+        parts = [self.product.name]
         if self.color_name:
-            name_parts.append(f"لون: {self.color_name}")
-        
-        # Add size if available
+            parts.append(f"لون: {self.color_name}")
         if self.size_name:
-            name_parts.append(f"مقاس: {self.size_name}")
-        
-        # Add variant info if available and not redundant
-        if self.variant_info and not (self.color_name or self.size_name):
-            name_parts.append(f"({self.variant_info})")
-        
-        return " - ".join(name_parts)
+            parts.append(f"مقاس: {self.size_name}")
+        if self.variant and not (self.color_name or self.size_name):
+            parts.append(self.variant.name)
+        return " - ".join(parts)
 
     def __str__(self):
-        unit = 'قطعة' if self.unit_type == 'piece' else 'كرتونة'
         if self.unit_type == 'piece':
             return f"{self.get_display_name()} x {self.quantity} قطعة"
         else:
             cartons = self.get_quantity_in_cartons()
-            return f"{self.get_display_name()} x {cartons:.0f} كرتونة"
+            return f"{self.get_display_name()} x {cartons} كرتونة ({self.quantity} قطعة)"
