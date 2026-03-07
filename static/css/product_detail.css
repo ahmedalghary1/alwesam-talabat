@@ -1119,3 +1119,51 @@ body.theme-dark .related-card img {
     background:#111;
     color:#fff;
 }
+
+/* تكبير مربعات الألوان */
+.color-option {
+    width: 44px !important;
+    height: 44px !important;
+    border-radius: 8px !important;
+    transition: all 0.2s ease;
+}
+.color-option-wrapper span {
+    font-size: 0.85em !important;
+    margin-top: 6px;
+}
+
+/* تصميم الخيارات النصية */
+.text-option {
+    padding: 10px 16px !important;
+    border: 2px solid #e0e0e0 !important;
+    border-radius: 8px !important;
+    background: #f8f8f8 !important;
+    color: #333 !important;
+    font-size: 15px !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease;
+    min-width: 80px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+.text-option:hover {
+    border-color: #aaa !important;
+    background: #fff !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* تأثير التحديد الأصفر */
+.text-option.selected {
+    border-color: #fbbf24 !important;  /* أصفر */
+    background: #fff9e6 !important;
+    box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.2);
+}
+
+/* تحسين مظهر الخيارات اللونية عند التحديد */
+.color-option.selected {
+    outline: 3px solid #fbbf24 !important;
+    outline-offset: 3px !important;
+    transform: scale(1.05);
+}

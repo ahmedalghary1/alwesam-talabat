@@ -350,51 +350,46 @@
 
             sortedGroups.forEach(group => {
                 if (group.attributeType === 'color') {
-                    // ------------------ عرض الخيارات اللونية (كما هي) ------------------
+                    // ------------------ عرض الخيارات اللونية ------------------
                     const variant = group.variants[0];
-                    const divWrapper = document.createElement('div');
-                    divWrapper.className = 'color-option-wrapper';
-                    divWrapper.style.cssText = 'display:inline-block; text-align:center; margin:5px';
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'color-option-wrapper';
+                    wrapper.style.cssText = 'display:inline-block; text-align:center; margin:5px';
 
-                    const div = document.createElement('div');
-                    div.dataset.colorId = group.colorId || 'no-color';
-                    div.className = 'color-option';
-                    div.style.cssText = 'width:30px; height:30px; border-radius:4px; cursor:pointer; margin-bottom:4px';
+                    const colorDiv = document.createElement('div');
+                    colorDiv.dataset.colorId = group.colorId || 'no-color';
+                    colorDiv.className = 'color-option';
                     if (group.colorHex && group.colorHex.trim() !== '') {
-                        div.style.backgroundColor = group.colorHex;
+                        colorDiv.style.backgroundColor = group.colorHex;
                     } else {
-                        div.style.backgroundColor = '#ffffff';
-                        div.style.border = '1px solid #ccc';
+                        colorDiv.style.backgroundColor = '#ffffff';
+                        colorDiv.style.border = '1px solid #ccc';
                     }
-                    div.onclick = () => selectColor(group.colorId || 'no-color', group.variants);
-                    divWrapper.appendChild(div);
+                    // تم إزالة تحديد width/height لأنها موجودة في CSS
+                    colorDiv.onclick = () => selectColor(group.colorId || 'no-color', group.variants);
 
                     const label = document.createElement('span');
                     label.textContent = group.colorName || 'اختيار';
-                    label.style.cssText = 'font-size:0.75em; display:block; color:#333';
-                    divWrapper.appendChild(label);
+                    label.style.cssText = 'font-size:0.85em; display:block; color:#333; margin-top:6px';
 
-                    container.appendChild(divWrapper);
+                    wrapper.appendChild(colorDiv);
+                    wrapper.appendChild(label);
+                    container.appendChild(wrapper);
                 } else {
-                    // ------------------ عرض الخيارات النصية (مستطيل + اسم) ------------------
-                    const variant = group.variants[0]; // يوجد متغير واحد فقط لأن المفتاح فريد
-                    const divWrapper = document.createElement('div');
-                    divWrapper.className = 'text-option-wrapper';
-                    divWrapper.style.cssText = 'display:inline-block; margin:5px';
+                    // ------------------ عرض الخيارات النصية ------------------
+                    const variant = group.variants[0]; // كل مجموعة نصية تحتوي على variant واحد فقط
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'text-option-wrapper';
+                    wrapper.style.cssText = 'display:inline-block; margin:5px';
 
-                    const div = document.createElement('div');
-                    div.dataset.variantId = variant.id;
-                    div.className = 'text-option';
-                    div.style.cssText = `
-                        padding:8px 12px; border:1px solid #ccc; border-radius:4px;
-                        cursor:pointer; background:#f9f9f9; color:#333;
-                        font-size:14px; text-align:center; min-width:60px;
-                    `;
-                    div.textContent = variant.variantName || variant.colorName || 'اختيار';
+                    const textDiv = document.createElement('div');
+                    textDiv.dataset.variantId = variant.id;
+                    textDiv.className = 'text-option';
+                    textDiv.textContent = variant.variantName || variant.colorName || 'اختيار';
+                    textDiv.onclick = () => selectTextVariant(variant);
 
-                    div.onclick = () => selectTextVariant(variant);
-                    divWrapper.appendChild(div);
-                    container.appendChild(divWrapper);
+                    wrapper.appendChild(textDiv);
+                    container.appendChild(wrapper);
                 }
             });
         }
@@ -514,7 +509,7 @@
                 updateGallery(productImages);
             }
         }
-        
+
         function renderSizeSelection(variants) {
             const sizeContainer = document.getElementById('size-selection');
             const labelSpan = document.getElementById('dynamic-length-label');
