@@ -479,15 +479,44 @@
             console.log('✓ تم تحديد اللون:', selectedColorName);
         }
         function selectTextVariant(variant) {
+            const currentEl = document.querySelector(`[data-variant-id="${variant.id}"]`);
+
+            // Toggle behavior: if already selected, deselect it
+            if (currentEl && currentEl.classList.contains('selected')) {
+                // Deselect
+                currentEl.classList.remove('selected');
+
+                // Reset state
+                selectedVariantId = null;
+                pcsPerCarton = PRODUCT_DATA.pcsCarton; // الرجوع إلى العدد الافتراضي للمنتج
+                document.getElementById('selected-variant-id').value = '';
+
+                // Hide size selection section
+                const sizeWrapper = document.getElementById('size-selection-wrapper');
+                if (sizeWrapper) {
+                    sizeWrapper.style.display = 'none';
+                }
+
+                // Clear selected sizes
+                document.querySelectorAll('.size-option').forEach(el => el.classList.remove('selected'));
+
+                // Reset the product image to the main product image
+                updateGallery(productImages);
+
+                console.log('✓ تم إلغاء تحديد النمط النصي');
+                return;
+            }
+
+            // If we reach here, we are selecting a new text variant
             // إزالة التحديد من جميع الخيارات النصية
             document.querySelectorAll('.text-option').forEach(el => el.classList.remove('selected'));
             // تحديد الخيار الحالي
-            const currentEl = document.querySelector(`[data-variant-id="${variant.id}"]`);
             if (currentEl) currentEl.classList.add('selected');
 
             // تعيين المتغير المختار
             selectedVariantId = variant.id;
             pcsPerCarton = variant.pcsCarton;
+            document.getElementById('selected-variant-id').value = variant.id;
 
             // عرض المقاسات إذا وجدت
             const sizeWrapper = document.getElementById('size-selection-wrapper');
@@ -508,8 +537,9 @@
             } else {
                 updateGallery(productImages);
             }
-        }
 
+            console.log('✓ تم تحديد النمط النصي:', variant.variantName);
+        }
         function renderSizeSelection(variants) {
             const sizeContainer = document.getElementById('size-selection');
             const labelSpan = document.getElementById('dynamic-length-label');
