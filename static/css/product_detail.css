@@ -1122,14 +1122,14 @@ body.theme-dark .related-card img {
 
 /* تكبير مربعات الألوان */
 .color-option {
-    width: 44px !important;
-    height: 44px !important;
+    width: 50px !important;
+    height: 50px !important;
     border-radius: 8px !important;
     transition: all 0.2s ease;
 }
 .color-option-wrapper span {
     font-size: 0.85em !important;
-    margin-top: 6px;
+    margin-top: 8px;
 }
 
 /* تصميم الخيارات النصية */
@@ -1167,3 +1167,5 @@ body.theme-dark .related-card img {
     outline-offset: 3px !important;
     transform: scale(1.05);
 }
+
+
