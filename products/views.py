@@ -87,8 +87,9 @@ def product_detail(request, slug):
     try:
         # تحسين استعلامات قاعدة البيانات مع ترتيب الأنماط والأطوال والألوان
         variants_qs = ProductVariant.objects.filter(is_available=True).order_by('order').prefetch_related(
-        Prefetch('sizes', queryset=Size.objects.all().order_by('order')),
-        Prefetch('attributes', queryset=VariantAttributeValue.objects.select_related('attribute'))
+            Prefetch('sizes', queryset=Size.objects.all().order_by('order')),
+            Prefetch('attributes', queryset=VariantAttributeValue.objects.select_related('attribute')),
+            Prefetch('size_prices', queryset=VariantSize.objects.select_related('size'))  # جديد
         )
         product = get_object_or_404(
             Product.objects.prefetch_related(
