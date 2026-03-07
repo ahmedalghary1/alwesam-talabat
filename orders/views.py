@@ -151,6 +151,7 @@ def create_order(request):
         return redirect('cart:cart_view')
     except Exception as e:
         messages.error(request, '❌ حدث خطأ أثناء إنشاء الطلب')
+        messages.error(request, e)
         logger.exception(e)
         return redirect('cart:checkout')
 
