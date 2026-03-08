@@ -7,7 +7,8 @@ from adminsortable2.admin import SortableAdminMixin
 from .models import (
     Category, Product, ProductImages, Size,
     VariantAttribute, VariantAttributeValue,
-    ProductVariant, VariantImage, VariantSize  # أضفنا VariantSize
+    ProductVariant, VariantImage, VariantSize,
+    ProductSize  # أضفنا ProductSize
 )
 
 
@@ -48,7 +49,17 @@ class VariantSizeInline(admin.TabularInline):
     model = VariantSize
     extra = 1
     fields = ['size', 'pcs_carton']
-    autocomplete_fields = ['size']  # إن كنت تستخدم autocomplete_fields في SizeAdmin
+    autocomplete_fields = ['size']
+
+
+class ProductSizeInline(admin.TabularInline):
+    """إدارة مقاسات المنتج المباشر مع الكمية"""
+    model = ProductSize
+    extra = 1
+    fields = ['size', 'pcs_carton']
+    autocomplete_fields = ['size']
+    verbose_name = "مقاس مباشر مع الكمية"
+    verbose_name_plural = "المقاسات المباشرة والكميات"
 
 
 class ProductVariantInline(admin.StackedInline):
@@ -60,19 +71,19 @@ class ProductVariantInline(admin.StackedInline):
         ('pcs_carton', 'is_available'),
         ('order', 'image'),
         'attributes',
-        'sizes_display',  # نعرض المقاسات بشكل readonly
+        'sizes_display',
     ]
-    filter_horizontal = ['attributes']  # 'sizes' ليس هنا لأنه أصبح عبر through
+    filter_horizontal = ['attributes']
     readonly_fields = ['sizes_display']
     ordering = ['order']
-    show_change_link = True  # رابط لتعديل النمط في صفحة منفصلة (حيث توجد VariantSizeInline)
+    show_change_link = True
 
     def sizes_display(self, obj):
         """عرض المقاسات مع الكمية الخاصة بكل منها (للقراءة فقط)"""
         if not obj.pk:
             return "احفظ النمط أولاً لإضافة المقاسات"
         size_info = []
-        # استخدم related_name 'size_prices' كما عرفنا في VariantSize
+        # استخدام related_name='size_prices' كما هو معرف في VariantSize
         for vs in obj.size_prices.select_related('size').all():
             size_info.append(f"{vs.size.name}: {vs.pcs_carton} قطعة")
         return format_html('<br>'.join(size_info) if size_info else "-")
@@ -183,12 +194,12 @@ class ProductVariantAdmin(SortableAdminMixin, admin.ModelAdmin):
         'name', 'product_link', 'code', 'pcs_carton',
         'attributes_colored', 'order', 'is_available', 'color_preview', 'sizes_list'
     ]
-    list_editable = ['is_available']  # order يتم عبر السحب بفضل SortableAdminMixin
+    list_editable = ['is_available']
     list_filter = ['is_available', 'product__category', 'attributes__attribute']
     search_fields = ['name', 'code', 'product__name']
     raw_id_fields = ['product']
-    filter_horizontal = ['attributes']  # أزلنا 'sizes' من هنا
-    inlines = [VariantImageInline, VariantSizeInline]  # أضفنا VariantSizeInline
+    filter_horizontal = ['attributes']
+    inlines = [VariantImageInline, VariantSizeInline]
     fieldsets = (
         ('معلومات أساسية', {
             'fields': ('product', 'name', 'code', 'order')
@@ -200,9 +211,9 @@ class ProductVariantAdmin(SortableAdminMixin, admin.ModelAdmin):
             'fields': ('image',)
         }),
         ('الخصائص', {
-            'fields': ('attributes',),  # أزلنا 'sizes' من هنا
+            'fields': ('attributes',),
             'classes': ('wide',),
-            'description': 'اختر الخصائص (الألوان)'
+            'description': 'اختر الخصائص (مثل الألوان)'
         }),
         # ملاحظة: المقاسات تدار عبر VariantSizeInline
     )
@@ -236,7 +247,6 @@ class ProductVariantAdmin(SortableAdminMixin, admin.ModelAdmin):
     color_preview.short_description = "اللون"
 
     def sizes_list(self, obj):
-        # تعرض المقاسات مع الكمية (اختصاراً)
         size_info = [f"{vs.size.name} ({vs.pcs_carton})" for vs in obj.size_prices.all()]
         return ", ".join(size_info) if size_info else "-"
     sizes_list.short_description = "المقاسات (الكمية)"
@@ -250,13 +260,13 @@ class ProductAdmin(SortableAdminMixin, admin.ModelAdmin):
         'order', 'is_available', 'image_preview',
         'variants_count'
     ]
-    list_editable = ['is_available']  # order يتم عبر السحب
+    list_editable = ['is_available']
     list_filter = ['is_available', 'category', 'created_at']
     search_fields = ['name', 'description', 'slug']
     prepopulated_fields = {'slug': ('name',)}
     readonly_fields = ['created_at', 'updated_at', 'image_preview']
-    raw_id_fields = ['category', 'sizes']
-    inlines = [ProductImagesInline, ProductVariantInline]
+    raw_id_fields = ['category']  # تم إزالة 'sizes' من هنا
+    inlines = [ProductImagesInline, ProductSizeInline, ProductVariantInline]  # أضفنا ProductSizeInline
     fieldsets = (
         ('معلومات المنتج', {
             'fields': ('name', 'slug', 'description', 'category')
@@ -267,10 +277,7 @@ class ProductAdmin(SortableAdminMixin, admin.ModelAdmin):
         ('الصور', {
             'fields': ('image', 'image_preview'),
         }),
-        ('المقاسات العامة', {
-            'fields': ('sizes',),
-            'description': 'هذه المقاسات تطبق على المنتج ككل إذا لم يكن له أنماط'
-        }),
+        # تم إزالة قسم "المقاسات العامة" لأنها تدار عبر ProductSizeInline
         ('معلومات إضافية', {
             'fields': ('created_at', 'updated_at'),
             'classes': ('collapse',),
