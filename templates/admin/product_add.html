@@ -25,7 +25,7 @@
         border: 2px solid var(--border-color);
         border-radius: 16px;
         padding: 2rem;
-        max-width: 800px;
+        max-width: 900px;
     }
 
     .form-group {
@@ -114,6 +114,162 @@
         border-color: #ef4444;
         color: #ef4444;
     }
+
+    .direct-sizes-section,
+    .variants-section {
+        border: 2px dashed var(--border-color);
+        padding: 1.5rem;
+        border-radius: 12px;
+        background: var(--bg-secondary);
+        margin-bottom: 2rem;
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .section-header h3 {
+        margin: 0;
+        color: var(--text-primary);
+        font-size: 1.25rem;
+        font-weight: 700;
+    }
+
+    .section-header h3 i {
+        color: #FFC400;
+        margin-left: 0.5rem;
+    }
+
+    .btn-add {
+        padding: 0.5rem 1rem;
+        background: #FFC400;
+        color: #1a1a1a;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s;
+    }
+
+    .btn-add:hover {
+        background: #e6b000;
+        transform: translateY(-2px);
+    }
+
+    .size-row {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        margin-bottom: 0.75rem;
+        background: var(--card-bg);
+        padding: 0.75rem;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+    }
+
+    .size-row select {
+        flex: 2;
+        padding: 0.5rem;
+        border-radius: 6px;
+        border: 2px solid var(--border-color);
+        background: var(--bg-primary);
+        color: var(--text-primary);
+    }
+
+    .size-row input {
+        flex: 1;
+        padding: 0.5rem;
+        border-radius: 6px;
+        border: 2px solid var(--border-color);
+        background: var(--bg-primary);
+        color: var(--text-primary);
+    }
+
+    .size-row .btn-remove {
+        background: #ef4444;
+        color: white;
+        border: none;
+        padding: 0.5rem 0.75rem;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+
+    .variant-row {
+        background: var(--card-bg);
+        padding: 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        border: 2px solid var(--border-color);
+    }
+
+    .variant-row h4 {
+        margin-top: 0;
+        margin-bottom: 1rem;
+        color: var(--text-primary);
+        font-weight: 700;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .variant-row h4 button {
+        background: #ef4444;
+        color: white;
+        border: none;
+        padding: 0.375rem 0.75rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.875rem;
+    }
+
+    .variant-fields {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+
+    .variant-fields .full-width {
+        grid-column: 1 / -1;
+    }
+
+    .sizes-container {
+        margin-top: 1rem;
+        padding: 1rem;
+        background: var(--bg-secondary);
+        border-radius: 8px;
+    }
+
+    .size-row .btn-add-size {
+        background: #10b981;
+        color: white;
+        border: none;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.75rem;
+        margin-left: 0.5rem;
+    }
+
+    .image-preview {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-top: 0.5rem;
+    }
+
+    .image-preview img {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 2px solid #FFC400;
+    }
 </style>
 {% endblock %}
 
@@ -124,38 +280,27 @@
 </h1>
 
 <div class="form-card">
-    <form method="post" enctype="multipart/form-data">
+    <form method="post" enctype="multipart/form-data" id="productForm">
         {% csrf_token %}
 
+        <!-- Basic info -->
         <div class="form-group">
-            <label class="form-label">
-                <i class="fas fa-box"></i>
-                اسم المنتج *
-            </label>
+            <label class="form-label"><i class="fas fa-box"></i> اسم المنتج *</label>
             <input type="text" name="name" class="form-input" required>
         </div>
 
         <div class="form-group">
-            <label class="form-label">
-                <i class="fas fa-align-right"></i>
-                الوصف
-            </label>
+            <label class="form-label"><i class="fas fa-align-right"></i> الوصف</label>
             <textarea name="description" class="form-textarea"></textarea>
         </div>
 
         <div class="form-group">
-            <label class="form-label">
-                <i class="fas fa-boxes"></i>
-                عدد القطع في الكرتون *
-            </label>
+            <label class="form-label"><i class="fas fa-boxes"></i> عدد القطع في الكرتون *</label>
             <input type="number" name="pcs_carton" class="form-input" value="1" min="1" required>
         </div>
 
         <div class="form-group">
-            <label class="form-label">
-                <i class="fas fa-th-large"></i>
-                القسم
-            </label>
+            <label class="form-label"><i class="fas fa-th-large"></i> القسم</label>
             <select name="category" class="form-select">
                 <option value="">بدون قسم</option>
                 {% for category in categories %}
@@ -165,18 +310,12 @@
         </div>
 
         <div class="form-group">
-            <label class="form-label">
-                <i class="fas fa-image"></i>
-                صورة المنتج الرئيسية *
-            </label>
+            <label class="form-label"><i class="fas fa-image"></i> صورة المنتج الرئيسية *</label>
             <input type="file" name="image" class="form-input" accept="image/*" required>
         </div>
 
         <div class="form-group">
-            <label class="form-label">
-                <i class="fas fa-check-circle"></i>
-                المنتج متوفر؟
-            </label>
+            <label class="form-label"><i class="fas fa-check-circle"></i> المنتج متوفر؟</label>
             <div style="display: flex; align-items: center; gap: 1rem;">
                 <input type="checkbox" name="is_available" id="product-available" checked
                     style="width: 20px; height: 20px; cursor: pointer;">
@@ -185,30 +324,33 @@
         </div>
 
         <div class="form-group">
-            <label class="form-label">
-                <i class="fas fa-images"></i>
-                صور إضافية (اختياري)
-            </label>
+            <label class="form-label"><i class="fas fa-images"></i> صور إضافية (اختياري)</label>
             <input type="file" name="additional_images[]" class="form-input" accept="image/*" multiple
                 id="additional-images">
             <small style="color: var(--text-secondary); display: block; margin-top: 0.25rem; font-size: 0.75rem;">
                 يمكنك اختيار صور متعددة (Ctrl/Cmd + Click)
             </small>
-            <div id="image-preview" style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem;"></div>
+            <div id="image-preview" class="image-preview"></div>
+        </div>
+
+        <!-- Direct Product Sizes (with quantity per size) -->
+        <div class="direct-sizes-section">
+            <div class="section-header">
+                <h3><i class="fas fa-ruler"></i> مقاسات المنتج المباشرة (مع الكمية)</h3>
+                <button type="button" class="btn-add" onclick="addDirectSizeRow()">
+                    <i class="fas fa-plus"></i> إضافة مقاس
+                </button>
+            </div>
+            <div id="direct-sizes-container"></div>
+            <small class="text-muted">إذا كان المنتج له أنماط (variants) فلا داعي لإضافة مقاسات مباشرة.</small>
         </div>
 
         <!-- Product Variants Section -->
-        <div class="form-group"
-            style="border: 2px dashed var(--border-color); padding: 1.5rem; border-radius: 12px; background: var(--bg-secondary);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                <label class="form-label" style="margin-bottom: 0;">
-                    <i class="fas fa-tags"></i>
-                    أنماط المنتج (اختياري)
-                </label>
-                <button type="button" onclick="addVariant()" class="btn-add-variant"
-                    style="padding: 0.5rem 1rem; background: #FFC400; color: #1a1a1a; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
-                    <i class="fas fa-plus"></i>
-                    إضافة نمط
+        <div class="variants-section">
+            <div class="section-header">
+                <h3><i class="fas fa-tags"></i> أنماط المنتج (اختياري)</h3>
+                <button type="button" class="btn-add" onclick="addVariant()">
+                    <i class="fas fa-plus"></i> إضافة نمط
                 </button>
             </div>
             <div id="variants-container"></div>
@@ -216,12 +358,10 @@
 
         <div class="form-actions">
             <button type="submit" class="btn-submit">
-                <i class="fas fa-check"></i>
-                حفظ المنتج
+                <i class="fas fa-check"></i> حفظ المنتج
             </button>
             <a href="{% url 'admin_app:admin_products' %}" class="btn-cancel">
-                <i class="fas fa-times"></i>
-                إلغاء
+                <i class="fas fa-times"></i> إلغاء
             </a>
         </div>
     </form>
@@ -230,119 +370,149 @@
 
 {% block extra_js %}
 <script>
+    // ========== Direct sizes ==========
+    let directSizeCounter = 0;
+    function addDirectSizeRow() {
+        const container = document.getElementById('direct-sizes-container');
+        const rowId = `direct-size-${directSizeCounter}`;
+        const row = document.createElement('div');
+        row.className = 'size-row';
+        row.id = rowId;
+        row.innerHTML = `
+            <select name="product_size_ids[]" required>
+                <option value="">اختر المقاس</option>
+                {% for size in sizes %}
+                <option value="{{ size.id }}">{{ size.name }}</option>
+                {% endfor %}
+            </select>
+            <input type="number" name="product_size_pcs[]" placeholder="الكمية في الكرتونة" min="1" value="24" required>
+            <button type="button" class="btn-remove" onclick="removeRow('${rowId}')">
+                <i class="fas fa-trash"></i>
+            </button>
+        `;
+        container.appendChild(row);
+        directSizeCounter++;
+    }
+
+    // ========== Variants ==========
     let variantCounter = 0;
 
     function addVariant() {
-        variantCounter++;
         const container = document.getElementById('variants-container');
-        const variantRow = document.createElement('div');
-        variantRow.className = 'variant-row';
-        variantRow.id = `variant-${variantCounter}`;
-        variantRow.style.cssText = 'background: var(--card-bg); padding: 1rem; border-radius: 10px; margin-bottom: 1rem; border: 2px solid var(--border-color);';
+        const variantId = variantCounter;
+        const rowId = `variant-${variantId}`;
+        const row = document.createElement('div');
+        row.className = 'variant-row';
+        row.id = rowId;
 
-        variantRow.innerHTML = `
-            <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 0.75rem;">
-                <h4 style="color: var(--text-primary); font-weight: 600; margin: 0;">نمط #${variantCounter}</h4>
-                <button type="button" onclick="removeVariant(${variantCounter})" style="background: #ef4444; color: white; border: none; padding: 0.375rem 0.75rem; border-radius: 6px; cursor: pointer; font-size: 0.875rem;">
-                    <i class="fas fa-trash"></i> حذف
+        // Build inner HTML
+        row.innerHTML = `
+            <h4>
+                نمط #${variantId + 1}
+                <button type="button" onclick="removeVariant('${rowId}')">
+                    <i class="fas fa-trash"></i> حذف النمط
                 </button>
-            </div>
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            </h4>
+            <div class="variant-fields">
                 <div>
-                    <label style="display: block; font-size: 0.875rem; margin-bottom: 0.25rem; color: var(--text-secondary);">اسم النمط *</label>
-                    <input type="text" name="variant_name[]" class="form-input" style="padding: 0.625rem; font-size: 0.875rem;" required>
+                    <label>اسم النمط *</label>
+                    <input type="text" name="variant_name[]" class="form-input" required>
                 </div>
                 <div>
-                    <label style="display: block; font-size: 0.875rem; margin-bottom: 0.25rem; color: var(--text-secondary);">الكود/SKU</label>
-                    <input type="text" name="variant_code[]" class="form-input" style="padding: 0.625rem; font-size: 0.875rem;">
-                </div>
-
-                <div>
-                    <label style="display: block; font-size: 0.875rem; margin-bottom: 0.25rem; color: var(--text-secondary);">عدد القطع/كرتون *</label>
-                    <input type="number" name="variant_pcs_carton[]" class="form-input" style="padding: 0.625rem; font-size: 0.875rem;" value="24" min="1" required>
+                    <label>الكود/SKU</label>
+                    <input type="text" name="variant_code[]" class="form-input">
                 </div>
                 <div>
-                    <label style="display: block; font-size: 0.875rem; margin-bottom: 0.25rem; color: var(--text-secondary);">
-                        <i class="fas fa-palette"></i> اللون (اختياري)
-                    </label>
-                    <select name="variant_color[]" class="form-select" style="padding: 0.625rem; font-size: 0.875rem;">
+                    <label>عدد القطع/كرتون *</label>
+                    <input type="number" name="variant_pcs_carton[]" class="form-input" value="24" min="1" required>
+                </div>
+                <div>
+                    <label>اللون (اختياري)</label>
+                    <select name="variant_color[]" class="form-select">
                         <option value="">بدون لون</option>
                         {% for color in colors %}
                         <option value="{{ color.id }}">{{ color.name }}</option>
                         {% endfor %}
                     </select>
                 </div>
-                <div style="flex: 1;">
-                    <label style="display: block; font-size: 0.875rem; margin-bottom: 0.25rem; color: var(--text-secondary);">متوفر؟</label>
-                    <input type="checkbox" name="variant_available[]" value="${variantCounter - 1}" checked style="width: 20px; height: 20px; cursor: pointer;">
+                <div>
+                    <label>نوع الطول (اختياري)</label>
+                    <input type="text" name="variant_length_label[]" class="form-input" placeholder="مثال: مقاس السلك">
                 </div>
-                <div style="grid-column: 1 / -1;">
-                    <label style="display: block; font-size: 0.875rem; margin-bottom: 0.5rem; color: var(--text-secondary);">
-                        <i class="fas fa-tag"></i> نوع الطول (اختياري)
-                    </label>
-                    <input type="text" name="variant_length_label[]" class="form-input" style="padding: 0.625rem; font-size: 0.875rem;" placeholder="مثال: مقاس السلك، طول الصابع">
-                </div>
-                <div style="grid-column: 1 / -1;">
-                    <label style="display: block; font-size: 0.875rem; margin-bottom: 0.5rem; color: var(--text-secondary);">
-                        <i class="fas fa-ruler"></i> الأطوال المتاحة (اختياري)
-                    </label>
-                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                        {% for size in sizes %}
-                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--text-primary);">
-                            <input type="checkbox" name="variant_${variantCounter - 1}_sizes[]" value="{{ size.id }}" style="width: 18px; height: 18px; cursor: pointer;">
-                            <span>{{ size.name }}</span>
-                        </label>
-                        {% endfor %}
-                    </div>
-                </div>
-                <div style="grid-column: 1 / -1;" class="variant-group">
-                    <label style="display: block; font-size: 0.875rem; margin-bottom: 0.25rem; color: var(--text-secondary);">
-                        <i class="fas fa-images"></i> صور النمط (متعددة)
-                    </label>
-                    <input type="file" name="variant_${variantCounter - 1}_images[]" class="variant-images-input" style="padding: 0.625rem; font-size: 0.875rem;" accept="image/*" multiple data-variant-index="${variantCounter - 1}">
-                    <small style="color: var(--text-secondary); display: block; margin-top: 0.25rem; font-size: 0.75rem;">
-                        يمكنك اختيار صور متعددة (Ctrl/Cmd + Click)
-                    </small>
-                    <div class="variant-images-preview" style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem;"></div>
+                <div>
+                    <label>متوفر؟</label>
+                    <input type="checkbox" name="variant_available[]" value="${variantId}" checked style="width:20px; height:20px;">
                 </div>
             </div>
+
+            <!-- Variant sizes with quantities -->
+            <div class="sizes-container" id="sizes-container-${variantId}">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                    <label style="font-weight:600;">مقاسات هذا النمط (مع الكمية)</label>
+                    <button type="button" class="btn-add-size" onclick="addVariantSizeRow(${variantId})">
+                        <i class="fas fa-plus"></i> إضافة مقاس
+                    </button>
+                </div>
+                <div id="variant-sizes-${variantId}"></div>
+            </div>
+
+            <!-- Variant images -->
+            <div style="margin-top: 1rem;">
+                <label>صور النمط (متعددة)</label>
+                <input type="file" name="variant_${variantId}_images[]" class="variant-images-input" accept="image/*" multiple data-variant-index="${variantId}">
+                <small style="color: var(--text-secondary); display: block;">يمكنك اختيار صور متعددة (Ctrl/Cmd + Click)</small>
+                <div class="variant-images-preview image-preview" id="variant-images-preview-${variantId}"></div>
+            </div>
         `;
-
-        container.appendChild(variantRow);
+        container.appendChild(row);
+        variantCounter++;
     }
 
-    function removeVariant(id) {
-        const row = document.getElementById(`variant-${id}`);
-        if (row) {
-            row.remove();
-            updateVariantNumbers();
-        }
+    function removeVariant(rowId) {
+        const row = document.getElementById(rowId);
+        if (row) row.remove();
     }
 
-    function updateVariantNumbers() {
-        const rows = document.querySelectorAll('.variant-row');
-        rows.forEach((row, index) => {
-            const header = row.querySelector('h4');
-            if (header) {
-                header.textContent = `نمط #${index + 1}`;
-            }
-        });
+    // Add size row for a specific variant
+    function addVariantSizeRow(variantIndex) {
+        const container = document.getElementById(`variant-sizes-${variantIndex}`);
+        if (!container) return;
+        const sizeRowId = `variant-${variantIndex}-size-${Date.now()}`;
+        const row = document.createElement('div');
+        row.className = 'size-row';
+        row.id = sizeRowId;
+        row.innerHTML = `
+            <select name="variant_${variantIndex}_size_ids[]" required>
+                <option value="">اختر المقاس</option>
+                {% for size in sizes %}
+                <option value="{{ size.id }}">{{ size.name }}</option>
+                {% endfor %}
+            </select>
+            <input type="number" name="variant_${variantIndex}_size_pcs[]" placeholder="الكمية في الكرتونة" min="1" value="24" required>
+            <button type="button" class="btn-remove" onclick="removeRow('${sizeRowId}')">
+                <i class="fas fa-trash"></i>
+            </button>
+        `;
+        container.appendChild(row);
     }
 
-    // Image preview - check if element exists first
+    // Generic remove row function
+    function removeRow(rowId) {
+        const row = document.getElementById(rowId);
+        if (row) row.remove();
+    }
+
+    // Image preview for product additional images
     const additionalImagesInput = document.getElementById('additional-images');
     if (additionalImagesInput) {
         additionalImagesInput.addEventListener('change', function (e) {
             const preview = document.getElementById('image-preview');
             preview.innerHTML = '';
-
             Array.from(e.target.files).forEach(file => {
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     const img = document.createElement('img');
                     img.src = e.target.result;
-                    img.style.cssText = 'width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border-color);';
                     preview.appendChild(img);
                 };
                 reader.readAsDataURL(file);
@@ -350,21 +520,18 @@
         });
     }
 
-    // Variant images preview handler (delegate for dynamically added inputs)
+    // Delegate preview for variant images
     document.addEventListener('change', function (e) {
-        // Check if it's a variant images input (matches pattern variant_X_images[])
         if (e.target && e.target.classList.contains('variant-images-input')) {
-            const previewContainer = e.target.closest('.variant-group').querySelector('.variant-images-preview');
+            const variantIndex = e.target.dataset.variantIndex;
+            const previewContainer = document.getElementById(`variant-images-preview-${variantIndex}`);
             if (!previewContainer) return;
-
             previewContainer.innerHTML = '';
-
-            Array.from(e.target.files).forEach((file, index) => {
+            Array.from(e.target.files).forEach(file => {
                 const reader = new FileReader();
-                reader.onload = function (event) {
+                reader.onload = (event) => {
                     const img = document.createElement('img');
                     img.src = event.target.result;
-                    img.style.cssText = 'width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 2px solid #FFC400;';
                     previewContainer.appendChild(img);
                 };
                 reader.readAsDataURL(file);

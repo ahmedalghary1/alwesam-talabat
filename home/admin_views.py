@@ -169,6 +169,9 @@ def admin_product_add(request):
     })
 
 
+import json
+from django.core.serializers.json import DjangoJSONEncoder
+
 @staff_member_required
 def admin_product_edit(request, product_id):
     """Edit product with direct sizes and variant sizes (with quantities)"""
@@ -192,6 +195,24 @@ def admin_product_edit(request, product_id):
         variant.size_data = list(variant.size_prices.select_related('size').values(
             'id', 'size_id', 'size__name', 'pcs_carton'
         ))
+
+    # Build JSON data for variants (for the template)
+    variants_data = []
+    for variant in variants:
+        variant_dict = {
+            'id': variant.id,
+            'name': variant.name,
+            'code': variant.code,
+            'pcs_carton': variant.pcs_carton,
+            'is_available': variant.is_available,
+            'color_id': variant.selected_color_id,
+            'length_label': variant.length_label,
+            'size_data': list(variant.size_prices.select_related('size').values(
+                'size_id', 'pcs_carton'
+            )),
+            'images': [{'id': img.id, 'url': img.image.url} for img in variant.images.all()]
+        }
+        variants_data.append(variant_dict)
 
     # Direct product sizes with quantities
     product_size_data = list(product.size_prices.select_related('size').values(
@@ -278,6 +299,7 @@ def admin_product_edit(request, product_id):
             variant_order = request.POST.getlist('variant_order[]')
             variant_available = request.POST.getlist('variant_available[]')
             variant_color_ids = request.POST.getlist('variant_color[]')
+            variant_length_labels = request.POST.getlist('variant_length_label[]')  # new field
 
             updated_variant_ids = []
 
@@ -292,6 +314,8 @@ def admin_product_edit(request, product_id):
                     }
                     if i < len(variant_order) and variant_order[i]:
                         variant_data['order'] = int(variant_order[i])
+                    if i < len(variant_length_labels) and variant_length_labels[i]:
+                        variant_data['length_label'] = variant_length_labels[i]
 
                     color_id = variant_color_ids[i] if i < len(variant_color_ids) and variant_color_ids[i] else None
 
@@ -339,33 +363,18 @@ def admin_product_edit(request, product_id):
                     # ========== Variant sizes (VariantSize) ==========
                     size_ids_key = f'variant_{i}_size_ids[]'
                     size_pcs_key = f'variant_{i}_size_pcs[]'
-                    vs_ids_key = f'variant_{i}_variant_size_ids[]'  # optional, if we want to update existing
-
                     size_ids = request.POST.getlist(size_ids_key)
                     size_pcs = request.POST.getlist(size_pcs_key)
-                    vs_ids = request.POST.getlist(vs_ids_key)  # may be empty
 
-                    if vs_ids and len(vs_ids) == len(size_ids):
-                        # Update existing VariantSize records
-                        for vs_id, size_id, pcs in zip(vs_ids, size_ids, size_pcs):
-                            if vs_id and size_id and pcs:
-                                VariantSize.objects.filter(id=vs_id, variant=variant).update(
-                                    size_id=int(size_id),
-                                    pcs_carton=int(pcs)
-                                )
-                        # Delete those not in list
-                        kept_vs_ids = [int(id) for id in vs_ids if id]
-                        variant.size_prices.exclude(id__in=kept_vs_ids).delete()
-                    else:
-                        # Simpler: delete all and recreate
-                        variant.size_prices.all().delete()
-                        for size_id, pcs in zip(size_ids, size_pcs):
-                            if size_id and pcs:
-                                VariantSize.objects.create(
-                                    variant=variant,
-                                    size_id=int(size_id),
-                                    pcs_carton=int(pcs)
-                                )
+                    # Delete all existing sizes for this variant and recreate
+                    variant.size_prices.all().delete()
+                    for size_id, pcs in zip(size_ids, size_pcs):
+                        if size_id and pcs:
+                            VariantSize.objects.create(
+                                variant=variant,
+                                size_id=int(size_id),
+                                pcs_carton=int(pcs)
+                            )
 
             # ========== Delete variants that were removed ==========
             if updated_variant_ids:
@@ -413,11 +422,11 @@ def admin_product_edit(request, product_id):
         'variants': variants,
         'product_images': product_images,
         'product_size_data': product_size_data,
+        'variants_data': json.dumps(variants_data, cls=DjangoJSONEncoder),  # for template
         'total_variants': variants.count(),
         'total_images': product_images.count(),
     }
     return render(request, 'admin/product_edit.html', context)
-
 
 @staff_member_required
 def admin_product_delete(request, product_id):
