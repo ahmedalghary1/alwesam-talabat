@@ -123,16 +123,51 @@
         background: var(--bg-secondary);
         border-radius: 10px;
         margin-bottom: 0.75rem;
+        flex-wrap: wrap;
     }
 
     .item-name {
         font-weight: 600;
         color: var(--text-primary);
+        font-size: 1.1rem;
+    }
+
+    .item-details {
+        margin-top: 0.25rem;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+    }
+
+    .item-attributes {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin: 0.5rem 0;
+    }
+
+    .attribute-badge {
+        background: rgba(255, 196, 0, 0.1);
+        color: #FFC400;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .attribute-badge i {
+        font-size: 0.7rem;
     }
 
     .item-meta {
         color: var(--text-secondary);
         font-size: 0.875rem;
+        background: rgba(0,0,0,0.03);
+        padding: 0.5rem;
+        border-radius: 8px;
+        margin-top: 0.5rem;
     }
 
     .status-form {
@@ -224,32 +259,76 @@
             <div class="order-item">
                 <div style="flex: 1;">
                     <div class="item-name">{{ item.product.name }}</div>
-                    {% if item.color_name or item.size_name or item.variant_info %}
-                    <div style="font-size: 0.85rem; color: #FFC400; margin-bottom: 0.25rem;">
-                        <i class="fas fa-tag"></i>
-                        {% if item.color_name %}
-                        <span>لون: {{ item.color_name }}</span>
-                        {% endif %}
-                        {% if item.color_name and item.size_name %}
-                        <span> • </span>
-                        {% endif %}
+                    
+                    {# عرض تفاصيل النمط إذا وجد #}
+                    {% if item.variant %}
+                    <div class="item-details">
+                        <div><i class="fas fa-cubes"></i> النمط: {{ item.variant.name }}</div>
+                        
+                        {# عرض جميع خصائص النمط (attributes) #}
+                        {% with attributes=item.variant.attributes.all %}
+                            {% if attributes %}
+                            <div class="item-attributes">
+                                {% for attr in attributes %}
+                                <span class="attribute-badge">
+                                    <i class="fas fa-tag"></i>
+                                    {{ attr.attribute.name }}: {{ attr.value }}
+                                </span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        {% endwith %}
+                        
+                        {# عرض المقاس إذا كان مخزناً في item (مثلاً عبر حقل size_name أو size) #}
                         {% if item.size_name %}
-                        <span>{% if item.variant and item.variant.length_label %}{{ item.variant.length_label }}{% else %}مقاس{% endif %}: {{ item.size_name }}</span>
+                        <div class="item-attributes">
+                            <span class="attribute-badge">
+                                <i class="fas fa-ruler"></i>
+                                مقاس: {{ item.size_name }}
+                            </span>
+                        </div>
+                        {% elif item.size %}
+                        <div class="item-attributes">
+                            <span class="attribute-badge">
+                                <i class="fas fa-ruler"></i>
+                                مقاس: {{ item.size.name }}
+                            </span>
+                        </div>
                         {% endif %}
-                        {% if item.variant_info and not item.color_name and not item.size_name %}
-                        <span>{{ item.variant_info }}</span>
+                        
+                        {# إذا كان هناك وصف إضافي #}
+                        {% if item.variant.length_label %}
+                        <div><small>الطول: {{ item.variant.length_label }}</small></div>
                         {% endif %}
                     </div>
+                    {% else %}
+                        {# إذا لم يكن هناك نمط، نعرض الخصائص القديمة #}
+                        {% if item.color_name or item.size_name %}
+                        <div class="item-details">
+                            {% if item.color_name %}
+                            <span class="attribute-badge"><i class="fas fa-palette"></i> لون: {{ item.color_name }}</span>
+                            {% endif %}
+                            {% if item.size_name %}
+                            <span class="attribute-badge"><i class="fas fa-ruler"></i> مقاس: {{ item.size_name }}</span>
+                            {% endif %}
+                        </div>
+                        {% endif %}
                     {% endif %}
+                    
                     <div class="item-meta">
                         {% if item.unit_type == 'piece' %}
-                        <i class="fas fa-cube"></i> طلب بالقطعة: <strong>{{ item.quantity }} قطعة</strong> ({{ item.get_pcs_carton }} قطعة/كرتون)
+                        <i class="fas fa-cube"></i> طلب بالقطعة: <strong>{{ item.quantity }} قطعة</strong> 
+                        ({{ item.get_pcs_carton }} قطعة/كرتون)
                         {% else %}
-                        <i class="fas fa-box"></i> طلب بالكرتونة: <strong>{{ item.get_quantity_in_cartons|floatformat:0 }} كرتون</strong> × {{ item.get_pcs_carton }} قطعة = <strong>{{ item.quantity }} قطعة إجمالي</strong>
+                        <i class="fas fa-box"></i> طلب بالكرتونة: 
+                        <strong>{{ item.get_quantity_in_cartons|floatformat:0 }} كرتون</strong> 
+                        × {{ item.get_pcs_carton }} قطعة = <strong>{{ item.quantity }} قطعة إجمالي</strong>
                         {% endif %}
                     </div>
                 </div>
             </div>
+            {% empty %}
+            <p>لا توجد منتجات في هذا الطلب.</p>
             {% endfor %}
         </div>
 
