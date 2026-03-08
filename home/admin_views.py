@@ -2,22 +2,24 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 from django.db.models import Q, Count
-from products.models import Product, Category, ProductImages, ProductVariant, VariantAttributeValue , VariantAttribute, Size
-from orders.models import Order
+from products.models import (
+    Product, Category, ProductImages, ProductVariant,
+    VariantAttributeValue, VariantAttribute, Size,
+    ProductSize, VariantSize, VariantImage
+)
+from orders.models import Order, OrderItem
 
 
 @staff_member_required
 def admin_dashboard(request):
     """Admin dashboard with statistics and recent orders"""
-    # Statistics
     total_products = Product.objects.count()
     total_categories = Category.objects.count()
     total_orders = Order.objects.count()
     pending_orders = Order.objects.filter(status='pending').count()
-    
-    # Recent orders
+
     recent_orders = Order.objects.all().order_by('-created_at')[:10]
-    
+
     context = {
         'total_products': total_products,
         'total_categories': total_categories,
@@ -33,20 +35,20 @@ def admin_products(request):
     """Product management with search and filter"""
     search_query = request.GET.get('search', '')
     category_filter = request.GET.get('category', '')
-    
+
     products = Product.objects.all()
-    
+
     if search_query:
         products = products.filter(
-            Q(name__icontains=search_query) | 
+            Q(name__icontains=search_query) |
             Q(description__icontains=search_query)
         )
-    
+
     if category_filter:
         products = products.filter(category__slug=category_filter)
-    
+
     categories = Category.objects.all()
-    
+
     return render(request, 'admin/products.html', {
         'products': products,
         'categories': categories,
@@ -54,31 +56,28 @@ def admin_products(request):
         'category_filter': category_filter,
     })
 
+
 @staff_member_required
 def admin_product_add(request):
-    """Add a new product"""
+    """Add a new product with direct sizes and variant sizes (with quantities)"""
     categories = Category.objects.all()
-    
-    # ✅ الحصول على الألوان من نموذج VariantAttributeValue
     colors = VariantAttributeValue.objects.filter(
         attribute__name__in=["لون", "Color"]
     ).all()
-    
     sizes = Size.objects.all()
-    
+
     if request.method == 'POST':
         name = request.POST.get('name')
         description = request.POST.get('description', '')
         pcs_carton = request.POST.get('pcs_carton', 1)
         category_id = request.POST.get('category')
         image = request.FILES.get('image')
-        
+
         try:
-            # Generate slug from name
             from django.utils.text import slugify
             slug = slugify(name, allow_unicode=True)
-            
-            # Create the product
+
+            # Create product
             product = Product.objects.create(
                 name=name,
                 slug=slug,
@@ -88,26 +87,33 @@ def admin_product_add(request):
                 image=image,
                 is_available='is_available' in request.POST
             )
-            
-            # Handle additional images
+
+            # Additional images for product
             additional_images = request.FILES.getlist('additional_images[]')
             for idx, img in enumerate(additional_images):
                 ProductImages.objects.create(product=product, image=img, order=idx)
-            
-            # Handle product variants with multiple images
+
+            # ========== Direct product sizes (ProductSize) ==========
+            product_size_ids = request.POST.getlist('product_size_ids[]')
+            product_size_pcs = request.POST.getlist('product_size_pcs[]')
+            for size_id, pcs in zip(product_size_ids, product_size_pcs):
+                if size_id and pcs:
+                    ProductSize.objects.create(
+                        product=product,
+                        size_id=int(size_id),
+                        pcs_carton=int(pcs)
+                    )
+
+            # ========== Variants ==========
             variant_names = request.POST.getlist('variant_name[]')
             variant_codes = request.POST.getlist('variant_code[]')
             variant_pcs = request.POST.getlist('variant_pcs_carton[]')
             variant_available = request.POST.getlist('variant_available[]')
-            
-            # ✅ Get color IDs from select inputs
             variant_color_ids = request.POST.getlist('variant_color[]')
-            
+
             for i in range(len(variant_names)):
-                if variant_names[i].strip():  # Only create if name is provided
-                    # Get color value for this variant
-                    color_id = variant_color_ids[i] if i < len(variant_color_ids) and variant_color_ids[i] else None
-                    
+                if variant_names[i].strip():
+                    # Create variant
                     variant = ProductVariant.objects.create(
                         product=product,
                         name=variant_names[i],
@@ -115,138 +121,156 @@ def admin_product_add(request):
                         pcs_carton=int(variant_pcs[i]) if i < len(variant_pcs) and variant_pcs[i] else 24,
                         is_available=str(i) in variant_available,
                     )
-                    
-                    # ✅ إضافة اللون كـ attribute للـ variant
-                    if color_id:
+
+                    # Add color attribute
+                    if i < len(variant_color_ids) and variant_color_ids[i]:
                         try:
-                            color_value = VariantAttributeValue.objects.get(id=color_id)
+                            color_value = VariantAttributeValue.objects.get(id=variant_color_ids[i])
                             variant.attributes.add(color_value)
                         except VariantAttributeValue.DoesNotExist:
                             pass
-                    
-                    # Add sizes to variant (many-to-many)
-                    size_ids_key = f'variant_{i}_sizes[]'
+
+                    # ========== Variant sizes with quantities (VariantSize) ==========
+                    size_ids_key = f'variant_{i}_size_ids[]'
+                    size_pcs_key = f'variant_{i}_size_pcs[]'
                     size_ids = request.POST.getlist(size_ids_key)
-                    if size_ids:
-                        variant.sizes.set(size_ids)
-                    
-                    # Save multiple variant images using indexed naming
+                    size_pcs = request.POST.getlist(size_pcs_key)
+
+                    for size_id, pcs in zip(size_ids, size_pcs):
+                        if size_id and pcs:
+                            VariantSize.objects.create(
+                                variant=variant,
+                                size_id=int(size_id),
+                                pcs_carton=int(pcs)
+                            )
+
+                    # ========== Variant images ==========
                     variant_images_key = f'variant_{i}_images[]'
                     variant_images = request.FILES.getlist(variant_images_key)
-                    
-                    if variant_images:
-                        from products.models import VariantImage
-                        for idx, img in enumerate(variant_images):
-                            VariantImage.objects.create(
-                                variant=variant,
-                                image=img,
-                                order=idx
-                            )
-            
+                    for idx, img in enumerate(variant_images):
+                        VariantImage.objects.create(
+                            variant=variant,
+                            image=img,
+                            order=idx
+                        )
+
             messages.success(request, f'تم إضافة المنتج "{product.name}" بنجاح')
             return redirect('admin_app:admin_products')
+
         except Exception as e:
             messages.error(request, f'حدث خطأ: {str(e)}')
             import traceback
-            traceback.print_exc()  # للتشخيص
-    
+            traceback.print_exc()
+
     return render(request, 'admin/product_add.html', {
         'categories': categories,
         'colors': colors,
         'sizes': sizes
     })
-    
+
+
 @staff_member_required
 def admin_product_edit(request, product_id):
-    """Edit existing product with full variant management including colors"""
+    """Edit product with direct sizes and variant sizes (with quantities)"""
     product = get_object_or_404(Product, id=product_id)
     categories = Category.objects.all()
-    
-    # ✅ الحصول على الألوان من VariantAttributeValue
     colors = VariantAttributeValue.objects.filter(
         attribute__name__in=["لون", "Color"]
     ).select_related('attribute').all()
-    
     sizes = Size.objects.all().order_by('order')
-    
-    # ✅ تجهيز الـ variants مع البيانات المرتبطة
+
+    # Prepare variants with their size data (through VariantSize)
     variants = product.variants.prefetch_related(
-        'attributes__attribute', 
-        'sizes',
+        'attributes__attribute',
         'images'
     ).all().order_by('order')
-    
-    # ✅ تجهيز الألوان المحددة لكل variant
+
     for variant in variants:
-        # الحصول على اللون المرتبط بهذا النمط
         color_attr = variant.attributes.filter(attribute__name__in=["لون", "Color"]).first()
         variant.selected_color_id = color_attr.id if color_attr else None
-        # تجهيز قائمة الـ sizes المحددة
-        variant.selected_size_ids = list(variant.sizes.values_list('id', flat=True))
-    
-    # ✅ تجهيز الصور الإضافية للمنتج
+        # Get size data with pcs_carton from VariantSize
+        variant.size_data = list(variant.size_prices.select_related('size').values(
+            'id', 'size_id', 'size__name', 'pcs_carton'
+        ))
+
+    # Direct product sizes with quantities
+    product_size_data = list(product.size_prices.select_related('size').values(
+        'id', 'size_id', 'size__name', 'pcs_carton'
+    ))
+
     product_images = product.additional_images.all().order_by('order')
-    
+
     if request.method == 'POST':
         try:
-            # ========== تحديث معلومات المنتج الأساسية ==========
+            # ========== Update product basic info ==========
             product.name = request.POST.get('name', product.name)
             product.description = request.POST.get('description', product.description)
             product.pcs_carton = request.POST.get('pcs_carton', product.pcs_carton)
             product.is_available = 'is_available' in request.POST
             product.order = request.POST.get('order', product.order)
-            
+
             category_id = request.POST.get('category')
-            if category_id:
-                product.category_id = category_id
-            else:
-                product.category = None
-            
-            # تحديث الصورة الرئيسية إذا تم رفع صورة جديدة
+            product.category_id = category_id if category_id else None
+
             if 'image' in request.FILES:
                 product.image = request.FILES['image']
-            
-            # تحديث slug إذا تغير الاسم
+
             if request.POST.get('name') != product.name or not product.slug:
                 from django.utils.text import slugify
                 product.slug = slugify(product.name, allow_unicode=True)
-            
+
             product.save()
-            
-            # ========== إدارة الصور الإضافية للمنتج ==========
-            
-            # حذف الصور المحددة
+
+            # ========== Product additional images ==========
+            # Delete selected images
             delete_product_images = request.POST.getlist('delete_product_images[]')
             if delete_product_images:
-                ProductImages.objects.filter(
-                    id__in=delete_product_images, 
-                    product=product
-                ).delete()
-            
-            # إضافة صور جديدة
+                ProductImages.objects.filter(id__in=delete_product_images, product=product).delete()
+
+            # Add new images
             new_product_images = request.FILES.getlist('new_product_images[]')
             if new_product_images:
                 from django.db import models as db_models
                 max_order = product.additional_images.aggregate(db_models.Max('order'))['order__max'] or 0
-                
                 for idx, img in enumerate(new_product_images):
                     ProductImages.objects.create(
                         product=product,
                         image=img,
                         order=max_order + idx + 1
                     )
-            
-            # تحديث ترتيب الصور الموجودة
+
+            # Update order of existing images
             image_orders = request.POST.getlist('image_order[]')
             image_ids = request.POST.getlist('image_id[]')
-            
             for img_id, order in zip(image_ids, image_orders):
                 if img_id and order:
                     ProductImages.objects.filter(id=img_id, product=product).update(order=order)
-            
-            # ========== إدارة الـ Variants ==========
-            
-            # جمع بيانات الـ variants من النموذج
+
+            # ========== Direct product sizes (ProductSize) ==========
+            existing_ps_ids = request.POST.getlist('product_size_id[]')
+            existing_ps_pcs = request.POST.getlist('product_size_pcs[]')
+            new_ps_size_ids = request.POST.getlist('new_product_size_id[]')
+            new_ps_pcs = request.POST.getlist('new_product_size_pcs[]')
+
+            # Update existing
+            for ps_id, pcs in zip(existing_ps_ids, existing_ps_pcs):
+                if ps_id and pcs:
+                    ProductSize.objects.filter(id=ps_id, product=product).update(pcs_carton=int(pcs))
+
+            # Add new
+            for size_id, pcs in zip(new_ps_size_ids, new_ps_pcs):
+                if size_id and pcs:
+                    ProductSize.objects.create(
+                        product=product,
+                        size_id=int(size_id),
+                        pcs_carton=int(pcs)
+                    )
+
+            # Delete removed ones (those not in existing_ps_ids)
+            kept_ps_ids = [int(id) for id in existing_ps_ids if id]
+            product.size_prices.exclude(id__in=kept_ps_ids).delete()
+
+            # ========== Variants ==========
             variant_ids = request.POST.getlist('variant_id[]')
             variant_names = request.POST.getlist('variant_name[]')
             variant_codes = request.POST.getlist('variant_code[]')
@@ -254,132 +278,116 @@ def admin_product_edit(request, product_id):
             variant_order = request.POST.getlist('variant_order[]')
             variant_available = request.POST.getlist('variant_available[]')
             variant_color_ids = request.POST.getlist('variant_color[]')
-            
-            # متغير لتتبع الـ variants التي تم تحديثها
+
             updated_variant_ids = []
-            
-            # معالجة كل variant
+
             for i in range(len(variant_names)):
-                if variant_names[i].strip():  # فقط إذا كان الاسم موجوداً
-                    
-                    # تجهيز بيانات الـ variant
+                if variant_names[i].strip():
                     variant_data = {
                         'product': product,
                         'name': variant_names[i],
                         'code': variant_codes[i] if i < len(variant_codes) and variant_codes[i] else None,
                         'pcs_carton': int(variant_pcs[i]) if i < len(variant_pcs) and variant_pcs[i] else 24,
-                        'is_available': str(i) in variant_available,  # تحويل checked إلى Boolean
+                        'is_available': str(i) in variant_available,
                     }
-                    
-                    # إضافة order إذا كان موجوداً
                     if i < len(variant_order) and variant_order[i]:
                         variant_data['order'] = int(variant_order[i])
-                    
-                    # الحصول على معرف اللون
+
                     color_id = variant_color_ids[i] if i < len(variant_color_ids) and variant_color_ids[i] else None
-                    
-                    # التحقق مما إذا كان هذا variant موجود مسبقاً أم جديد
+
                     if i < len(variant_ids) and variant_ids[i]:
-                        # تحديث variant موجود
+                        # Update existing variant
                         try:
                             variant = ProductVariant.objects.get(id=variant_ids[i], product=product)
-                            
-                            # تحديث الحقول الأساسية
                             for key, value in variant_data.items():
                                 setattr(variant, key, value)
-                            
-                            # تحديث الصورة إذا تم رفع صورة جديدة
-                            variant_image_key = f'variant_image_{i}'
-                            if variant_image_key in request.FILES:
-                                variant.image = request.FILES[variant_image_key]
-                            
                             variant.save()
-                            
-                            # ✅ تحديث اللون (attributes)
-                            # إزالة جميع الألوان القديمة
+
+                            # Update color
                             old_colors = variant.attributes.filter(attribute__name__in=["لون", "Color"])
                             if old_colors.exists():
                                 variant.attributes.remove(*old_colors)
-                            
-                            # إضافة اللون الجديد إذا تم اختياره
                             if color_id:
                                 try:
                                     color_value = VariantAttributeValue.objects.get(id=color_id)
                                     variant.attributes.add(color_value)
                                 except VariantAttributeValue.DoesNotExist:
                                     pass
-                            
-                            # تحديث المقاسات (sizes)
-                            size_ids_key = f'variant_{i}_sizes[]'
-                            size_ids = request.POST.getlist(size_ids_key)
-                            if size_ids:
-                                variant.sizes.set(size_ids)
-                            else:
-                                variant.sizes.clear()
-                            
+
                             updated_variant_ids.append(variant.id)
-                            
                         except ProductVariant.DoesNotExist:
-                            # إذا كان ID غير صالح، أنشئ variant جديد
+                            # If ID invalid, create new
                             variant = ProductVariant.objects.create(**variant_data)
-                            
-                            # إضافة اللون
                             if color_id:
                                 try:
                                     color_value = VariantAttributeValue.objects.get(id=color_id)
                                     variant.attributes.add(color_value)
                                 except VariantAttributeValue.DoesNotExist:
                                     pass
-                            
-                            # إضافة المقاسات
-                            size_ids_key = f'variant_{i}_sizes[]'
-                            size_ids = request.POST.getlist(size_ids_key)
-                            if size_ids:
-                                variant.sizes.set(size_ids)
-                            
                             updated_variant_ids.append(variant.id)
                     else:
-                        # إنشاء variant جديد
+                        # Create new variant
                         variant = ProductVariant.objects.create(**variant_data)
-                        
-                        # إضافة اللون
                         if color_id:
                             try:
                                 color_value = VariantAttributeValue.objects.get(id=color_id)
                                 variant.attributes.add(color_value)
                             except VariantAttributeValue.DoesNotExist:
                                 pass
-                        
-                        # إضافة المقاسات
-                        size_ids_key = f'variant_{i}_sizes[]'
-                        size_ids = request.POST.getlist(size_ids_key)
-                        if size_ids:
-                            variant.sizes.set(size_ids)
-                        
                         updated_variant_ids.append(variant.id)
-            
-            # ========== إدارة صور الـ Variants ==========
-            
-            # حذف الصور المحددة من جميع الـ variants
+
+                    # ========== Variant sizes (VariantSize) ==========
+                    size_ids_key = f'variant_{i}_size_ids[]'
+                    size_pcs_key = f'variant_{i}_size_pcs[]'
+                    vs_ids_key = f'variant_{i}_variant_size_ids[]'  # optional, if we want to update existing
+
+                    size_ids = request.POST.getlist(size_ids_key)
+                    size_pcs = request.POST.getlist(size_pcs_key)
+                    vs_ids = request.POST.getlist(vs_ids_key)  # may be empty
+
+                    if vs_ids and len(vs_ids) == len(size_ids):
+                        # Update existing VariantSize records
+                        for vs_id, size_id, pcs in zip(vs_ids, size_ids, size_pcs):
+                            if vs_id and size_id and pcs:
+                                VariantSize.objects.filter(id=vs_id, variant=variant).update(
+                                    size_id=int(size_id),
+                                    pcs_carton=int(pcs)
+                                )
+                        # Delete those not in list
+                        kept_vs_ids = [int(id) for id in vs_ids if id]
+                        variant.size_prices.exclude(id__in=kept_vs_ids).delete()
+                    else:
+                        # Simpler: delete all and recreate
+                        variant.size_prices.all().delete()
+                        for size_id, pcs in zip(size_ids, size_pcs):
+                            if size_id and pcs:
+                                VariantSize.objects.create(
+                                    variant=variant,
+                                    size_id=int(size_id),
+                                    pcs_carton=int(pcs)
+                                )
+
+            # ========== Delete variants that were removed ==========
+            if updated_variant_ids:
+                deleted_count = product.variants.exclude(id__in=updated_variant_ids).delete()
+                if deleted_count[0] > 0:
+                    messages.info(request, f'تم حذف {deleted_count[0]} نمط/أنماط')
+
+            # ========== Variant images ==========
+            # Delete selected images
             delete_variant_images = request.POST.getlist('delete_variant_images[]')
             if delete_variant_images:
-                from products.models import VariantImage
                 VariantImage.objects.filter(id__in=delete_variant_images).delete()
-            
-            # إضافة صور جديدة لكل variant
+
+            # Add new images for each variant
             for idx, variant_id in enumerate(updated_variant_ids):
                 new_images_key = f'variant_{idx}_new_images[]'
                 new_images = request.FILES.getlist(new_images_key)
-                
                 if new_images:
                     try:
                         variant = ProductVariant.objects.get(id=variant_id)
-                        from products.models import VariantImage
                         from django.db import models as db_models
-                        
-                        # الحصول على أعلى ترتيب للصور الموجودة
                         max_order = variant.images.aggregate(db_models.Max('order'))['order__max'] or 0
-                        
                         for img_idx, img in enumerate(new_images):
                             VariantImage.objects.create(
                                 variant=variant,
@@ -388,28 +396,15 @@ def admin_product_edit(request, product_id):
                             )
                     except ProductVariant.DoesNotExist:
                         continue
-            
-            # ========== حذف الـ variants التي لم تعد موجودة ==========
-            if updated_variant_ids:
-                # حذف الـ variants التي لم يتم تضمينها في التحديث
-                deleted_count = ProductVariant.objects.filter(
-                    product=product
-                ).exclude(
-                    id__in=updated_variant_ids
-                ).delete()
-                
-                if deleted_count[0] > 0:
-                    messages.info(request, f'تم حذف {deleted_count[0]} نمط/أنماط')
-            
+
             messages.success(request, f'تم تحديث المنتج "{product.name}" بنجاح')
             return redirect('admin_app:admin_products')
-            
+
         except Exception as e:
             messages.error(request, f'حدث خطأ أثناء تحديث المنتج: {str(e)}')
             import traceback
-            traceback.print_exc()  # للتشخيص في وحدة التحكم
-    
-    # تجهيز الـ context للقالب
+            traceback.print_exc()
+
     context = {
         'product': product,
         'categories': categories,
@@ -417,13 +412,11 @@ def admin_product_edit(request, product_id):
         'sizes': sizes,
         'variants': variants,
         'product_images': product_images,
-        # إحصائيات للمساعدة في العرض
+        'product_size_data': product_size_data,
         'total_variants': variants.count(),
         'total_images': product_images.count(),
     }
-    
     return render(request, 'admin/product_edit.html', context)
-
 
 
 @staff_member_required
@@ -442,20 +435,21 @@ def admin_orders(request):
     """Order management with search and filter"""
     status_filter = request.GET.get('status', '')
     search_query = request.GET.get('search', '').strip()
-    
-    orders = Order.objects.all().select_related('user').prefetch_related('items__product').order_by('-created_at')
-    
-    # Apply search filter (order ID or customer name only)
+
+    orders = Order.objects.all().select_related('user').prefetch_related(
+        'items__product',
+        'items__variant'
+    ).order_by('-created_at')
+
     if search_query:
         orders = orders.filter(
             Q(id__icontains=search_query) |
             Q(user__username__icontains=search_query)
         ).distinct()
-    
-    # Apply status filter
+
     if status_filter:
         orders = orders.filter(status=status_filter)
-    
+
     return render(request, 'admin/orders.html', {
         'orders': orders,
         'status_filter': status_filter,
@@ -463,30 +457,30 @@ def admin_orders(request):
     })
 
 
-
 @staff_member_required
 def admin_order_detail(request, order_id):
-    """Order details in admin panel"""
+    """Order details in admin panel, including variant information"""
     order = get_object_or_404(Order, id=order_id)
-    
+    # Prefetch items with related product and variant
+    order_items = order.items.select_related('product', 'variant').all()
+
     if request.method == 'POST':
         new_status = request.POST.get('status')
         if new_status in dict(Order.STATUS_CHOICES).keys():
             order.status = new_status
             order.save()
-            
-            # Send order status update email asynchronously using Celery
+
             try:
                 from utils.email_tasks import send_order_status_email_task
-                
-                # Queue the email task to be processed in the background
                 send_order_status_email_task(order.id, new_status, order.user.email)
-                
             except Exception as e:
                 messages.success(request, f'تم تحديث حالة الطلب (فشل جدولة إرسال البريد الإلكتروني: {str(e)})')
-    
-    return render(request, 'admin/order_detail.html', {'order': order})
 
+    context = {
+        'order': order,
+        'order_items': order_items,
+    }
+    return render(request, 'admin/order_detail.html', context)
 
 
 @staff_member_required
@@ -503,7 +497,7 @@ def admin_category_add(request):
         name = request.POST.get('name')
         description = request.POST.get('description', '')
         image = request.FILES.get('image')
-        
+
         try:
             category = Category.objects.create(
                 name=name,
@@ -514,7 +508,7 @@ def admin_category_add(request):
             return redirect('admin_app:admin_categories')
         except Exception as e:
             messages.error(request, f'حدث خطأ: {str(e)}')
-    
+
     return render(request, 'admin/category_add.html')
 
 
@@ -522,18 +516,18 @@ def admin_category_add(request):
 def admin_category_edit(request, category_id):
     """Edit category"""
     category = get_object_or_404(Category, id=category_id)
-    
+
     if request.method == 'POST':
         category.name = request.POST.get('name', category.name)
         category.description = request.POST.get('description', category.description)
-        
+
         if 'image' in request.FILES:
             category.image = request.FILES['image']
-        
+
         category.save()
         messages.success(request, 'تم تحديث القسم بنجاح')
         return redirect('admin_app:admin_categories')
-    
+
     return render(request, 'admin/category_edit.html', {'category': category})
 
 
@@ -552,10 +546,7 @@ def admin_category_delete(request, category_id):
 def admin_pending_users(request):
     """Display users awaiting approval"""
     from accounts.models import CustomUser
-    
-    # Get all inactive users
     pending_users = CustomUser.objects.filter(is_active=False, is_staff=False).order_by('-date_joined')
-    
     context = {
         'pending_users': pending_users,
         'pending_users_active': 'active',
@@ -567,24 +558,23 @@ def admin_pending_users(request):
 def admin_all_users(request):
     """Display all users"""
     from accounts.models import CustomUser
-    
     search_query = request.GET.get('search', '')
     status_filter = request.GET.get('status', '')
-    
+
     users = CustomUser.objects.filter(is_staff=False).order_by('-date_joined')
-    
+
     if search_query:
         users = users.filter(
             Q(username__icontains=search_query) |
             Q(email__icontains=search_query) |
             Q(phone__icontains=search_query)
         )
-    
+
     if status_filter == 'active':
         users = users.filter(is_active=True)
     elif status_filter == 'inactive':
         users = users.filter(is_active=False)
-    
+
     context = {
         'users': users,
         'search_query': search_query,
@@ -598,26 +588,19 @@ def admin_all_users(request):
 def admin_approve_user(request, user_id):
     """Approve user registration"""
     from accounts.models import CustomUser
-    
     if request.method == 'POST':
         user = get_object_or_404(CustomUser, id=user_id, is_staff=False)
         user.is_active = True
         user.save()
-        
-        # Send activation email asynchronously using Celery
+
         try:
             from utils.email_tasks import send_activation_email_task
-            
             login_url = request.build_absolute_uri('/accounts/login/')
-            
-            # Queue the email task to be processed in the background
             send_activation_email_task(user.id, login_url)
-            
             messages.success(request, f'تم تفعيل حساب "{user.username}" وتم إضافة إرسال البريد الإلكتروني إلى قائمة الانتظار')
-            
         except Exception as e:
             messages.success(request, f'تم تفعيل حساب "{user.username}" (فشل جدولة إرسال البريد الإلكتروني: {str(e)})')
-    
+
     return redirect('admin_app:pending_users')
 
 
@@ -625,13 +608,11 @@ def admin_approve_user(request, user_id):
 def admin_reject_user(request, user_id):
     """Reject user and delete account"""
     from accounts.models import CustomUser
-    
     if request.method == 'POST':
         user = get_object_or_404(CustomUser, id=user_id, is_staff=False)
         username = user.username
         user.delete()
         messages.success(request, f'تم رفض وحذف طلب انضمام "{username}"')
-    
     return redirect('admin_app:pending_users')
 
 
@@ -639,30 +620,20 @@ def admin_reject_user(request, user_id):
 def admin_toggle_user_status(request, user_id):
     """Toggle user active status (deactivate/activate)"""
     from accounts.models import CustomUser
-    
     if request.method == 'POST':
         user = get_object_or_404(CustomUser, id=user_id, is_staff=False)
-        
-        # Toggle the active status
         user.is_active = not user.is_active
         user.save()
-        
+
         if user.is_active:
-            status_text = "تفعيل"
-            # Send activation email asynchronously using Celery
             try:
                 from utils.email_tasks import send_activation_email_task
-                
                 login_url = request.build_absolute_uri('/accounts/login/')
-                
-                # Queue the email task to be processed in the background
                 send_activation_email_task(user.id, login_url)
-                
-                messages.success(request, f'تم تفعيل حساب "{user.username}" تم  إرسال البريد الإلكتروني  ')
+                messages.success(request, f'تم تفعيل حساب "{user.username}" وتم إرسال البريد الإلكتروني')
             except Exception as e:
-                messages.success(request, f'تم تفعيل حساب "{user.username}" (فشل  إرسال البريد الإلكتروني: {str(e)})')
+                messages.success(request, f'تم تفعيل حساب "{user.username}" (فشل إرسال البريد الإلكتروني: {str(e)})')
         else:
-            status_text = "إيقاف"
-            messages.success(request, f'تم {status_text} حساب المستخدم "{user.username}" بنجاح')
-        
+            messages.success(request, f'تم إيقاف حساب المستخدم "{user.username}" بنجاح')
+
     return redirect('admin_app:all_users')
