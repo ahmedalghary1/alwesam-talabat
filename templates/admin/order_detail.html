@@ -220,7 +220,7 @@
 
         <h3 class="section-title">المنتجات المطلوبة</h3>
         <div class="items-list">
-            {% for item in order.items.all %}
+            {% for item in order_items %}
             <div class="order-item">
                 <div style="flex: 1;">
                     <div class="item-name">{{ item.product.name }}</div>
