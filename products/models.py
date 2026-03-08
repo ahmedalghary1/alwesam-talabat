@@ -19,6 +19,7 @@ class Category(ImageCompressionMixin, models.Model):
                 self.slug = slugify(self.name, allow_unicode=True)
             super().save(*args, **kwargs)
             self.save_with_compression(image_field_name='image')
+
     def __str__(self):
         return self.name
 
@@ -26,6 +27,7 @@ class Category(ImageCompressionMixin, models.Model):
         ordering = ['order']
         verbose_name = "القسم"
         verbose_name_plural = "الأقسام"
+
 
 class Product(ImageCompressionMixin, models.Model):
     """
@@ -35,20 +37,22 @@ class Product(ImageCompressionMixin, models.Model):
     """
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True)
-    # Default pieces per carton (can be overridden by variants)
+    # Default pieces per carton (can be overridden by variants or direct sizes)
     pcs_carton = models.PositiveIntegerField(default=24)
     # Indexed for URL routing and faster queries
     slug = models.CharField(max_length=255, unique=True, blank=True, db_index=True)
     image = models.ImageField(upload_to='product-image')
     order = models.PositiveIntegerField(default=0)
-    # 👇 أضف هذا الجزء هنا
+
+    # Direct sizes with per-size pcs_carton (through model)
     sizes = models.ManyToManyField(
         "Size",
+        through='ProductSize',
+        through_fields=('product', 'size'),
         blank=True,
-
         related_name='products',
         verbose_name="الأطوال المتاحة للمنتج",
-        help_text="أضف أطوال مباشرة إذا لم يكن للمنتج أنماط"
+        help_text="أضف أطوال مباشرة إذا لم يكن للمنتج أنماط. يمكن تحديد الكمية لكل مقاس عبر الواجهة المخصصة."
     )
 
     category = models.ForeignKey(Category, related_name='products', on_delete=models.SET_NULL, null=True, blank=True)
@@ -68,7 +72,6 @@ class Product(ImageCompressionMixin, models.Model):
 
     class Meta:
         ordering = ['order']
-        # Strategic indexes for common query patterns
         verbose_name = "المنتج"
         verbose_name_plural = "المنتجات"
         indexes = [
@@ -78,13 +81,12 @@ class Product(ImageCompressionMixin, models.Model):
         ]
 
     def __str__(self):
-        return self.name 
-        
+        return self.name
+
 
 class ProductImages(ImageCompressionMixin, models.Model):
     """
     Additional product images for gallery/slideshow.
-    
     Images are ordered by the 'order' field for display control.
     """
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='additional_images')
@@ -108,14 +110,37 @@ class ProductImages(ImageCompressionMixin, models.Model):
     def __str__(self):
         return f"صورة لـ {self.product.name}"
 
+
+class Size(models.Model):
+    """
+    Product sizes/lengths for product variants.
+    Examples: S, M, L, XL or wire gauges, fabric lengths, etc.
+    Ordered by 'order' field for consistent display.
+    """
+    name = models.CharField(max_length=50, verbose_name="اسم المقاس")
+    order = models.PositiveIntegerField(default=0, verbose_name="الترتيب")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['order', 'name']
+        verbose_name = "مقاس"
+        verbose_name_plural = "المقاسات"
+
+    def __str__(self):
+        return self.name
+
+
 class VariantSize(models.Model):
+    """
+    Intermediate model for Variant - Size relationship with per-size pcs_carton.
+    """
     variant = models.ForeignKey(
-        'ProductVariant',  # استخدام نص
+        'ProductVariant',
         on_delete=models.CASCADE,
         related_name='size_prices'
     )
     size = models.ForeignKey(
-        'Size',  # استخدام نص
+        Size,
         on_delete=models.CASCADE,
         related_name='variant_prices'
     )
@@ -132,23 +157,35 @@ class VariantSize(models.Model):
     def __str__(self):
         return f"{self.variant} - {self.size.name}: {self.pcs_carton} قطعة"
 
-class Size(models.Model):
+
+class ProductSize(models.Model):
     """
-    Product sizes/lengths for product variants.
-    Examples: S, M, L, XL or wire gauges, fabric lengths, etc.
-    Ordered by 'order' field for consistent display.
+    Intermediate model for Product (direct) - Size relationship with per-size pcs_carton.
+    Used when product has no variants.
     """
-    name = models.CharField(max_length=50, verbose_name="اسم المقاس")
-    order = models.PositiveIntegerField(default=0, verbose_name="الترتيب")
-    created_at = models.DateTimeField(auto_now_add=True)
-    
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name='size_prices'
+    )
+    size = models.ForeignKey(
+        Size,
+        on_delete=models.CASCADE,
+        related_name='product_prices'
+    )
+    pcs_carton = models.PositiveIntegerField(
+        default=24,
+        verbose_name="عدد القطع في الكرتونة"
+    )
+
     class Meta:
-        ordering = ['order', 'name']
-        verbose_name = "مقاس"
-        verbose_name_plural = "المقاسات"
-    
+        unique_together = ('product', 'size')
+        verbose_name = "مقاس المنتج المباشر"
+        verbose_name_plural = "مقاسات المنتج المباشرة"
+
     def __str__(self):
-        return self.name
+        return f"{self.product.name} - {self.size.name}: {self.pcs_carton} قطعة"
+
 
 class VariantImage(ImageCompressionMixin, models.Model):
     """
@@ -176,6 +213,7 @@ class VariantImage(ImageCompressionMixin, models.Model):
     def __str__(self):
         return f"صورة لنمط {self.variant.name}"
 
+
 class VariantAttribute(models.Model):
     """
     نوع المتغير: لون - مقاس - خامة - موديل ...
@@ -197,7 +235,6 @@ class VariantAttributeValue(models.Model):
         on_delete=models.CASCADE
     )
     value = models.CharField(max_length=100)
-
     hex_code = models.CharField(
         max_length=7,
         blank=True,
@@ -221,7 +258,6 @@ class ProductVariant(ImageCompressionMixin, models.Model):
     This allows selling the same product in different configurations.
     Example: Same shirt in different colors or different wire gauges.
     """
-
     attributes = models.ManyToManyField(
         VariantAttributeValue,
         blank=True,
@@ -231,19 +267,18 @@ class ProductVariant(ImageCompressionMixin, models.Model):
 
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='variants')
     order = models.PositiveIntegerField(default=0)
-    # Variant classification
     # Variant-specific attributes
     name = models.CharField(max_length=200, help_text="اسم النمط الكامل")
     length_label = models.CharField(max_length=50, blank=True, null=True, verbose_name="نوع الطول", help_text="مثال: مقاس السلك، طول الصابع")
     # Unique SKU/product code for inventory tracking
-    code = models.CharField(max_length=50, unique=True, blank=True, null=True,help_text="كود/SKU خاص بالنمط")
+    code = models.CharField(max_length=50, unique=True, blank=True, null=True, help_text="كود/SKU الخاص بالنمط")
     # Variant can override product's default pcs_carton
-    pcs_carton = models.PositiveIntegerField(default=24,help_text="عدد القطع في الكرتونة لهذا النمط")
-    image = models.ImageField(upload_to='variant-images', blank=True, null=True,help_text="صورة خاصة بالنمط")
+    pcs_carton = models.PositiveIntegerField(default=24, help_text="عدد القطع في الكرتونة لهذا النمط")
+    image = models.ImageField(upload_to='variant-images', blank=True, null=True, help_text="صورة خاصة بالنمط")
 
     sizes = models.ManyToManyField(
         Size,
-        through='products.VariantSize',  # استخدم اسم التطبيق + اسم النموذج كنص
+        through='VariantSize',
         through_fields=('variant', 'size'),
         blank=True,
         related_name='variants',
@@ -267,18 +302,13 @@ class ProductVariant(ImageCompressionMixin, models.Model):
             self.save_with_compression(image_field_name='image')
 
     class Meta:
-        # Ensure each product has unique variant codes
-
         ordering = ['order']
         verbose_name = "نمط المنتج"
         verbose_name_plural = "أنماط المنتجات"
-        # Optimize common queries
         indexes = [
             models.Index(fields=['is_available']),
             models.Index(fields=['product', 'is_available']),
         ]
 
-
     def __str__(self):
         return self.name or f"{self.product.name}"
-        
