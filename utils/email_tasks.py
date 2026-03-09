@@ -167,7 +167,7 @@ def send_order_status_email_task(self, order_id, new_status, user_email):
         html_content = render_to_string('emails/order_status_update.html', context)
         text_content = strip_tags(html_content)
         
-        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'info@elwsam.com')
+        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'support@elwsamstore.com')
         recipient_list = [user_email]
         
         # Create and send the email
