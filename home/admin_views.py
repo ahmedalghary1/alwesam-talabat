@@ -10,6 +10,19 @@ from products.models import (
 from orders.models import Order, OrderItem
 
 
+def _valid_model_ids(values):
+    """Return only positive integer IDs from untrusted form values."""
+    valid_ids = []
+    for value in values:
+        try:
+            model_id = int(value)
+        except (TypeError, ValueError):
+            continue
+        if model_id > 0:
+            valid_ids.append(model_id)
+    return valid_ids
+
+
 @staff_member_required
 def admin_dashboard(request):
     """Admin dashboard with statistics and recent orders"""
@@ -244,7 +257,9 @@ def admin_product_edit(request, product_id):
 
             # ========== Product additional images ==========
             # Delete selected images
-            delete_product_images = request.POST.getlist('delete_product_images[]')
+            delete_product_images = _valid_model_ids(
+                request.POST.getlist('delete_product_images[]')
+            )
             if delete_product_images:
                 ProductImages.objects.filter(id__in=delete_product_images, product=product).delete()
 
@@ -384,9 +399,14 @@ def admin_product_edit(request, product_id):
 
             # ========== Variant images ==========
             # Delete selected images
-            delete_variant_images = request.POST.getlist('delete_variant_images[]')
+            delete_variant_images = _valid_model_ids(
+                request.POST.getlist('delete_variant_images[]')
+            )
             if delete_variant_images:
-                VariantImage.objects.filter(id__in=delete_variant_images).delete()
+                VariantImage.objects.filter(
+                    id__in=delete_variant_images,
+                    variant__product=product,
+                ).delete()
 
             # Add new images for each variant
             for idx, variant_id in enumerate(updated_variant_ids):
