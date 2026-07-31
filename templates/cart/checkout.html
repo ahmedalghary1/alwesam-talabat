@@ -90,6 +90,7 @@
         gap: 1rem;
         padding: 0.875rem 0;
         border-bottom: 1px solid var(--border-color);
+        align-items: center;
     }
 
     .cart-item:last-child {
@@ -97,11 +98,13 @@
     }
 
     .item-image {
-        width: 50px;
-        height: 50px;
-        border-radius: 8px;
+        width: clamp(88px, 10vw, 112px);
+        height: clamp(88px, 10vw, 112px);
+        min-width: clamp(88px, 10vw, 112px);
+        border-radius: 12px;
         object-fit: contain;
         background: var(--bg-secondary);
+        padding: 0.35rem;
     }
 
     .item-name {
@@ -172,6 +175,24 @@
         .checkout-grid {
             grid-template-columns: 1fr;
         }
+
+        .item-image {
+            width: clamp(96px, 27vw, 128px);
+            height: clamp(96px, 27vw, 128px);
+            min-width: clamp(96px, 27vw, 128px);
+        }
+    }
+
+    @media (max-width: 420px) {
+        .cart-item {
+            align-items: flex-start;
+        }
+
+        .item-image {
+            width: 92px;
+            height: 92px;
+            min-width: 92px;
+        }
     }
 </style>
 {% endblock %}
@@ -211,7 +232,7 @@
                     {% for item in cart_items %}
                     <div class="cart-item">
                         {% if item.product.image %}
-                        <img src="{{ item.product.image.url }}" class="item-image">
+                        <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="item-image" loading="lazy">
                         {% else %}
                         <div class="item-image" style="display: flex; align-items: center; justify-content: center;"><i
                                 class="fas fa-box"></i></div>

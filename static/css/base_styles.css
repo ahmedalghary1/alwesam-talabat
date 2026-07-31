@@ -696,7 +696,7 @@ body.theme-dark .nav-link {
 .product-image,
 .product-card img {
     width: 100%;
-    height: 250px;
+    height: clamp(240px, 26vw, 340px);
     object-fit: contain;
     border-radius: 12px;
     background: transparent;
@@ -729,7 +729,7 @@ body.theme-dark .product-detail-image {
     .category-image,
     .product-image,
     .product-card img {
-        height: 180px;
+        height: clamp(230px, 64vw, 320px);
     }
 
     .product-detail-image {

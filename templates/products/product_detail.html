@@ -160,10 +160,9 @@
             {% for rp in related_products %}
             <a href="{% url 'products:product_detail' rp.slug %}" class="related-card">
                 {% if rp.image %}
-                <img src="{{ rp.image.url }}" alt="{{ rp.name }}">
+                <img src="{{ rp.image.url }}" alt="{{ rp.name }}" loading="lazy">
                 {% else %}
-                <div
-                    style="height:200px;display:flex;align-items:center;justify-content:center;background:var(--bg-secondary);">
+                <div class="related-image-placeholder">
                     <i class="fas fa-box" style="font-size:3rem;color:var(--text-secondary);"></i>
                 </div>
                 {% endif %}

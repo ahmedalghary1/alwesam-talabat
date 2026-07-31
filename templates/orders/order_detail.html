@@ -182,10 +182,10 @@
     }
 
     .product-image {
-        width: 100px;
-        height: 100px;
-        min-width: 100px;
-        border-radius: 12px;
+        width: clamp(128px, 13vw, 160px);
+        height: clamp(128px, 13vw, 160px);
+        min-width: clamp(128px, 13vw, 160px);
+        border-radius: 16px;
         overflow: hidden;
         background: #ffffff;
         display: flex;
@@ -456,6 +456,9 @@
 
         .product-image {
             margin: 0 auto;
+            width: clamp(150px, 52vw, 210px);
+            height: clamp(150px, 52vw, 210px);
+            min-width: clamp(150px, 52vw, 210px);
         }
 
         .product-meta {
