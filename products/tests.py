@@ -7,7 +7,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from .models import Product, ProductSize, Size
+from .models import Product, ProductSize, ProductVariant, Size, VariantSize
 
 
 def _image_file():
@@ -33,4 +33,20 @@ class ProductDetailSizeQuantityTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'data-pcs-carton="48"')
-        self.assertContains(response, "selectDirectSize('كبير', 48, this)")
+        self.assertEqual(
+            response.context['product_page_data']['directSizePrices'][0]['pcsCarton'],
+            48,
+        )
+        self.assertContains(response, 'id="product-page-data"')
+
+    def test_variant_size_quantity_is_sent_from_database(self):
+        product = Product.objects.create(name='منتج بنمط', pcs_carton=24, image=_image_file())
+        size = Size.objects.create(name='وسط')
+        variant = ProductVariant.objects.create(product=product, name='نمط', pcs_carton=30)
+        VariantSize.objects.create(variant=variant, size=size, pcs_carton=72)
+
+        response = self.client.get(reverse('products:product_detail', args=[product.slug]))
+
+        size_data = response.context['product_page_data']['variants'][0]['sizePrices'][0]
+        self.assertEqual(size_data['sizeId'], size.pk)
+        self.assertEqual(size_data['pcsCarton'], 72)

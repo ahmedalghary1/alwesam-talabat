@@ -103,7 +103,7 @@
             </div>
             {% endif %}
 
-            {% if not variants and product.size_prices.all %}
+            {% if not variants and direct_size_prices %}
             <div class="variant-selection-section mt-3">
                 <h4>
                     <i class="fas fa-ruler"></i>
@@ -111,11 +111,13 @@
                 </h4>
 
                 <div class="size-selection">
-                    {% for size_price in product.size_prices.all %}
+                    {% for size_price in direct_size_prices %}
                     <div class="size-option"
+                        data-direct-size="true"
+                        data-size-id="{{ size_price.size_id }}"
                         data-size-name="{{ size_price.size.name }}"
                         data-pcs-carton="{{ size_price.pcs_carton }}"
-                        onclick="selectDirectSize('{{ size_price.size.name|escapejs }}', {{ size_price.pcs_carton }}, this)">
+                        role="button" tabindex="0">
                         {{ size_price.size.name }}
                     </div>
                     {% endfor %}
@@ -222,8 +224,11 @@
 {% endblock %}
 
 {% block extra_js %}
-<parameter name="StartLine">
+    {{ product_page_data|json_script:"product-page-data" }}
     <script>
+        const PRODUCT_PAGE_DATA = JSON.parse(
+            document.getElementById('product-page-data').textContent
+        );
         // Calculate contrasting text color based on background brightness
         function getContrastColor(hexColor) {
             if (!hexColor || typeof hexColor !== 'string') {
@@ -268,32 +273,7 @@
 
         // ==================== Variant Selection System ====================
         // All variants data from Django
-        const ALL_VARIANTS = [
-            {% for v in variants %}
-            {
-                id: {{ v.id }},
-                name: '{{ v.name|escapejs }}',
-                pcsCarton: {{ v.pcs_carton }},
-                isAvailable: {{ v.is_available|yesno:"true,false" }},
-                colorId: {% if v.color %}{{ v.color.id }}{% else %}null{% endif %},
-                colorName: '{% if v.color %}{{ v.color.value|escapejs }}{% endif %}',
-                colorHex: '{% if v.color %}{{ v.color.hex_code }}{% endif %}',
-                lengthLabel: '{{ v.length_label|default:""|escapejs }}',
-                sizePrices: [
-                    {% for sp in v.size_prices.all %}
-                    {
-                        sizeId: {{ sp.size.id }},
-                        sizeName: '{{ sp.size.name|escapejs }}',
-                        pcsCarton: {{ sp.pcs_carton }}
-                    }{% if not forloop.last %},{% endif %}
-                    {% endfor %}
-                ],
-                image: '{% if v.image %}{{ v.image.url }}{% endif %}',
-                attributeType: '{% if v.color %}color{% else %}text{% endif %}',
-                variantName: '{{ v.name|escapejs }}'
-            }{% if not forloop.last %},{% endif %}
-            {% endfor %}
-        ];
+        const ALL_VARIANTS = PRODUCT_PAGE_DATA.variants;
         ALL_VARIANTS.sort((a, b) => a.order - b.order); 
 
         function organizeVariantsByColor() {
@@ -580,47 +560,22 @@
         // ==================== Product Detail Page ====================
         // Page state
         let quantity = 1;
-        let pcsPerCarton = {{ product.pcs_carton }};
+        let pcsPerCarton = Number(PRODUCT_PAGE_DATA.product.pcsCarton);
         let selectedVariantId = null;
         let selectedColorId = null;
         let selectedColorName = null;
         let selectedSizeName = null;
         let selectedUnit = null;
         
-        const productHasSizes = {{ product.size_prices.all|yesno:"true,false" }};
+        const productHasSizes = PRODUCT_PAGE_DATA.product.hasSizes;
         // Product info
-        const PRODUCT_DATA = {
-            id: {{ product.id }},
-            name: "{{ product.name|escapejs }}",
-            image: "{% if product.image %}{{ product.image.url }}{% endif %}",
-            pcsCarton: {{ product.pcs_carton }}
-        }
+        const PRODUCT_DATA = PRODUCT_PAGE_DATA.product;
 
         // Variant images data
-        const variantImagesData = {
-        {% for v in variants %}
-            '{{ v.id }}': [
-            {% if v.images.all %}
-                {% for vimg in v.images.all %}
-                    { url: '{{ vimg.image.url }}', alt: '' } {% if not forloop.last %}, {% endif %}
-                {% endfor %}
-            {% elif v.image %}
-                { url: '{{ v.image.url }}', alt: '' }
-            {% endif %}
-            ]{% if not forloop.last %}, {% endif %}
-        {% endfor %}
-    };
+        const variantImagesData = PRODUCT_PAGE_DATA.variantImages;
 
         // Product images for fallback
-        const productImages = [
-            {% if product.image %}
-                { url: '{{ product.image.url }}', alt: '{{ product.name }}' },
-            {% endif %}
-
-            {% for img in product.additional_images.all %}
-                { url: '{{ img.image.url }}', alt: '{{ product.name }}' } {% if not forloop.last %}, {% endif %}
-            {% endfor %}
-        ];
+        const productImages = PRODUCT_PAGE_DATA.productImages;
 
         // === QUANTITY CONTROLS ===
         function increaseQty() {
@@ -916,6 +871,21 @@
         document.addEventListener('DOMContentLoaded', function () {
             updateDisplay();
             initGalleryTouch();
+
+            document.querySelectorAll('[data-direct-size="true"]').forEach(option => {
+                const chooseSize = () => selectDirectSize(
+                    option.dataset.sizeName,
+                    option.dataset.pcsCarton,
+                    option
+                );
+                option.addEventListener('click', chooseSize);
+                option.addEventListener('keydown', event => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        chooseSize();
+                    }
+                });
+            });
 
 
             // Initialize variant selection - فقط عرض الخيارات بدون تحديد تلقائي

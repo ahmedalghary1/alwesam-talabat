@@ -92,7 +92,8 @@ def product_detail(request, slug):
         variants_qs = ProductVariant.objects.filter(is_available=True).order_by('order').prefetch_related(
             Prefetch('sizes', queryset=Size.objects.all().order_by('order')),
             Prefetch('attributes', queryset=VariantAttributeValue.objects.select_related('attribute')),
-            Prefetch('size_prices', queryset=VariantSize.objects.select_related('size'))  # جديد
+            Prefetch('size_prices', queryset=VariantSize.objects.select_related('size')),
+            'images',
         )
         product = get_object_or_404(
             Product.objects.prefetch_related(
@@ -112,6 +113,70 @@ def product_detail(request, slug):
         # الحصول على الأنماط من Prefetch المرتب مسبقًا
         variants = product.variants.all()  # already prefetch_related & ordered
 
+        direct_size_prices = list(product.size_prices.all())
+        variants_data = []
+        variant_images_data = {}
+        for variant in variants:
+            color = variant.color
+            variant_images = [
+                {'url': image.image.url, 'alt': variant.name}
+                for image in variant.images.all() if image.image
+            ]
+            if not variant_images and variant.image:
+                variant_images = [{'url': variant.image.url, 'alt': variant.name}]
+            variant_images_data[str(variant.pk)] = variant_images
+            variants_data.append({
+                'id': variant.pk,
+                'name': variant.name,
+                'order': variant.order,
+                'pcsCarton': variant.pcs_carton,
+                'isAvailable': variant.is_available,
+                'colorId': color.pk if color else None,
+                'colorName': color.value if color else '',
+                'colorHex': color.hex_code if color and color.hex_code else '',
+                'lengthLabel': variant.length_label or '',
+                'sizePrices': [
+                    {
+                        'sizeId': size_price.size_id,
+                        'sizeName': size_price.size.name,
+                        'pcsCarton': size_price.pcs_carton,
+                    }
+                    for size_price in variant.size_prices.all()
+                ],
+                'image': variant.image.url if variant.image else '',
+                'attributeType': 'color' if color else 'text',
+                'variantName': variant.name,
+            })
+
+        product_images_data = []
+        if product.image:
+            product_images_data.append({'url': product.image.url, 'alt': product.name})
+        product_images_data.extend(
+            {'url': image.image.url, 'alt': product.name}
+            for image in product_images if image.image
+        )
+
+        product_page_data = {
+            'product': {
+                'id': product.pk,
+                'name': product.name,
+                'image': product.image.url if product.image else '',
+                'pcsCarton': product.pcs_carton,
+                'hasSizes': bool(direct_size_prices),
+            },
+            'directSizePrices': [
+                {
+                    'sizeId': size_price.size_id,
+                    'sizeName': size_price.size.name,
+                    'pcsCarton': size_price.pcs_carton,
+                }
+                for size_price in direct_size_prices
+            ],
+            'variants': variants_data,
+            'variantImages': variant_images_data,
+            'productImages': product_images_data,
+        }
+
         # المنتجات المرتبطة بنفس القسم
         related_products = Product.objects.filter(
             category=product.category
@@ -121,7 +186,9 @@ def product_detail(request, slug):
             'product': product,
             'product_images': product_images,
             'variants': variants,
-            'related_products': related_products
+            'related_products': related_products,
+            'direct_size_prices': direct_size_prices,
+            'product_page_data': product_page_data,
         })
 
     except Http404:
