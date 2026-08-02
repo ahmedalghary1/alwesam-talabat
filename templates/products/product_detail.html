@@ -478,6 +478,7 @@
                         const sizeDiv = document.createElement('div');
                         sizeDiv.className = 'size-option';
                         sizeDiv.dataset.variantId = variant.id;
+                        sizeDiv.dataset.sizeId = sizePrice.sizeId;
                         sizeDiv.dataset.sizeName = sizePrice.sizeName;
                         sizeDiv.dataset.pcsCarton = sizePrice.pcsCarton;  // تخزين الكمية
                         sizeDiv.innerHTML = `<span></span><small class="size-carton-quantity"></small>`;
@@ -488,26 +489,6 @@
                             sizeDiv.classList.add('disabled');
                             sizeDiv.title = 'غير متوفر';
                         }
-
-                        sizeDiv.onclick = async () => {
-                            if (variant.isAvailable) {
-                                // إزالة التحديد السابق
-                                document.querySelectorAll('.size-option').forEach(el => el.classList.remove('selected'));
-                                sizeDiv.classList.add('selected');
-
-                                // تحديث المتغيرات
-                                selectedSizeName = sizePrice.sizeName;
-                                selectedSizeId = sizePrice.sizeId;
-                                pcsPerCarton = sizePrice.pcsCarton;  // تحديث عدد القطع
-
-                                // تحديث العرض
-                                updateDisplay();
-
-                                // اختيار الـ variant (لتحديث الصورة إلخ)
-                                selectVariantById(variant.id);
-                                await refreshCartonQuantity(sizePrice.sizeId, variant.id);
-                            }
-                        };
 
                         sizeContainer.appendChild(sizeDiv);
                     });
@@ -555,7 +536,29 @@
                 updateGallery(productImages);
             }
         }
+        function applyCartonQuantity(value) {
+            const parsedValue = Number(value);
+            if (!Number.isInteger(parsedValue) || parsedValue < 1) return false;
+
+            pcsPerCarton = parsedValue;
+            const pcsDisplay = document.getElementById('pcs-carton-display');
+            if (pcsDisplay) {
+                pcsDisplay.textContent = String(parsedValue);
+                pcsDisplay.dataset.currentValue = String(parsedValue);
+            }
+            const totalPieces = document.getElementById('total-pieces-display');
+            if (totalPieces) {
+                totalPieces.textContent = selectedUnit === 'carton'
+                    ? String(quantity * parsedValue)
+                    : String(quantity);
+            }
+            return true;
+        }
+
+        let cartonQuantityRequest = 0;
+
         async function refreshCartonQuantity(sizeId, variantId = null) {
+            const requestNumber = ++cartonQuantityRequest;
             const url = new URL(PRODUCT_DATA.cartonQuantityUrl, window.location.origin);
             url.searchParams.set('size_id', sizeId);
             if (variantId) url.searchParams.set('variant_id', variantId);
@@ -573,24 +576,42 @@
                 if (!Number.isInteger(authoritativeQuantity) || authoritativeQuantity < 1) {
                     throw new Error('Invalid pcs_carton response');
                 }
-                pcsPerCarton = authoritativeQuantity;
-                updateDisplay();
+                // Ignore a slow response for a size that is no longer selected.
+                if (
+                    requestNumber === cartonQuantityRequest &&
+                    Number(selectedSizeId) === Number(data.size_id) &&
+                    Number(selectedVariantId || 0) === Number(data.variant_id || 0)
+                ) {
+                    applyCartonQuantity(authoritativeQuantity);
+                }
             } catch (error) {
                 console.error('تعذر تحديث كمية الكرتونة من السيرفر:', error);
             }
         }
 
-        async function selectDirectSize(sizeId, sizeName, sizePcsCarton, element) {
+        async function selectSizeOption(element) {
+            if (!element || element.classList.contains('disabled')) return;
+
             document.querySelectorAll('.size-option').forEach(el => {
                 el.classList.remove('selected');
             });
 
             element.classList.add('selected');
-            selectedSizeId = Number(sizeId);
-            selectedSizeName = sizeName;
-            pcsPerCarton = Number(sizePcsCarton) || PRODUCT_DATA.pcsCarton;
-            updateDisplay();
-            await refreshCartonQuantity(selectedSizeId);
+            selectedSizeId = Number(element.dataset.sizeId);
+            selectedSizeName = element.dataset.sizeName || '';
+            const optionVariantId = element.dataset.variantId
+                ? Number(element.dataset.variantId)
+                : null;
+
+            // Select the owning variant first. The size quantity is deliberately
+            // applied afterwards so variant defaults can never overwrite it.
+            if (optionVariantId) {
+                selectVariantById(optionVariantId);
+            } else {
+                selectedVariantId = null;
+            }
+            applyCartonQuantity(element.dataset.pcsCarton);
+            await refreshCartonQuantity(selectedSizeId, optionVariantId);
         }
 
         // ==================== Product Detail Page ====================
@@ -710,7 +731,7 @@
             const totalPieces = document.getElementById('total-pieces-display');
 
             if (qtyValue) qtyValue.textContent = quantity;
-            if (pcsDisplay) pcsDisplay.textContent = pcsPerCarton;  // تحديث القيمة
+            if (pcsDisplay) pcsDisplay.textContent = String(pcsPerCarton);
 
             if (totalPieces) {
                 totalPieces.textContent = selectedUnit === 'carton' ? (quantity * pcsPerCarton) : quantity;
@@ -909,22 +930,6 @@
             updateDisplay();
             initGalleryTouch();
 
-            document.querySelectorAll('[data-direct-size="true"]').forEach(option => {
-                const chooseSize = () => selectDirectSize(
-                    option.dataset.sizeId,
-                    option.dataset.sizeName,
-                    option.dataset.pcsCarton,
-                    option
-                );
-                option.addEventListener('click', chooseSize);
-                option.addEventListener('keydown', event => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault();
-                        chooseSize();
-                    }
-                });
-            });
-
 
             // Initialize variant selection - فقط عرض الخيارات بدون تحديد تلقائي
             if (ALL_VARIANTS.length > 0) {
@@ -935,6 +940,20 @@
             const addBtn = document.getElementById('add-to-cart-btn');
             if (addBtn) {
                 addBtn.addEventListener('click', handleAddToCart);
+            }
+        });
+
+        // One delegated handler serves both server-rendered direct sizes and
+        // dynamically-rendered variant sizes.
+        document.addEventListener('click', event => {
+            const option = event.target.closest('.size-option[data-size-id]');
+            if (option) selectSizeOption(option);
+        });
+        document.addEventListener('keydown', event => {
+            const option = event.target.closest('.size-option[data-size-id]');
+            if (option && (event.key === 'Enter' || event.key === ' ')) {
+                event.preventDefault();
+                selectSizeOption(option);
             }
         });
     </script>
