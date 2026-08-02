@@ -103,7 +103,7 @@
             </div>
             {% endif %}
 
-            {% if not variants and product.sizes.exists %}
+            {% if not variants and product.size_prices.all %}
             <div class="variant-selection-section mt-3">
                 <h4>
                     <i class="fas fa-ruler"></i>
@@ -111,10 +111,12 @@
                 </h4>
 
                 <div class="size-selection">
-                    {% for size in product.sizes.all %}
+                    {% for size_price in product.size_prices.all %}
                     <div class="size-option"
-                        onclick="selectDirectSize('{{ size.name|escapejs }}', this)">
-                        {{ size.name }}
+                        data-size-name="{{ size_price.size.name }}"
+                        data-pcs-carton="{{ size_price.pcs_carton }}"
+                        onclick="selectDirectSize('{{ size_price.size.name|escapejs }}', {{ size_price.pcs_carton }}, this)">
+                        {{ size_price.size.name }}
                     </div>
                     {% endfor %}
                 </div>
@@ -412,6 +414,7 @@
             // Store selected color info
             selectedColorId = colorId !== 'no-color' ? colorId : null;
             selectedColorName = variants[0]?.colorName || null;
+            selectedSizeName = null;
             console.log('Selected color:', selectedColorName);
 
             const sizeWrapper = document.getElementById('size-selection-wrapper');
@@ -449,6 +452,7 @@
             if (currentEl) currentEl.classList.add('selected');
 
             selectedVariantId = variant.id;
+            selectedSizeName = null;
             pcsPerCarton = variant.pcsCarton; // مؤقتاً، سيتم تحديثها عند اختيار مقاس
             document.getElementById('selected-variant-id').value = variant.id;
 
@@ -460,6 +464,7 @@
             } else {
                 sizeWrapper.style.display = 'none';
             }
+            updateDisplay();
 
             // تحديث الصور
             const variantImages = variantImagesData[variant.id];
@@ -561,15 +566,15 @@
                 updateGallery(productImages);
             }
         }
-        function selectDirectSize(sizeName, element) {
+        function selectDirectSize(sizeName, sizePcsCarton, element) {
             document.querySelectorAll('.size-option').forEach(el => {
                 el.classList.remove('selected');
             });
 
             element.classList.add('selected');
             selectedSizeName = sizeName;
-
-            console.log('Direct product size selected:', selectedSizeName);
+            pcsPerCarton = Number(sizePcsCarton) || PRODUCT_DATA.pcsCarton;
+            updateDisplay();
         }
 
         // ==================== Product Detail Page ====================
@@ -582,7 +587,7 @@
         let selectedSizeName = null;
         let selectedUnit = null;
         
-        const productHasSizes = {{ product.sizes.exists|yesno:"true,false" }};
+        const productHasSizes = {{ product.size_prices.all|yesno:"true,false" }};
         // Product info
         const PRODUCT_DATA = {
             id: {{ product.id }},
@@ -833,7 +838,8 @@
                 const idx = cart.findIndex(i =>
                     i.product_id === PRODUCT_DATA.id &&
                     i.variant_id === selectedVariantId &&
-                    i.unit_type === selectedUnit
+                    i.unit_type === selectedUnit &&
+                    (i.size_name || '') === (selectedSizeName || '')
                 );
 
                 if (idx !== -1) {

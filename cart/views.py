@@ -9,7 +9,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 
 from core.constants import MAX_QUANTITY_PER_ITEM
-from products.models import Product, ProductVariant, VariantSize  # ✅ أضفنا VariantSize
+from products.models import Product, ProductVariant, VariantSize, ProductSize
 
 from .models import Cart, CartItem
 
@@ -113,7 +113,7 @@ def add_to_cart(request, product_id):
 
     if variant_id:
         try:
-            variant = ProductVariant.objects.get(id=variant_id)
+            variant = ProductVariant.objects.get(id=variant_id, product=product)
             # Check if variant is available
             if not variant.is_available:
                 logger.warning(f"Attempt to add unavailable variant {variant_id} to cart")
@@ -143,8 +143,14 @@ def add_to_cart(request, product_id):
             pcs_carton = product.pcs_carton
             logger.warning(f"Variant {variant_id} not found, using product pcs_carton={pcs_carton}")
     else:
-        # لا يوجد نمط، نستخدم قيمة المنتج
-        pcs_carton = product.pcs_carton
+        # منتج مباشر: الكمية قد تختلف حسب المقاس.
+        if size_name:
+            size_price = ProductSize.objects.filter(
+                product=product, size__name=size_name
+            ).values_list('pcs_carton', flat=True).first()
+            pcs_carton = size_price if size_price is not None else product.pcs_carton
+        else:
+            pcs_carton = product.pcs_carton
 
     # حساب الكمية بالقطع بناءً على الوحدة
     if unit_type == "carton":
@@ -323,6 +329,12 @@ def sync_cart_from_local(request):
                             f"Variant {variant_id} for product {product.id} not found, skipping sync."
                         )
                         continue
+                elif size_name:
+                    size_price = ProductSize.objects.filter(
+                        product=product, size__name=size_name
+                    ).values_list('pcs_carton', flat=True).first()
+                    if size_price is not None:
+                        pcs_carton = size_price
 
                 # Calculate quantity in pieces based on unit type
                 if unit_type == "carton":

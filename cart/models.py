@@ -49,9 +49,21 @@ class CartItem(models.Model):
 
         
     def get_pcs_carton(self):
-        """Get pcs_carton from variant or product"""
+        """Get the carton quantity for the selected variant and size."""
         if self.variant:
+            if self.size_name:
+                size_price = self.variant.size_prices.filter(
+                    size__name=self.size_name
+                ).values_list('pcs_carton', flat=True).first()
+                if size_price is not None:
+                    return size_price
             return self.variant.pcs_carton
+        if self.size_name:
+            size_price = self.product.size_prices.filter(
+                size__name=self.size_name
+            ).values_list('pcs_carton', flat=True).first()
+            if size_price is not None:
+                return size_price
         return self.product.pcs_carton
     
     def get_quantity_in_cartons(self):

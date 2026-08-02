@@ -4,7 +4,10 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
-from products.models import Product, Category , ProductVariant , Size,VariantAttributeValue , VariantAttribute , VariantSize
+from products.models import (
+    Product, Category, ProductVariant, Size, VariantAttributeValue,
+    VariantAttribute, VariantSize, ProductSize,
+)
 import logging
 from urllib.parse import unquote
 from django.db.models import Prefetch
@@ -94,7 +97,11 @@ def product_detail(request, slug):
         product = get_object_or_404(
             Product.objects.prefetch_related(
                 'additional_images',
-                Prefetch('variants', queryset=variants_qs)
+                Prefetch('variants', queryset=variants_qs),
+                Prefetch(
+                    'size_prices',
+                    queryset=ProductSize.objects.select_related('size').order_by('size__order'),
+                ),
             ),
             slug=slug
         )
