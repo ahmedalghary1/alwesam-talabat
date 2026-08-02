@@ -118,7 +118,8 @@
                         data-size-name="{{ size_price.size.name }}"
                         data-pcs-carton="{{ size_price.pcs_carton }}"
                         role="button" tabindex="0">
-                        {{ size_price.size.name }}
+                        <span>{{ size_price.size.name }}</span>
+                        <small class="size-carton-quantity">{{ size_price.pcs_carton }} قطعة/كرتون</small>
                     </div>
                     {% endfor %}
                 </div>
@@ -395,6 +396,7 @@
             selectedColorId = colorId !== 'no-color' ? colorId : null;
             selectedColorName = variants[0]?.colorName || null;
             selectedSizeName = null;
+            selectedSizeId = null;
             console.log('Selected color:', selectedColorName);
 
             const sizeWrapper = document.getElementById('size-selection-wrapper');
@@ -433,6 +435,7 @@
 
             selectedVariantId = variant.id;
             selectedSizeName = null;
+            selectedSizeId = null;
             pcsPerCarton = variant.pcsCarton; // مؤقتاً، سيتم تحديثها عند اختيار مقاس
             document.getElementById('selected-variant-id').value = variant.id;
 
@@ -477,14 +480,16 @@
                         sizeDiv.dataset.variantId = variant.id;
                         sizeDiv.dataset.sizeName = sizePrice.sizeName;
                         sizeDiv.dataset.pcsCarton = sizePrice.pcsCarton;  // تخزين الكمية
-                        sizeDiv.textContent = sizePrice.sizeName;
+                        sizeDiv.innerHTML = `<span></span><small class="size-carton-quantity"></small>`;
+                        sizeDiv.querySelector('span').textContent = sizePrice.sizeName;
+                        sizeDiv.querySelector('small').textContent = `${sizePrice.pcsCarton} قطعة/كرتون`;
 
                         if (!variant.isAvailable) {
                             sizeDiv.classList.add('disabled');
                             sizeDiv.title = 'غير متوفر';
                         }
 
-                        sizeDiv.onclick = () => {
+                        sizeDiv.onclick = async () => {
                             if (variant.isAvailable) {
                                 // إزالة التحديد السابق
                                 document.querySelectorAll('.size-option').forEach(el => el.classList.remove('selected'));
@@ -492,6 +497,7 @@
 
                                 // تحديث المتغيرات
                                 selectedSizeName = sizePrice.sizeName;
+                                selectedSizeId = sizePrice.sizeId;
                                 pcsPerCarton = sizePrice.pcsCarton;  // تحديث عدد القطع
 
                                 // تحديث العرض
@@ -499,6 +505,7 @@
 
                                 // اختيار الـ variant (لتحديث الصورة إلخ)
                                 selectVariantById(variant.id);
+                                await refreshCartonQuantity(sizePrice.sizeId, variant.id);
                             }
                         };
 
@@ -522,8 +529,10 @@
             selectedVariantId = variantId;
 
             // إذا كان هناك مقاس محدد، نأخذ pcsCarton من بيانات ذلك المقاس
-            if (selectedSizeName && variant.sizePrices) {
-                const selectedSizePrice = variant.sizePrices.find(sp => sp.sizeName === selectedSizeName);
+            if (selectedSizeId && variant.sizePrices) {
+                const selectedSizePrice = variant.sizePrices.find(
+                    sp => Number(sp.sizeId) === Number(selectedSizeId)
+                );
                 if (selectedSizePrice) {
                     pcsPerCarton = selectedSizePrice.pcsCarton;
                 } else {
@@ -546,15 +555,42 @@
                 updateGallery(productImages);
             }
         }
-        function selectDirectSize(sizeName, sizePcsCarton, element) {
+        async function refreshCartonQuantity(sizeId, variantId = null) {
+            const url = new URL(PRODUCT_DATA.cartonQuantityUrl, window.location.origin);
+            url.searchParams.set('size_id', sizeId);
+            if (variantId) url.searchParams.set('variant_id', variantId);
+            url.searchParams.set('_', Date.now());
+
+            try {
+                const response = await fetch(url, {
+                    method: 'GET',
+                    cache: 'no-store',
+                    headers: { 'Accept': 'application/json' }
+                });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const data = await response.json();
+                const authoritativeQuantity = Number(data.pcs_carton);
+                if (!Number.isInteger(authoritativeQuantity) || authoritativeQuantity < 1) {
+                    throw new Error('Invalid pcs_carton response');
+                }
+                pcsPerCarton = authoritativeQuantity;
+                updateDisplay();
+            } catch (error) {
+                console.error('تعذر تحديث كمية الكرتونة من السيرفر:', error);
+            }
+        }
+
+        async function selectDirectSize(sizeId, sizeName, sizePcsCarton, element) {
             document.querySelectorAll('.size-option').forEach(el => {
                 el.classList.remove('selected');
             });
 
             element.classList.add('selected');
+            selectedSizeId = Number(sizeId);
             selectedSizeName = sizeName;
             pcsPerCarton = Number(sizePcsCarton) || PRODUCT_DATA.pcsCarton;
             updateDisplay();
+            await refreshCartonQuantity(selectedSizeId);
         }
 
         // ==================== Product Detail Page ====================
@@ -564,6 +600,7 @@
         let selectedVariantId = null;
         let selectedColorId = null;
         let selectedColorName = null;
+        let selectedSizeId = null;
         let selectedSizeName = null;
         let selectedUnit = null;
         
@@ -874,6 +911,7 @@
 
             document.querySelectorAll('[data-direct-size="true"]').forEach(option => {
                 const chooseSize = () => selectDirectSize(
+                    option.dataset.sizeId,
                     option.dataset.sizeName,
                     option.dataset.pcsCarton,
                     option

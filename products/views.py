@@ -11,6 +11,9 @@ from products.models import (
 import logging
 from urllib.parse import unquote
 from django.db.models import Prefetch
+from django.urls import reverse
+from django.views.decorators.cache import never_cache
+from django.views.decorators.http import require_GET
 
 logger = logging.getLogger(__name__)
 
@@ -79,6 +82,7 @@ def category_products(request, slug):
         return redirect('products:all_categories')
 
 
+@never_cache
 def product_detail(request, slug):
     """
     Display product details with variants and related products.
@@ -163,6 +167,9 @@ def product_detail(request, slug):
                 'image': product.image.url if product.image else '',
                 'pcsCarton': product.pcs_carton,
                 'hasSizes': bool(direct_size_prices),
+                'cartonQuantityUrl': reverse(
+                    'products:product_carton_quantity', args=[product.slug]
+                ),
             },
             'directSizePrices': [
                 {
@@ -197,5 +204,47 @@ def product_detail(request, slug):
     except Exception as e:
         logger.error(f'Error loading product detail for slug {slug}: {str(e)}', exc_info=True)
         messages.error(request, 'حدث خطأ أثناء تحميل تفاصيل المنتج. يرجى المحاولة لاحقاً')
-        messages.error(request, e)
         return redirect('products:all_categories')
+
+
+@require_GET
+@never_cache
+def product_carton_quantity(request, slug):
+    """Return the authoritative carton quantity for one product/variant size."""
+    product = get_object_or_404(Product, slug=slug, is_available=True)
+    try:
+        size_id = int(request.GET.get('size_id', ''))
+        if size_id < 1:
+            raise ValueError
+    except (TypeError, ValueError):
+        return JsonResponse({'error': 'المقاس غير صحيح'}, status=400)
+
+    variant_id = request.GET.get('variant_id')
+    if variant_id:
+        try:
+            variant_id = int(variant_id)
+        except (TypeError, ValueError):
+            return JsonResponse({'error': 'النمط غير صحيح'}, status=400)
+        size_price = get_object_or_404(
+            VariantSize.objects.select_related('size'),
+            variant_id=variant_id,
+            variant__product=product,
+            variant__is_available=True,
+            size_id=size_id,
+        )
+    else:
+        size_price = get_object_or_404(
+            ProductSize.objects.select_related('size'),
+            product=product,
+            size_id=size_id,
+        )
+
+    response = JsonResponse({
+        'product_id': product.pk,
+        'variant_id': variant_id or None,
+        'size_id': size_price.size_id,
+        'size_name': size_price.size.name,
+        'pcs_carton': size_price.pcs_carton,
+    })
+    response['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    return response

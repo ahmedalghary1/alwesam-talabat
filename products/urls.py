@@ -19,4 +19,9 @@ urlpatterns = [
         views.product_detail,
         name='product_detail'
     ),
+    re_path(
+        r'^product/(?P<slug>[-\wء-ي]+)/carton-quantity/$',
+        views.product_carton_quantity,
+        name='product_carton_quantity'
+    ),
 ]

@@ -50,3 +50,26 @@ class ProductDetailSizeQuantityTests(TestCase):
         size_data = response.context['product_page_data']['variants'][0]['sizePrices'][0]
         self.assertEqual(size_data['sizeId'], size.pk)
         self.assertEqual(size_data['pcsCarton'], 72)
+
+        endpoint = reverse('products:product_carton_quantity', args=[product.slug])
+        quantity_response = self.client.get(endpoint, {
+            'variant_id': variant.pk,
+            'size_id': size.pk,
+        })
+        self.assertEqual(quantity_response.status_code, 200)
+        self.assertEqual(quantity_response.json()['pcs_carton'], 72)
+        self.assertIn('no-store', quantity_response['Cache-Control'])
+
+    def test_direct_size_quantity_endpoint_reads_current_database_value(self):
+        product = Product.objects.create(name='منتج مباشر', pcs_carton=24, image=_image_file())
+        size = Size.objects.create(name='صغير')
+        size_price = ProductSize.objects.create(product=product, size=size, pcs_carton=36)
+        endpoint = reverse('products:product_carton_quantity', args=[product.slug])
+
+        first_response = self.client.get(endpoint, {'size_id': size.pk})
+        size_price.pcs_carton = 60
+        size_price.save(update_fields=['pcs_carton'])
+        second_response = self.client.get(endpoint, {'size_id': size.pk})
+
+        self.assertEqual(first_response.json()['pcs_carton'], 36)
+        self.assertEqual(second_response.json()['pcs_carton'], 60)
