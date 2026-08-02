@@ -8,6 +8,7 @@ from io import BytesIO
 from datetime import datetime
 from PIL import Image
 from django.core.files.base import ContentFile
+from django.db import transaction
 
 
 def generate_unique_filename(original_filename, extension='webp'):
@@ -131,12 +132,26 @@ def should_compress_image(image_field):
 class ImageCompressionMixin:
     """Mixin to handle automatic image compression on save"""
     def save_with_compression(self, image_field_name='image', *args, **kwargs):
-        # Import here to avoid circular imports
-        from utils.image_utils import compress_image_to_webp, should_compress_image
-        
         image_field = getattr(self, image_field_name, None)
-        if image_field and should_compress_image(image_field):
+        update_fields = kwargs.get('update_fields')
+        image_is_being_saved = not update_fields or image_field_name in update_fields
+
+        old_name = None
+        if self.pk and image_is_being_saved:
+            old_name = type(self)._base_manager.filter(pk=self.pk).values_list(
+                image_field_name, flat=True
+            ).first()
+
+        # Compress before the database/storage save.  The previous implementation
+        # saved twice, leaving the initially uploaded source file orphaned.
+        if image_is_being_saved and image_field and should_compress_image(image_field):
             compressed_image = compress_image_to_webp(image_field)
             if compressed_image:
                 setattr(self, image_field_name, compressed_image)
         super().save(*args, **kwargs)
+
+        new_field = getattr(self, image_field_name, None)
+        new_name = getattr(new_field, 'name', None)
+        if old_name and old_name != new_name:
+            storage = new_field.storage
+            transaction.on_commit(lambda: storage.delete(old_name))

@@ -3,6 +3,23 @@ from django.utils.text import slugify
 from utils.image_utils import ImageCompressionMixin
 
 
+def _unique_slug(instance, value):
+    """Build a stable unique slug, including for repeated Arabic product names."""
+    field = instance._meta.get_field('slug')
+    base = slugify(value, allow_unicode=True) or 'item'
+    base = base[:field.max_length]
+    candidate = base
+    suffix = 2
+    queryset = type(instance)._base_manager.all()
+    if instance.pk:
+        queryset = queryset.exclude(pk=instance.pk)
+    while queryset.filter(slug=candidate).exists():
+        marker = f'-{suffix}'
+        candidate = f'{base[:field.max_length - len(marker)]}{marker}'
+        suffix += 1
+    return candidate
+
+
 class Category(ImageCompressionMixin, models.Model):
     name = models.CharField(max_length=200)
     slug = models.SlugField(max_length=255, unique=True, blank=True, db_index=True)
@@ -12,13 +29,12 @@ class Category(ImageCompressionMixin, models.Model):
 
     def save(self, *args, **kwargs):
         update_fields = kwargs.get('update_fields')
-        if update_fields and 'order' in update_fields:
+        if update_fields and 'image' not in update_fields:
             super().save(*args, **kwargs)
         else:
             if not self.slug:
-                self.slug = slugify(self.name, allow_unicode=True)
-            super().save(*args, **kwargs)
-            self.save_with_compression(image_field_name='image')
+                self.slug = _unique_slug(self, self.name)
+            self.save_with_compression(image_field_name='image', *args, **kwargs)
 
     def __str__(self):
         return self.name
@@ -62,13 +78,12 @@ class Product(ImageCompressionMixin, models.Model):
 
     def save(self, *args, **kwargs):
         update_fields = kwargs.get('update_fields')
-        if update_fields and 'order' in update_fields:
+        if update_fields and 'image' not in update_fields:
             super().save(*args, **kwargs)
         else:
             if not self.slug:
-                self.slug = slugify(self.name, allow_unicode=True)
-            super().save(*args, **kwargs)
-            self.save_with_compression(image_field_name='image')
+                self.slug = _unique_slug(self, self.name)
+            self.save_with_compression(image_field_name='image', *args, **kwargs)
 
     class Meta:
         ordering = ['order']
@@ -96,11 +111,10 @@ class ProductImages(ImageCompressionMixin, models.Model):
 
     def save(self, *args, **kwargs):
         update_fields = kwargs.get('update_fields')
-        if update_fields and 'order' in update_fields:
+        if update_fields and 'image' not in update_fields:
             super().save(*args, **kwargs)
         else:
-            super().save(*args, **kwargs)
-            self.save_with_compression(image_field_name='image')
+            self.save_with_compression(image_field_name='image', *args, **kwargs)
 
     class Meta:
         ordering = ['order', 'created_at']
@@ -199,11 +213,10 @@ class VariantImage(ImageCompressionMixin, models.Model):
 
     def save(self, *args, **kwargs):
         update_fields = kwargs.get('update_fields')
-        if update_fields and 'order' in update_fields:
+        if update_fields and 'image' not in update_fields:
             super().save(*args, **kwargs)
         else:
-            super().save(*args, **kwargs)
-            self.save_with_compression(image_field_name='image')
+            self.save_with_compression(image_field_name='image', *args, **kwargs)
 
     class Meta:
         ordering = ['order', 'created_at']
@@ -295,11 +308,10 @@ class ProductVariant(ImageCompressionMixin, models.Model):
 
     def save(self, *args, **kwargs):
         update_fields = kwargs.get('update_fields')
-        if update_fields and 'order' in update_fields:
+        if update_fields and 'image' not in update_fields:
             super().save(*args, **kwargs)
         else:
-            super().save(*args, **kwargs)
-            self.save_with_compression(image_field_name='image')
+            self.save_with_compression(image_field_name='image', *args, **kwargs)
 
     class Meta:
         ordering = ['order']

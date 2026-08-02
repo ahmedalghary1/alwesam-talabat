@@ -218,6 +218,9 @@ class ProductVariantAdmin(SortableAdminMixin, admin.ModelAdmin):
         # ملاحظة: المقاسات تدار عبر VariantSizeInline
     )
 
+    class Media:
+        css = {'all': ('admin/css/product_admin_fix.css',)}
+
     def product_link(self, obj):
         url = reverse('admin:products_product_change', args=[obj.product.id])
         return format_html('<a href="{}">{}</a>', url, obj.product.name)
@@ -284,6 +287,9 @@ class ProductAdmin(SortableAdminMixin, admin.ModelAdmin):
         }),
     )
     actions = ['make_available', 'make_unavailable']
+
+    class Media:
+        css = {'all': ('admin/css/product_admin_fix.css',)}
 
     def category_link(self, obj):
         if obj.category:

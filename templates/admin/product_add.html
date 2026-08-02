@@ -420,6 +420,7 @@
 
         // Build inner HTML
         row.innerHTML = `
+            <input type="hidden" name="variant_form_key[]" value="${variantId}">
             <h4>
                 نمط #${variantId + 1}
                 <button type="button" onclick="removeVariant('${rowId}')">

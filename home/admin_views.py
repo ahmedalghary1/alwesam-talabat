@@ -1,7 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
-from django.db.models import Q, Count
+from django.db import transaction
+from django.db.models import Q, Count, Max
 from products.models import (
     Product, Category, ProductImages, ProductVariant,
     VariantAttributeValue, VariantAttribute, Size,
@@ -21,6 +22,37 @@ def _valid_model_ids(values):
         if model_id > 0:
             valid_ids.append(model_id)
     return valid_ids
+
+
+def _positive_int(value, default=None):
+    """Parse a positive integer from an untrusted form value."""
+    try:
+        value = int(value)
+    except (TypeError, ValueError):
+        if default is not None:
+            return default
+        raise ValueError('يجب إدخال رقم صحيح موجب')
+    if value < 1:
+        raise ValueError('يجب أن تكون الكمية 1 على الأقل')
+    return value
+
+
+def _variant_sizes_from_post(request, form_key):
+    """Read variant sizes without relying on fragile parallel checkbox lists."""
+    size_ids = request.POST.getlist(f'variant_{form_key}_size_ids[]')
+    legacy_quantities = request.POST.getlist(f'variant_{form_key}_size_pcs[]')
+    result = []
+    seen = set()
+    for index, size_id in enumerate(size_ids):
+        size_id = _positive_int(size_id)
+        if size_id in seen:
+            continue
+        quantity = request.POST.get(f'variant_{form_key}_size_pcs_{size_id}')
+        if quantity is None and index < len(legacy_quantities):
+            quantity = legacy_quantities[index]
+        result.append((size_id, _positive_int(quantity, 24)))
+        seen.add(size_id)
+    return result
 
 
 @staff_member_required
@@ -87,78 +119,75 @@ def admin_product_add(request):
         image = request.FILES.get('image')
 
         try:
-            from django.utils.text import slugify
-            slug = slugify(name, allow_unicode=True)
+            if not name or not name.strip():
+                raise ValueError('اسم المنتج مطلوب')
+            if not image:
+                raise ValueError('صورة المنتج الرئيسية مطلوبة')
+            with transaction.atomic():
+                # Create product
+                product = Product.objects.create(
+                    name=name.strip(),
+                    slug='',
+                    description=description,
+                    pcs_carton=_positive_int(pcs_carton, 1),
+                    category_id=category_id if category_id else None,
+                    image=image,
+                    is_available='is_available' in request.POST
+                )
 
-            # Create product
-            product = Product.objects.create(
-                name=name,
-                slug=slug,
-                description=description,
-                pcs_carton=pcs_carton,
-                category_id=category_id if category_id else None,
-                image=image,
-                is_available='is_available' in request.POST
-            )
-
-            # Additional images for product
-            additional_images = request.FILES.getlist('additional_images[]')
-            for idx, img in enumerate(additional_images):
-                ProductImages.objects.create(product=product, image=img, order=idx)
+                # Additional images for product
+                additional_images = request.FILES.getlist('additional_images[]')
+                for idx, img in enumerate(additional_images):
+                    ProductImages.objects.create(product=product, image=img, order=idx)
 
             # ========== Direct product sizes (ProductSize) ==========
-            product_size_ids = request.POST.getlist('product_size_ids[]')
-            product_size_pcs = request.POST.getlist('product_size_pcs[]')
-            for size_id, pcs in zip(product_size_ids, product_size_pcs):
-                if size_id and pcs:
-                    ProductSize.objects.create(
-                        product=product,
-                        size_id=int(size_id),
-                        pcs_carton=int(pcs)
-                    )
+                product_size_ids = request.POST.getlist('product_size_ids[]')
+                product_size_pcs = request.POST.getlist('product_size_pcs[]')
+                for size_id, pcs in zip(product_size_ids, product_size_pcs):
+                    if size_id and pcs:
+                        ProductSize.objects.update_or_create(
+                            product=product,
+                            size_id=_positive_int(size_id),
+                            defaults={'pcs_carton': _positive_int(pcs)}
+                        )
 
             # ========== Variants ==========
-            variant_names = request.POST.getlist('variant_name[]')
-            variant_codes = request.POST.getlist('variant_code[]')
-            variant_pcs = request.POST.getlist('variant_pcs_carton[]')
-            variant_available = request.POST.getlist('variant_available[]')
-            variant_color_ids = request.POST.getlist('variant_color[]')
+                variant_names = request.POST.getlist('variant_name[]')
+                variant_codes = request.POST.getlist('variant_code[]')
+                variant_pcs = request.POST.getlist('variant_pcs_carton[]')
+                variant_available = request.POST.getlist('variant_available[]')
+                variant_color_ids = request.POST.getlist('variant_color[]')
+                variant_length_labels = request.POST.getlist('variant_length_label[]')
+                variant_keys = request.POST.getlist('variant_form_key[]')
 
-            for i in range(len(variant_names)):
-                if variant_names[i].strip():
+                for i in range(len(variant_names)):
+                    if not variant_names[i].strip():
+                        continue
+                    form_key = variant_keys[i] if i < len(variant_keys) else str(i)
                     # Create variant
                     variant = ProductVariant.objects.create(
                         product=product,
-                        name=variant_names[i],
+                        name=variant_names[i].strip(),
                         code=variant_codes[i] if i < len(variant_codes) and variant_codes[i] else None,
-                        pcs_carton=int(variant_pcs[i]) if i < len(variant_pcs) and variant_pcs[i] else 24,
-                        is_available=str(i) in variant_available,
+                        pcs_carton=_positive_int(variant_pcs[i], 24) if i < len(variant_pcs) else 24,
+                        is_available=form_key in variant_available,
+                        length_label=(variant_length_labels[i] or None) if i < len(variant_length_labels) else None,
                     )
 
                     # Add color attribute
                     if i < len(variant_color_ids) and variant_color_ids[i]:
                         try:
-                            color_value = VariantAttributeValue.objects.get(id=variant_color_ids[i])
+                            color_value = colors.get(id=variant_color_ids[i])
                             variant.attributes.add(color_value)
                         except VariantAttributeValue.DoesNotExist:
                             pass
 
                     # ========== Variant sizes with quantities (VariantSize) ==========
-                    size_ids_key = f'variant_{i}_size_ids[]'
-                    size_pcs_key = f'variant_{i}_size_pcs[]'
-                    size_ids = request.POST.getlist(size_ids_key)
-                    size_pcs = request.POST.getlist(size_pcs_key)
-
-                    for size_id, pcs in zip(size_ids, size_pcs):
-                        if size_id and pcs:
-                            VariantSize.objects.create(
-                                variant=variant,
-                                size_id=int(size_id),
-                                pcs_carton=int(pcs)
-                            )
+                    for size_id, pcs in _variant_sizes_from_post(request, form_key):
+                        VariantSize.objects.create(variant=variant, size_id=size_id, pcs_carton=pcs)
 
                     # ========== Variant images ==========
-                    variant_images_key = f'variant_{i}_images[]'
+                    variant_images_key = f'variant_{form_key}_images[]'
                     variant_images = request.FILES.getlist(variant_images_key)
                     for idx, img in enumerate(variant_images):
                         VariantImage.objects.create(
@@ -182,10 +211,8 @@ def admin_product_add(request):
     })
 
 
-import json
-from django.core.serializers.json import DjangoJSONEncoder
-
 @staff_member_required
+@transaction.atomic
 def admin_product_edit(request, product_id):
     """Edit product with direct sizes and variant sizes (with quantities)"""
     product = get_object_or_404(Product, id=product_id)
@@ -237,11 +264,14 @@ def admin_product_edit(request, product_id):
     if request.method == 'POST':
         try:
             # ========== Update product basic info ==========
-            product.name = request.POST.get('name', product.name)
+            old_name = product.name
+            product.name = request.POST.get('name', product.name).strip()
+            if not product.name:
+                raise ValueError('اسم المنتج مطلوب')
             product.description = request.POST.get('description', product.description)
-            product.pcs_carton = request.POST.get('pcs_carton', product.pcs_carton)
+            product.pcs_carton = _positive_int(request.POST.get('pcs_carton'), product.pcs_carton)
             product.is_available = 'is_available' in request.POST
-            product.order = request.POST.get('order', product.order)
+            product.order = max(int(request.POST.get('order') or 0), 0)
 
             category_id = request.POST.get('category')
             product.category_id = category_id if category_id else None
@@ -249,9 +279,8 @@ def admin_product_edit(request, product_id):
             if 'image' in request.FILES:
                 product.image = request.FILES['image']
 
-            if request.POST.get('name') != product.name or not product.slug:
-                from django.utils.text import slugify
-                product.slug = slugify(product.name, allow_unicode=True)
+            if old_name != product.name or not product.slug:
+                product.slug = ''
 
             product.save()
 
@@ -279,8 +308,8 @@ def admin_product_edit(request, product_id):
             image_orders = request.POST.getlist('image_order[]')
             image_ids = request.POST.getlist('image_id[]')
             for img_id, order in zip(image_ids, image_orders):
-                if img_id and order:
-                    ProductImages.objects.filter(id=img_id, product=product).update(order=order)
+                if img_id and order != '':
+                    ProductImages.objects.filter(id=img_id, product=product).update(order=max(int(order), 0))
 
             # ========== Direct product sizes (ProductSize) ==========
             existing_ps_ids = request.POST.getlist('product_size_id[]')
@@ -291,20 +320,21 @@ def admin_product_edit(request, product_id):
             # Update existing
             for ps_id, pcs in zip(existing_ps_ids, existing_ps_pcs):
                 if ps_id and pcs:
-                    ProductSize.objects.filter(id=ps_id, product=product).update(pcs_carton=int(pcs))
+                    ProductSize.objects.filter(id=ps_id, product=product).update(pcs_carton=_positive_int(pcs))
+
+            # Delete removed existing rows before creating new rows. Otherwise the
+            # newly created rows are absent from existing_ps_ids and get deleted.
+            kept_ps_ids = _valid_model_ids(existing_ps_ids)
+            product.size_prices.exclude(id__in=kept_ps_ids).delete()
 
             # Add new
             for size_id, pcs in zip(new_ps_size_ids, new_ps_pcs):
                 if size_id and pcs:
-                    ProductSize.objects.create(
+                    ProductSize.objects.update_or_create(
                         product=product,
-                        size_id=int(size_id),
-                        pcs_carton=int(pcs)
+                        size_id=_positive_int(size_id),
+                        defaults={'pcs_carton': _positive_int(pcs)}
                     )
-
-            # Delete removed ones (those not in existing_ps_ids)
-            kept_ps_ids = [int(id) for id in existing_ps_ids if id]
-            product.size_prices.exclude(id__in=kept_ps_ids).delete()
 
             # ========== Variants ==========
             variant_ids = request.POST.getlist('variant_id[]')
@@ -314,23 +344,25 @@ def admin_product_edit(request, product_id):
             variant_order = request.POST.getlist('variant_order[]')
             variant_available = request.POST.getlist('variant_available[]')
             variant_color_ids = request.POST.getlist('variant_color[]')
-            variant_length_labels = request.POST.getlist('variant_length_label[]')  # new field
+            variant_length_labels = request.POST.getlist('variant_length_label[]')
+            variant_keys = request.POST.getlist('variant_form_key[]')
 
             updated_variant_ids = []
+            updated_variants = []
 
             for i in range(len(variant_names)):
                 if variant_names[i].strip():
+                    form_key = variant_keys[i] if i < len(variant_keys) else str(i)
                     variant_data = {
                         'product': product,
-                        'name': variant_names[i],
+                        'name': variant_names[i].strip(),
                         'code': variant_codes[i] if i < len(variant_codes) and variant_codes[i] else None,
-                        'pcs_carton': int(variant_pcs[i]) if i < len(variant_pcs) and variant_pcs[i] else 24,
-                        'is_available': str(i) in variant_available,
+                        'pcs_carton': _positive_int(variant_pcs[i], 24) if i < len(variant_pcs) else 24,
+                        'is_available': form_key in variant_available,
+                        'length_label': (variant_length_labels[i] or None) if i < len(variant_length_labels) else None,
                     }
                     if i < len(variant_order) and variant_order[i]:
-                        variant_data['order'] = int(variant_order[i])
-                    if i < len(variant_length_labels) and variant_length_labels[i]:
-                        variant_data['length_label'] = variant_length_labels[i]
+                        variant_data['order'] = max(int(variant_order[i]), 0)
 
                     color_id = variant_color_ids[i] if i < len(variant_color_ids) and variant_color_ids[i] else None
 
@@ -348,54 +380,46 @@ def admin_product_edit(request, product_id):
                                 variant.attributes.remove(*old_colors)
                             if color_id:
                                 try:
-                                    color_value = VariantAttributeValue.objects.get(id=color_id)
+                                    color_value = colors.get(id=color_id)
                                     variant.attributes.add(color_value)
                                 except VariantAttributeValue.DoesNotExist:
                                     pass
 
                             updated_variant_ids.append(variant.id)
+                            updated_variants.append((form_key, variant))
                         except ProductVariant.DoesNotExist:
                             # If ID invalid, create new
                             variant = ProductVariant.objects.create(**variant_data)
                             if color_id:
                                 try:
-                                    color_value = VariantAttributeValue.objects.get(id=color_id)
+                                    color_value = colors.get(id=color_id)
                                     variant.attributes.add(color_value)
                                 except VariantAttributeValue.DoesNotExist:
                                     pass
                             updated_variant_ids.append(variant.id)
+                            updated_variants.append((form_key, variant))
                     else:
                         # Create new variant
                         variant = ProductVariant.objects.create(**variant_data)
                         if color_id:
                             try:
-                                color_value = VariantAttributeValue.objects.get(id=color_id)
+                                color_value = colors.get(id=color_id)
                                 variant.attributes.add(color_value)
                             except VariantAttributeValue.DoesNotExist:
                                 pass
                         updated_variant_ids.append(variant.id)
+                        updated_variants.append((form_key, variant))
 
                     # ========== Variant sizes (VariantSize) ==========
-                    size_ids_key = f'variant_{i}_size_ids[]'
-                    size_pcs_key = f'variant_{i}_size_pcs[]'
-                    size_ids = request.POST.getlist(size_ids_key)
-                    size_pcs = request.POST.getlist(size_pcs_key)
-
                     # Delete all existing sizes for this variant and recreate
                     variant.size_prices.all().delete()
-                    for size_id, pcs in zip(size_ids, size_pcs):
-                        if size_id and pcs:
-                            VariantSize.objects.create(
-                                variant=variant,
-                                size_id=int(size_id),
-                                pcs_carton=int(pcs)
-                            )
+                    for size_id, pcs in _variant_sizes_from_post(request, form_key):
+                        VariantSize.objects.create(variant=variant, size_id=size_id, pcs_carton=pcs)
 
             # ========== Delete variants that were removed ==========
-            if updated_variant_ids:
-                deleted_count = product.variants.exclude(id__in=updated_variant_ids).delete()
-                if deleted_count[0] > 0:
-                    messages.info(request, f'تم حذف {deleted_count[0]} نمط/أنماط')
+            deleted_count = product.variants.exclude(id__in=updated_variant_ids).delete()
+            if deleted_count[0] > 0:
+                messages.info(request, f'تم حذف {deleted_count[0]} نمط/أنماط')
 
             # ========== Variant images ==========
             # Delete selected images
@@ -409,30 +433,25 @@ def admin_product_edit(request, product_id):
                 ).delete()
 
             # Add new images for each variant
-            for idx, variant_id in enumerate(updated_variant_ids):
-                new_images_key = f'variant_{idx}_new_images[]'
+            for form_key, variant in updated_variants:
+                new_images_key = f'variant_{form_key}_new_images[]'
                 new_images = request.FILES.getlist(new_images_key)
                 if new_images:
-                    try:
-                        variant = ProductVariant.objects.get(id=variant_id)
-                        from django.db import models as db_models
-                        max_order = variant.images.aggregate(db_models.Max('order'))['order__max'] or 0
-                        for img_idx, img in enumerate(new_images):
-                            VariantImage.objects.create(
-                                variant=variant,
-                                image=img,
-                                order=max_order + img_idx + 1
-                            )
-                    except ProductVariant.DoesNotExist:
-                        continue
+                    max_order = variant.images.aggregate(Max('order'))['order__max'] or 0
+                    for img_idx, img in enumerate(new_images):
+                        VariantImage.objects.create(
+                            variant=variant,
+                            image=img,
+                            order=max_order + img_idx + 1
+                        )
 
             messages.success(request, f'تم تحديث المنتج "{product.name}" بنجاح')
             return redirect('admin_app:admin_products')
 
         except Exception as e:
+            transaction.set_rollback(True)
             messages.error(request, f'حدث خطأ أثناء تحديث المنتج: {str(e)}')
-            import traceback
-            traceback.print_exc()
+            return redirect('admin_app:admin_product_edit', product_id=product.pk)
 
     context = {
         'product': product,
@@ -442,7 +461,11 @@ def admin_product_edit(request, product_id):
         'variants': variants,
         'product_images': product_images,
         'product_size_data': product_size_data,
-        'variants_data': json.dumps(variants_data, cls=DjangoJSONEncoder),  # for template
+        'variants_data': variants_data,
+        'sizes_data': list(sizes.values('id', 'name')),
+        'colors_data': [
+            {'id': color.id, 'name': str(color)} for color in colors
+        ],
         'total_variants': variants.count(),
         'total_images': product_images.count(),
     }

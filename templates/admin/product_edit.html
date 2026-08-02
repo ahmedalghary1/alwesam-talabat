@@ -104,6 +104,7 @@
                     <div style="flex: 1;">
                         <input type="number" name="product_size_pcs[]" class="form-input" style="padding: 0.5rem;" value="{{ ps.pcs_carton }}" min="1" placeholder="الكمية">
                     </div>
+                    <button type="button" onclick="this.parentElement.remove()" title="حذف المقاس" style="background:#ef4444;color:white;border:0;border-radius:6px;padding:.55rem;cursor:pointer"><i class="fas fa-trash"></i></button>
                 </div>
                 {% endfor %}
             </div>
@@ -164,19 +165,10 @@
     </form>
 </div>
 
-<!-- تضمين بيانات الأنماط الحالية بصيغة JSON -->
-<script id="variants-data" type="application/json">
-{{ variants_data|safe }}
-</script>
-
-<!-- تضمين بيانات المقاسات ككائن JavaScript -->
-<script>
-window.allSizes = [
-    {% for size in sizes %}
-    { id: {{ size.id }}, name: "{{ size.name }}" }{% if not forloop.last %},{% endif %}
-    {% endfor %}
-];
-</script>
+<!-- تضمين بيانات الأنماط الحالية بصيغة JSON آمنة -->
+{{ variants_data|json_script:"variants-data" }}
+{{ sizes_data|json_script:"sizes-data" }}
+{{ colors_data|json_script:"colors-data" }}
 {% endblock %}
 
 {% block extra_js %}
@@ -303,6 +295,11 @@ window.allSizes = [
 <script>
     let variantCounter = 0;
     const variantsData = JSON.parse(document.getElementById('variants-data')?.textContent || '[]');
+    window.allSizes = JSON.parse(document.getElementById('sizes-data')?.textContent || '[]');
+    window.colorsData = JSON.parse(document.getElementById('colors-data')?.textContent || '[]');
+    const escapeHtml = value => String(value ?? '').replace(/[&<>'"]/g, char => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+    })[char]);
 
     function addNewProductSizeRow() {
         const container = document.getElementById('new-product-sizes-container');
@@ -314,7 +311,7 @@ window.allSizes = [
         row.innerHTML = `
             <select name="new_product_size_id[]" class="form-select" style="flex: 2;">
                 <option value="">اختر مقاس...</option>
-                ${window.allSizes.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
+                ${window.allSizes.map(s => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('')}
             </select>
             <input type="number" name="new_product_size_pcs[]" class="form-input" style="flex: 1;" placeholder="الكمية" min="1">
             <button type="button" onclick="this.parentElement.remove()" style="background: #ef4444; color: white; border: none; border-radius: 6px; padding: 0.5rem;"><i class="fas fa-trash"></i></button>
@@ -324,6 +321,7 @@ window.allSizes = [
 
     function addVariant(data = null) {
         variantCounter++;
+        const formKey = variantCounter - 1;
         const container = document.getElementById('variants-container');
         const variantRow = document.createElement('div');
         variantRow.className = 'variant-row';
@@ -332,12 +330,12 @@ window.allSizes = [
 
         const variant = data || {};
         const variantId = variant.id || '';
-        const variantName = variant.name || '';
-        const variantCode = variant.code || '';
+        const variantName = escapeHtml(variant.name || '');
+        const variantCode = escapeHtml(variant.code || '');
         const variantPcs = variant.pcs_carton || 24;
         const variantAvailable = variant.is_available !== false;
         const variantColorId = variant.color_id || '';
-        const variantLengthLabel = variant.length_label || '';
+        const variantLengthLabel = escapeHtml(variant.length_label || '');
         const sizeData = variant.size_data || [];
 
         // بناء HTML للمقاسات مع الكميات ديناميكياً
@@ -346,9 +344,9 @@ window.allSizes = [
             const existing = sizeData.find(s => s.size_id == size.id);
             sizesHtml += `
                 <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
-                    <input type="checkbox" name="variant_${variantCounter-1}_size_ids[]" value="${size.id}" ${existing ? 'checked' : ''}>
-                    <span style="min-width: 80px;">${size.name}</span>
-                    <input type="number" name="variant_${variantCounter-1}_size_pcs[]" class="form-input" style="width: 100px;" placeholder="الكمية" min="1" value="${existing ? existing.pcs_carton : ''}">
+                    <input type="checkbox" name="variant_${formKey}_size_ids[]" value="${size.id}" ${existing ? 'checked' : ''} onchange="this.parentElement.querySelector('input[type=number]').disabled = !this.checked">
+                    <span style="min-width: 80px;">${escapeHtml(size.name)}</span>
+                    <input type="number" name="variant_${formKey}_size_pcs_${size.id}" class="form-input" style="width: 100px;" placeholder="الكمية" min="1" value="${existing ? existing.pcs_carton : ''}" ${existing ? '' : 'disabled'}>
                 </div>
             `;
         });
@@ -376,6 +374,7 @@ window.allSizes = [
                     <i class="fas fa-trash"></i> حذف
                 </button>
             </div>
+            <input type="hidden" name="variant_form_key[]" value="${formKey}">
             <input type="hidden" name="variant_id[]" value="${variantId}">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                 <div>
@@ -394,12 +393,12 @@ window.allSizes = [
                     <label style="display: block; font-size: 0.875rem; margin-bottom: 0.25rem;"><i class="fas fa-palette"></i> اللون</label>
                     <select name="variant_color[]" class="form-select" style="padding: 0.625rem;">
                         <option value="">بدون لون</option>
-                        ${window.colorsData ? window.colorsData.map(c => `<option value="${c.id}" ${variantColorId == c.id ? 'selected' : ''}>${c.name}</option>`).join('') : ''}
+                        ${window.colorsData.map(c => `<option value="${c.id}" ${variantColorId == c.id ? 'selected' : ''}>${escapeHtml(c.name)}</option>`).join('')}
                     </select>
                 </div>
                 <div>
                     <label style="display: block; font-size: 0.875rem; margin-bottom: 0.25rem;">متوفر؟</label>
-                    <input type="checkbox" name="variant_available[]" ${variantAvailable ? 'checked' : ''} style="width: 20px; height: 20px;">
+                    <input type="checkbox" name="variant_available[]" value="${formKey}" ${variantAvailable ? 'checked' : ''} style="width: 20px; height: 20px;">
                 </div>
                 <div style="grid-column: span 2;">
                     <label style="display: block; font-size: 0.875rem; margin-bottom: 0.25rem;"><i class="fas fa-tag"></i> نوع الطول</label>
@@ -413,7 +412,7 @@ window.allSizes = [
                     ${existingImagesHtml}
                     <div class="variant-group">
                         <label style="display: block; font-size: 0.875rem; margin-bottom: 0.5rem; font-weight: 600;"><i class="fas fa-images"></i> إضافة صور جديدة</label>
-                        <input type="file" name="variant_${variantCounter-1}_new_images[]" class="variant-images-input" accept="image/*" multiple style="padding: 0.625rem; border: 2px dashed var(--border-color); border-radius: 8px; width: 100%;">
+                        <input type="file" name="variant_${formKey}_new_images[]" class="variant-images-input" accept="image/*" multiple style="padding: 0.625rem; border: 2px dashed var(--border-color); border-radius: 8px; width: 100%;">
                         <div class="variant-images-preview" style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem;"></div>
                     </div>
                 </div>
@@ -424,12 +423,6 @@ window.allSizes = [
 
     // تحميل الأنماط الحالية
     document.addEventListener('DOMContentLoaded', function () {
-        // تجهيز بيانات الألوان أيضاً
-        window.colorsData = [
-            {% for color in colors %}
-            { id: {{ color.id }}, name: "{{ color.name }}" }{% if not forloop.last %},{% endif %}
-            {% endfor %}
-        ];
         variantsData.forEach(v => addVariant(v));
     });
 
