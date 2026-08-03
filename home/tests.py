@@ -7,7 +7,9 @@ from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import RequestFactory, SimpleTestCase, TestCase, override_settings
 
-from products.models import Product, ProductSize, ProductVariant, Size, VariantImage
+from products.models import (
+    Product, ProductSize, ProductVariant, Size, VariantImage, VariantSize,
+)
 
 from .admin_views import _valid_model_ids, _variant_sizes_from_post
 
@@ -85,6 +87,38 @@ class ProductAdminFlowTests(TestCase):
         kept.refresh_from_db()
         self.assertTrue(kept.is_available)
         self.assertEqual(VariantImage.objects.filter(variant=kept).count(), 1)
+
+    def test_add_product_saves_the_quantity_for_each_variant_size(self):
+        first_size = Size.objects.create(name='مقاس أول')
+        second_size = Size.objects.create(name='مقاس ثان')
+
+        response = self.client.post(
+            '/admin-panel/products/add/',
+            {
+                'name': 'منتج بكميات مقاسات',
+                'image': _image_file('sized-product.png'),
+                'pcs_carton': '24',
+                'is_available': 'on',
+                'variant_form_key[]': ['0'],
+                'variant_name[]': ['النمط الأول'],
+                'variant_code[]': [''],
+                'variant_pcs_carton[]': ['30'],
+                'variant_available[]': ['0'],
+                'variant_color[]': [''],
+                'variant_length_label[]': [''],
+                'variant_0_size_ids[]': [str(first_size.pk), str(second_size.pk)],
+                'variant_0_size_pcs[]': ['12', '60'],
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        variant = ProductVariant.objects.get(product__name='منتج بكميات مقاسات')
+        self.assertTrue(VariantSize.objects.filter(
+            variant=variant, size=first_size, pcs_carton=12,
+        ).exists())
+        self.assertTrue(VariantSize.objects.filter(
+            variant=variant, size=second_size, pcs_carton=60,
+        ).exists())
 
     def test_repeated_arabic_product_names_get_unique_slugs(self):
         first = Product.objects.create(name='منتج مكرر', image=_image_file('one.png'))

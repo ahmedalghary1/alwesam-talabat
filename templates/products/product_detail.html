@@ -67,7 +67,10 @@
 
             <div class="specs-panel">
                 <div class="spec-row">
-                    <span><i class="fas fa-box"></i> القطع في الكرتون</span>
+                    <span>
+                        <i class="fas fa-box"></i> القطع في الكرتون
+                        <small id="selected-size-label" style="display:none;"></small>
+                    </span>
                     <strong id="pcs-carton-display">{{ product.pcs_carton }}</strong>
                 </div>
 
@@ -117,6 +120,8 @@
                         data-size-id="{{ size_price.size_id }}"
                         data-size-name="{{ size_price.size.name }}"
                         data-pcs-carton="{{ size_price.pcs_carton }}"
+                        onclick="selectSizeOption(this)"
+                        onkeydown="handleSizeOptionKeydown(event, this)"
                         role="button" tabindex="0">
                         <span>{{ size_price.size.name }}</span>
                         <small class="size-carton-quantity">{{ size_price.pcs_carton }} قطعة/كرتون</small>
@@ -481,6 +486,8 @@
                         sizeDiv.dataset.sizeId = sizePrice.sizeId;
                         sizeDiv.dataset.sizeName = sizePrice.sizeName;
                         sizeDiv.dataset.pcsCarton = sizePrice.pcsCarton;  // تخزين الكمية
+                        sizeDiv.setAttribute('role', 'button');
+                        sizeDiv.tabIndex = 0;
                         sizeDiv.innerHTML = `<span></span><small class="size-carton-quantity"></small>`;
                         sizeDiv.querySelector('span').textContent = sizePrice.sizeName;
                         sizeDiv.querySelector('small').textContent = `${sizePrice.pcsCarton} قطعة/كرتون`;
@@ -489,6 +496,11 @@
                             sizeDiv.classList.add('disabled');
                             sizeDiv.title = 'غير متوفر';
                         }
+
+                        sizeDiv.addEventListener('click', () => selectSizeOption(sizeDiv));
+                        sizeDiv.addEventListener('keydown', event => {
+                            handleSizeOptionKeydown(event, sizeDiv);
+                        });
 
                         sizeContainer.appendChild(sizeDiv);
                     });
@@ -546,6 +558,7 @@
                 pcsDisplay.textContent = String(parsedValue);
                 pcsDisplay.dataset.currentValue = String(parsedValue);
             }
+            updateSelectedSizeLabel();
             const totalPieces = document.getElementById('total-pieces-display');
             if (totalPieces) {
                 totalPieces.textContent = selectedUnit === 'carton'
@@ -612,6 +625,24 @@
             }
             applyCartonQuantity(element.dataset.pcsCarton);
             await refreshCartonQuantity(selectedSizeId, optionVariantId);
+        }
+
+        function handleSizeOptionKeydown(event, element) {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            event.preventDefault();
+            selectSizeOption(element);
+        }
+
+        function updateSelectedSizeLabel() {
+            const label = document.getElementById('selected-size-label');
+            if (!label) return;
+            if (selectedSizeName) {
+                label.textContent = `(${selectedSizeName})`;
+                label.style.display = 'inline';
+            } else {
+                label.textContent = '';
+                label.style.display = 'none';
+            }
         }
 
         // ==================== Product Detail Page ====================
@@ -732,6 +763,7 @@
 
             if (qtyValue) qtyValue.textContent = quantity;
             if (pcsDisplay) pcsDisplay.textContent = String(pcsPerCarton);
+            updateSelectedSizeLabel();
 
             if (totalPieces) {
                 totalPieces.textContent = selectedUnit === 'carton' ? (quantity * pcsPerCarton) : quantity;
@@ -961,18 +993,5 @@
             }
         });
 
-        // One delegated handler serves both server-rendered direct sizes and
-        // dynamically-rendered variant sizes.
-        document.addEventListener('click', event => {
-            const option = event.target.closest('.size-option[data-size-id]');
-            if (option) selectSizeOption(option);
-        });
-        document.addEventListener('keydown', event => {
-            const option = event.target.closest('.size-option[data-size-id]');
-            if (option && (event.key === 'Enter' || event.key === ' ')) {
-                event.preventDefault();
-                selectSizeOption(option);
-            }
-        });
     </script>
     {% endblock %}
