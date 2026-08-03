@@ -400,8 +400,6 @@
             // Store selected color info
             selectedColorId = colorId !== 'no-color' ? colorId : null;
             selectedColorName = variants[0]?.colorName || null;
-            selectedSizeName = null;
-            selectedSizeId = null;
             console.log('Selected color:', selectedColorName);
 
             const sizeWrapper = document.getElementById('size-selection-wrapper');
@@ -438,11 +436,9 @@
             document.querySelectorAll('.text-option').forEach(el => el.classList.remove('selected'));
             if (currentEl) currentEl.classList.add('selected');
 
-            selectedVariantId = variant.id;
-            selectedSizeName = null;
-            selectedSizeId = null;
-            pcsPerCarton = variant.pcsCarton; // مؤقتاً، سيتم تحديثها عند اختيار مقاس
-            document.getElementById('selected-variant-id').value = variant.id;
+            selectedColorId = null;
+            selectedColorName = null;
+            commitProductSelection(variant, null);
 
             const sizeWrapper = document.getElementById('size-selection-wrapper');
             // ✅ استخدام sizePrices
@@ -451,18 +447,6 @@
                 renderSizeSelection([variant]);
             } else {
                 sizeWrapper.style.display = 'none';
-            }
-            updateDisplay();
-
-            // تحديث الصور
-            const variantImages = variantImagesData[variant.id];
-            if (variantImages && variantImages.length > 0) {
-                updateGallery(variantImages);
-            } else if (variant.image) {
-                const mainImg = document.getElementById('main-product-img');
-                if (mainImg) mainImg.src = variant.image;
-            } else {
-                updateGallery(productImages);
             }
         }
         function renderSizeSelection(variants) {
@@ -510,7 +494,9 @@
             });
         }
         function selectVariantById(variantId) {
-            const variant = ALL_VARIANTS.find(v => v.id === variantId);
+            const variant = ALL_VARIANTS.find(
+                item => Number(item.id) === Number(variantId)
+            );
             if (!variant) {
                 console.warn('Variant not found:', variantId);
                 return;
@@ -518,27 +504,20 @@
 
             console.log('Selected variant:', variant);
 
-            document.getElementById('selected-variant-id').value = variantId;
-            selectedVariantId = variantId;
+            const selectedSizePrice = selectedSizeId && variant.sizePrices
+                ? variant.sizePrices.find(
+                    sizePrice => Number(sizePrice.sizeId) === Number(selectedSizeId)
+                )
+                : null;
+            commitProductSelection(variant, selectedSizePrice || null);
+        }
 
-            // إذا كان هناك مقاس محدد، نأخذ pcsCarton من بيانات ذلك المقاس
-            if (selectedSizeId && variant.sizePrices) {
-                const selectedSizePrice = variant.sizePrices.find(
-                    sp => Number(sp.sizeId) === Number(selectedSizeId)
-                );
-                if (selectedSizePrice) {
-                    pcsPerCarton = selectedSizePrice.pcsCarton;
-                } else {
-                    pcsPerCarton = variant.pcsCarton;  // القيمة الافتراضية
-                }
-            } else {
-                pcsPerCarton = variant.pcsCarton;
+        function updateVariantGallery(variant) {
+            if (!variant) {
+                updateGallery(productImages);
+                return;
             }
-
-            updateDisplay();
-
-            // تحديث الصور
-            const variantImages = variantImagesData[variantId];
+            const variantImages = variantImagesData[variant.id];
             if (variantImages && variantImages.length > 0) {
                 updateGallery(variantImages);
             } else if (variant.image) {
@@ -548,83 +527,59 @@
                 updateGallery(productImages);
             }
         }
-        function applyCartonQuantity(value) {
-            const parsedValue = Number(value);
-            if (!Number.isInteger(parsedValue) || parsedValue < 1) return false;
 
-            pcsPerCarton = parsedValue;
-            const pcsDisplay = document.getElementById('pcs-carton-display');
-            if (pcsDisplay) {
-                pcsDisplay.textContent = String(parsedValue);
-                pcsDisplay.dataset.currentValue = String(parsedValue);
+        function commitProductSelection(variant, sizePrice) {
+            const cartonQuantity = Number(
+                sizePrice?.pcsCarton ?? variant?.pcsCarton ?? PRODUCT_PAGE_DATA.product.pcsCarton
+            );
+            if (!Number.isInteger(cartonQuantity) || cartonQuantity < 1) {
+                console.error('Invalid carton quantity for selection', {variant, sizePrice});
+                return false;
             }
-            updateSelectedSizeLabel();
-            const totalPieces = document.getElementById('total-pieces-display');
-            if (totalPieces) {
-                totalPieces.textContent = selectedUnit === 'carton'
-                    ? String(quantity * parsedValue)
-                    : String(quantity);
-            }
+
+            selectedVariantId = variant ? Number(variant.id) : null;
+            selectedSizeId = sizePrice ? Number(sizePrice.sizeId) : null;
+            selectedSizeName = sizePrice ? String(sizePrice.sizeName) : null;
+            pcsPerCarton = cartonQuantity;
+
+            const hiddenVariant = document.getElementById('selected-variant-id');
+            if (hiddenVariant) hiddenVariant.value = selectedVariantId || '';
+
+            updateDisplay();
+            updateVariantGallery(variant);
             return true;
         }
 
-        let cartonQuantityRequest = 0;
-
-        async function refreshCartonQuantity(sizeId, variantId = null) {
-            const requestNumber = ++cartonQuantityRequest;
-            const url = new URL(PRODUCT_DATA.cartonQuantityUrl, window.location.origin);
-            url.searchParams.set('size_id', sizeId);
-            if (variantId) url.searchParams.set('variant_id', variantId);
-            url.searchParams.set('_', Date.now());
-
-            try {
-                const response = await fetch(url, {
-                    method: 'GET',
-                    cache: 'no-store',
-                    headers: { 'Accept': 'application/json' }
-                });
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                const data = await response.json();
-                const authoritativeQuantity = Number(data.pcs_carton);
-                if (!Number.isInteger(authoritativeQuantity) || authoritativeQuantity < 1) {
-                    throw new Error('Invalid pcs_carton response');
-                }
-                // Ignore a slow response for a size that is no longer selected.
-                if (
-                    requestNumber === cartonQuantityRequest &&
-                    Number(selectedSizeId) === Number(data.size_id) &&
-                    Number(selectedVariantId || 0) === Number(data.variant_id || 0)
-                ) {
-                    applyCartonQuantity(authoritativeQuantity);
-                }
-            } catch (error) {
-                console.error('تعذر تحديث كمية الكرتونة من السيرفر:', error);
-            }
-        }
-
-        async function selectSizeOption(element) {
+        function selectSizeOption(element) {
             if (!element || element.classList.contains('disabled')) return;
+
+            const sizeId = Number(element.dataset.sizeId);
+            const optionVariantId = element.dataset.variantId
+                ? Number(element.dataset.variantId)
+                : null;
+            const variant = optionVariantId
+                ? ALL_VARIANTS.find(item => Number(item.id) === optionVariantId)
+                : null;
+            const sizePrices = variant
+                ? (variant.sizePrices || [])
+                : (PRODUCT_PAGE_DATA.directSizePrices || []);
+            const sizePrice = sizePrices.find(
+                item => Number(item.sizeId) === sizeId
+            );
+
+            if (!sizePrice || (optionVariantId && !variant)) {
+                console.error('Size selection is not present in product data', {
+                    sizeId, optionVariantId
+                });
+                return;
+            }
 
             document.querySelectorAll('.size-option').forEach(el => {
                 el.classList.remove('selected');
             });
 
             element.classList.add('selected');
-            selectedSizeId = Number(element.dataset.sizeId);
-            selectedSizeName = element.dataset.sizeName || '';
-            const optionVariantId = element.dataset.variantId
-                ? Number(element.dataset.variantId)
-                : null;
-
-            // Select the owning variant first. The size quantity is deliberately
-            // applied afterwards so variant defaults can never overwrite it.
-            if (optionVariantId) {
-                selectVariantById(optionVariantId);
-            } else {
-                selectedVariantId = null;
-            }
-            applyCartonQuantity(element.dataset.pcsCarton);
-            await refreshCartonQuantity(selectedSizeId, optionVariantId);
+            commitProductSelection(variant, sizePrice);
         }
 
         function handleSizeOptionKeydown(event, element) {
