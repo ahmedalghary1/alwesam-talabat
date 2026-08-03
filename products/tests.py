@@ -35,7 +35,10 @@ class ProductDetailSizeQuantityTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'data-pcs-carton="48"')
-        self.assertContains(response, 'onclick="selectSizeOption(this)"')
+        self.assertContains(
+            response,
+            'onclick="setDisplayedCartonQuantity(this.dataset.pcsCarton); selectSizeOption(this)"',
+        )
         self.assertContains(response, 'id="selected-size-label"')
         self.assertEqual(
             response.context['product_page_data']['directSizePrices'][0]['pcsCarton'],

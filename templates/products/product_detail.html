@@ -120,7 +120,7 @@
                         data-size-id="{{ size_price.size_id }}"
                         data-size-name="{{ size_price.size.name }}"
                         data-pcs-carton="{{ size_price.pcs_carton }}"
-                        onclick="selectSizeOption(this)"
+                        onclick="setDisplayedCartonQuantity(this.dataset.pcsCarton); selectSizeOption(this)"
                         onkeydown="handleSizeOptionKeydown(event, this)"
                         role="button" tabindex="0">
                         <span>{{ size_price.size.name }}</span>
@@ -348,7 +348,10 @@
                     wrapper.style.cssText = 'display:inline-block; text-align:center; margin:5px';
 
                     const colorDiv = document.createElement('div');
+                    const displayVariant = group.variants.find(item => item.isAvailable) || variant;
                     colorDiv.dataset.colorId = group.colorId || 'no-color';
+                    colorDiv.dataset.variantId = displayVariant.id;
+                    colorDiv.dataset.pcsCarton = displayVariant.pcsCarton;
                     colorDiv.className = 'color-option';
                     if (group.colorHex && group.colorHex.trim() !== '') {
                         colorDiv.style.backgroundColor = group.colorHex;
@@ -357,7 +360,10 @@
                         colorDiv.style.border = '1px solid #ccc';
                     }
                     // تم إزالة تحديد width/height لأنها موجودة في CSS
-                    colorDiv.onclick = () => selectColor(group.colorId || 'no-color', group.variants);
+                    colorDiv.onclick = () => {
+                        setDisplayedCartonQuantity(displayVariant.pcsCarton);
+                        selectColor(group.colorId || 'no-color', group.variants);
+                    };
 
                     const label = document.createElement('span');
                     label.textContent = group.colorName || 'اختيار';
@@ -375,9 +381,13 @@
 
                     const textDiv = document.createElement('div');
                     textDiv.dataset.variantId = variant.id;
+                    textDiv.dataset.pcsCarton = variant.pcsCarton;
                     textDiv.className = 'text-option';
                     textDiv.textContent = variant.variantName || variant.colorName || 'اختيار';
-                    textDiv.onclick = () => selectTextVariant(variant);
+                    textDiv.onclick = () => {
+                        setDisplayedCartonQuantity(variant.pcsCarton);
+                        selectTextVariant(variant);
+                    };
 
                     wrapper.appendChild(textDiv);
                     container.appendChild(wrapper);
@@ -481,7 +491,10 @@
                             sizeDiv.title = 'غير متوفر';
                         }
 
-                        sizeDiv.addEventListener('click', () => selectSizeOption(sizeDiv));
+                        sizeDiv.addEventListener('click', () => {
+                            setDisplayedCartonQuantity(sizePrice.pcsCarton);
+                            selectSizeOption(sizeDiv);
+                        });
                         sizeDiv.addEventListener('keydown', event => {
                             handleSizeOptionKeydown(event, sizeDiv);
                         });
@@ -532,7 +545,7 @@
             const cartonQuantity = Number(
                 sizePrice?.pcsCarton ?? variant?.pcsCarton ?? PRODUCT_PAGE_DATA.product.pcsCarton
             );
-            if (!Number.isInteger(cartonQuantity) || cartonQuantity < 1) {
+            if (!setDisplayedCartonQuantity(cartonQuantity)) {
                 console.error('Invalid carton quantity for selection', {variant, sizePrice});
                 return false;
             }
@@ -540,13 +553,26 @@
             selectedVariantId = variant ? Number(variant.id) : null;
             selectedSizeId = sizePrice ? Number(sizePrice.sizeId) : null;
             selectedSizeName = sizePrice ? String(sizePrice.sizeName) : null;
-            pcsPerCarton = cartonQuantity;
-
             const hiddenVariant = document.getElementById('selected-variant-id');
             if (hiddenVariant) hiddenVariant.value = selectedVariantId || '';
 
             updateDisplay();
             updateVariantGallery(variant);
+            return true;
+        }
+
+        function setDisplayedCartonQuantity(rawQuantity) {
+            const cartonQuantity = Number(rawQuantity);
+            if (!Number.isInteger(cartonQuantity) || cartonQuantity < 1) return false;
+
+            pcsPerCarton = cartonQuantity;
+            const pcsDisplay = document.getElementById('pcs-carton-display');
+            if (pcsDisplay) pcsDisplay.textContent = String(cartonQuantity);
+
+            const totalPieces = document.getElementById('total-pieces-display');
+            if (totalPieces && selectedUnit === 'carton') {
+                totalPieces.textContent = String(quantity * cartonQuantity);
+            }
             return true;
         }
 
