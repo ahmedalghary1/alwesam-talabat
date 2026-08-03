@@ -66,7 +66,7 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
                 size_name = cart_item.size_name
                 
                 if cart_item.variant and cart_item.variant.color:
-                    color_name = cart_item.variant.color.name
+                    color_name = cart_item.variant.color.value
                 
                 OrderItem.objects.create(
                     order=order,
@@ -75,7 +75,8 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
                     quantity=cart_item.quantity,
                     unit_type=cart_item.unit_type,
                     color_name=color_name,
-                    size_name=size_name
+                    size_name=size_name,
+                    pcs_carton=cart_item.get_pcs_carton(),
                 )
             
             cart.items.all().delete()

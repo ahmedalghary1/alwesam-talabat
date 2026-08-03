@@ -6,7 +6,6 @@ from django.contrib import messages
 from django.db.models import Sum, Count
 from .models import Order, OrderItem
 from cart.models import Cart
-from products.models import VariantSize  # لإستخراج عدد القطع حسب المقاس
 import logging
 
 logger = logging.getLogger(__name__)
@@ -94,7 +93,7 @@ def create_order(request):
             )
 
             # جلب عناصر السلة مع المنتج والـ variant فقط (لا يوجد علاقة مباشرة للون)
-            cart_items = cart.items.select_related('product', 'variant')
+            cart_items = cart.items.select_related('product', 'variant', 'size')
 
             for cart_item in cart_items:
                 # ---- 1. استخراج اسم اللون بشكل صحيح ----
@@ -104,24 +103,8 @@ def create_order(request):
                     if color_obj:
                         color_name = color_obj.value   # الحقل الصحيح هو value وليس name
 
-                # ---- 2. تحديد عدد القطع في الكرتونة لهذا العنصر ----
-                # القاعدة: إذا كان هناك مقاس محدد، نأخذ القيمة من VariantSize
-                # وإلا نستخدم pcs_carton الخاص بالـ variant أو المنتج
-                pcs_carton_value = None
-                if cart_item.variant:
-                    if cart_item.size_name:
-                        try:
-                            vs = VariantSize.objects.get(variant=cart_item.variant, size__name=cart_item.size_name)
-                            pcs_carton_value = vs.pcs_carton
-                        except VariantSize.DoesNotExist:
-                            # إذا لم يجد المقاس في جدول المقاسات (نادر) نستخدم قيمة الـ variant
-                            pcs_carton_value = cart_item.variant.pcs_carton
-                    else:
-                        pcs_carton_value = cart_item.variant.pcs_carton
-                else:
-                    pcs_carton_value = cart_item.product.pcs_carton
-
-                # ---- 3. إنشاء عنصر الطلب مع حفظ pcs_carton الفعلي ----
+                # Use the exact direct-size or variant-size carton quantity.
+                pcs_carton_value = cart_item.get_pcs_carton()
                 OrderItem.objects.create(
                     order=order,
                     product=cart_item.product,

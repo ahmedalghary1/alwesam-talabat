@@ -96,7 +96,7 @@ const CartManager = {
     },
 
     // Add item to cart
-    addItem(productId, productName, quantity, pcsCarton, imageUrl, variantId = null, unitType = 'carton', sizeName = '') {
+    addItem(productId, productName, quantity, pcsCarton, imageUrl, variantId = null, unitType = 'carton', sizeName = '', sizeId = null) {
         let cart = this.getCart();
 
         // Convert to pieces if ordering by carton
@@ -110,11 +110,19 @@ const CartManager = {
             item.product_id === productId &&
             item.variant_id === variantId &&
             item.unit_type === unitType &&
+            Number(item.size_id || 0) === Number(sizeId || 0) &&
             (item.size_name || '') === sizeName
         );
 
         if (existingIndex !== -1) {
+            let previousUnitQuantity = Number(cart[existingIndex].unit_quantity);
+            if (!Number.isFinite(previousUnitQuantity) || previousUnitQuantity < 1) {
+                previousUnitQuantity = unitType === 'carton'
+                    ? Number(cart[existingIndex].quantity) / Number(cart[existingIndex].pcs_carton || pcsCarton || 1)
+                    : Number(cart[existingIndex].quantity);
+            }
             cart[existingIndex].quantity += quantityInPieces;
+            cart[existingIndex].unit_quantity = previousUnitQuantity + quantity;
         } else {
             cart.push({
                 product_id: productId,
@@ -125,6 +133,8 @@ const CartManager = {
                 variant_id: variantId,
                 unit_type: unitType,  // NEW
                 size_name: sizeName,  // NEW: Store size name
+                size_id: sizeId,
+                unit_quantity: quantity,
                 added_at: new Date().toISOString()
             });
         }
@@ -250,7 +260,7 @@ function removeFromCartLocal(productId, variantId = null, unitType = 'carton') {
 }
 
 // ==================== ADD TO CART - UNIVERSAL FUNCTION ====================
-async function addToCart(productId, productName, quantity, pcsCarton, imageUrl, isAuthenticated, variantId = null, unitType = 'carton', sizeName = '') {
+async function addToCart(productId, productName, quantity, pcsCarton, imageUrl, isAuthenticated, variantId = null, unitType = 'carton', sizeName = '', sizeId = null) {
     if (isAuthenticated) {
         // Authenticated user - add via server
         try {
@@ -272,6 +282,9 @@ async function addToCart(productId, productName, quantity, pcsCarton, imageUrl, 
             }
             if (sizeName) {
                 formData.append('size_name', sizeName);  // NEW: Add size_name
+            }
+            if (sizeId) {
+                formData.append('size_id', sizeId);
             }
 
             const response = await fetch(`/cart/add/${productId}/`, {
@@ -306,7 +319,7 @@ async function addToCart(productId, productName, quantity, pcsCarton, imageUrl, 
         }
     } else {
         // Non-authenticated user - use localStorage
-        CartManager.addItem(productId, productName, quantity, pcsCarton, imageUrl, variantId, unitType, sizeName);
+        CartManager.addItem(productId, productName, quantity, pcsCarton, imageUrl, variantId, unitType, sizeName, sizeId);
         showNotification(`تم إضافة ${productName} إلى السلة`, 'success');
         return { success: true };
     }

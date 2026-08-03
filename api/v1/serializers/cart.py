@@ -3,7 +3,7 @@ Serializers for cart app - Shopping cart and cart items.
 """
 from rest_framework import serializers
 from cart.models import Cart, CartItem
-from products.models import Product, ProductVariant
+from products.models import Product
 
 
 class CartItemSerializer(serializers.ModelSerializer):
@@ -17,13 +17,13 @@ class CartItemSerializer(serializers.ModelSerializer):
         model = CartItem
         fields = ['id', 'product', 'product_name', 'product_image',
                   'variant', 'variant_info', 'quantity',
-                  'unit_type', 'size_name', 'quantity_in_cartons']
-        read_only_fields = ['id']
+                  'unit_type', 'size', 'size_name', 'quantity_in_cartons']
+        read_only_fields = ['id', 'size']
     
     def get_variant_info(self, obj):
         if obj.variant:
             return {
-                'color': obj.variant.color.name if obj.variant.color else None,
+                'color': obj.variant.color.value if obj.variant.color else None,
                 'sku_code': obj.variant.code
             }
         return None
@@ -39,6 +39,7 @@ class AddToCartSerializer(serializers.Serializer):
     quantity = serializers.IntegerField(min_value=1)
     unit_type = serializers.ChoiceField(choices=['piece', 'carton'])
     size_name = serializers.CharField(required=False, allow_blank=True)
+    size_id = serializers.IntegerField(required=False, allow_null=True, min_value=1)
     
     def validate_product_id(self, value):
         if not Product.objects.filter(id=value, is_available=True).exists():
@@ -46,8 +47,8 @@ class AddToCartSerializer(serializers.Serializer):
         return value
     
     def validate_variant_id(self, value):
-        if value and not ProductVariant.objects.filter(id=value, is_available=True).exists():
-            raise serializers.ValidationError("النمط غير متاح")
+        # Product ownership and size compatibility are validated together in
+        # the view, where the selected product is available.
         return value
 
 

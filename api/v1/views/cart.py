@@ -6,7 +6,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from cart.models import Cart, CartItem
-from products.models import Product, ProductVariant
+from cart.services import InvalidProductSelection, resolve_product_selection
+from products.models import Product
 from ..serializers.cart import CartSerializer, AddToCartSerializer, CartItemSerializer
 import logging
 logger = logging.getLogger(__name__)
@@ -37,14 +38,25 @@ class CartViewSet(viewsets.ViewSet):
         quantity = serializer.validated_data['quantity']
         unit_type = serializer.validated_data['unit_type']
         size_name = serializer.validated_data.get('size_name', '')
+        size_id = serializer.validated_data.get('size_id')
         
         product = Product.objects.get(id=product_id)
-        variant = ProductVariant.objects.get(id=variant_id) if variant_id else None
+        try:
+            selection = resolve_product_selection(
+                product,
+                variant_id=variant_id,
+                size_id=size_id,
+                size_name=size_name,
+            )
+        except InvalidProductSelection as exc:
+            return Response({'detail': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+        variant = selection.variant
+        size_name = selection.size.name if selection.size else ''
         
         # Convert to pieces if unit is carton
         if unit_type == 'carton':
-            pcs_carton = variant.pcs_carton if variant else product.pcs_carton
-            quantity = quantity * pcs_carton
+            quantity = quantity * selection.pcs_carton
         
         # Get or create cart item
         cart_item, created = CartItem.objects.get_or_create(
@@ -53,11 +65,12 @@ class CartViewSet(viewsets.ViewSet):
             variant=variant,
             unit_type=unit_type,
             size_name=size_name,
-            defaults={'quantity': quantity}
+            defaults={'quantity': quantity, 'size': selection.size}
         )
         
         if not created:
             cart_item.quantity += quantity
+            cart_item.size = selection.size
             cart_item.save()
         
         return Response(

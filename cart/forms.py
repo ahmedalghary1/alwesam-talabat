@@ -32,6 +32,10 @@ class AddToCartForm(forms.Form):
         required=False,
         max_length=100,
     )
+    size_id = forms.IntegerField(
+        required=False,
+        min_value=1,
+    )
 
 
 class UpdateCartForm(forms.Form):

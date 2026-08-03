@@ -1,6 +1,6 @@
 from django.db import models
 from django.conf import settings
-from products.models import Product, ProductVariant
+from products.models import Product, ProductVariant, Size
 
 User = settings.AUTH_USER_MODEL
 
@@ -39,6 +39,13 @@ class CartItem(models.Model):
     quantity = models.PositiveIntegerField(default=1)
     # User's preferred display unit (converted to pieces internally)
     unit_type = models.CharField(max_length=10, choices=UNIT_TYPE_CHOICES, default='carton')
+    size = models.ForeignKey(
+        Size,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='cart_items',
+    )
     size_name = models.CharField(max_length=100, blank=True, help_text="اسم الطول/المقاس المختار")
 
     class Meta:
@@ -51,14 +58,26 @@ class CartItem(models.Model):
     def get_pcs_carton(self):
         """Get the carton quantity for the selected variant and size."""
         if self.variant:
-            if self.size_name:
+            if self.size_id:
+                size_price = self.variant.size_prices.filter(
+                    size_id=self.size_id
+                ).values_list('pcs_carton', flat=True).first()
+                if size_price is not None:
+                    return size_price
+            elif self.size_name:
                 size_price = self.variant.size_prices.filter(
                     size__name=self.size_name
                 ).values_list('pcs_carton', flat=True).first()
                 if size_price is not None:
                     return size_price
             return self.variant.pcs_carton
-        if self.size_name:
+        if self.size_id:
+            size_price = self.product.size_prices.filter(
+                size_id=self.size_id
+            ).values_list('pcs_carton', flat=True).first()
+            if size_price is not None:
+                return size_price
+        elif self.size_name:
             size_price = self.product.size_prices.filter(
                 size__name=self.size_name
             ).values_list('pcs_carton', flat=True).first()

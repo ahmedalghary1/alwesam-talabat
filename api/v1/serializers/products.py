@@ -4,7 +4,8 @@ Serializers for products app - Categories, Products, and Variants.
 from rest_framework import serializers
 from products.models import (
     Category, Product, ProductVariant, Size,
-    ProductImages, VariantImage, VariantAttributeValue, VariantAttribute
+    ProductImages, VariantImage, VariantSize,
+    VariantAttributeValue, VariantAttribute
 )
 
 
@@ -30,6 +31,17 @@ class SizeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Size
         fields = ['id', 'name', 'order']
+
+
+class SizeCartonQuantitySerializer(serializers.ModelSerializer):
+    """A selectable size together with its authoritative carton quantity."""
+    id = serializers.IntegerField(source='size_id', read_only=True)
+    name = serializers.CharField(source='size.name', read_only=True)
+    order = serializers.IntegerField(source='size.order', read_only=True)
+
+    class Meta:
+        model = VariantSize
+        fields = ['id', 'name', 'order', 'pcs_carton']
 
 
 class ProductImageSerializer(serializers.ModelSerializer):
@@ -62,13 +74,14 @@ class ProductVariantSerializer(serializers.ModelSerializer):
     # ✅ استخدام VariantAttributeValue بدلاً من Color
     colors = serializers.SerializerMethodField()
     sizes = SizeSerializer(many=True, read_only=True)
+    size_options = SizeCartonQuantitySerializer(source='size_prices', many=True, read_only=True)
     images = VariantImageSerializer(many=True, read_only=True)
     attributes = VariantAttributeValueSerializer(many=True, read_only=True)
     
     class Meta:
         model = ProductVariant
         fields = [
-            'id', 'name', 'colors', 'sizes', 'code', 'pcs_carton', 
+            'id', 'name', 'colors', 'sizes', 'size_options', 'code', 'pcs_carton',
             'is_available', 'images', 'attributes', 'order'
         ]
     
@@ -110,20 +123,21 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
     variants = serializers.SerializerMethodField()
     additional_images = ProductImageSerializer(many=True, read_only=True)
+    size_options = SizeCartonQuantitySerializer(source='size_prices', many=True, read_only=True)
     
     class Meta:
         model = Product
         fields = [
             'id', 'name', 'slug', 'description', 'category',
             'image', 'pcs_carton', 'is_available', 'order',
-            'variants', 'additional_images',
+            'variants', 'size_options', 'additional_images',
             'created_at', 'updated_at'
         ]
     
     def get_variants(self, obj):
         """Get variants with proper ordering and filtering."""
         variants = obj.variants.filter(is_available=True).order_by('order').prefetch_related(
-            'sizes', 'attributes__attribute', 'images'
+            'sizes', 'size_prices__size', 'attributes__attribute', 'images'
         )
         return ProductVariantSerializer(variants, many=True).data
 

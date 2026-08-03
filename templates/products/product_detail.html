@@ -783,6 +783,13 @@
                 showValidationError('⚠️ يرجى اختيار لون المنتج أولاً', '.variant-selection-section');
                 return;
             }
+            const selectedVariant = ALL_VARIANTS.find(
+                variant => Number(variant.id) === Number(selectedVariantId)
+            );
+            if (selectedVariant?.sizePrices?.length > 0 && !selectedSizeId) {
+                showValidationError('⚠️ يرجى اختيار المقاس أولاً', '#size-selection-wrapper');
+                return;
+            }
             if (ALL_VARIANTS.length === 0 && productHasSizes && !selectedSizeName) {
                 alert("اختر المقاس أولاً");
                 return;
@@ -797,7 +804,7 @@
             const isAuth = document.body.dataset.userAuthenticated === 'true';
 
             if (window.addToCart) {
-                await window.addToCart(PRODUCT_DATA.id, PRODUCT_DATA.name, quantity, pcsPerCarton, PRODUCT_DATA.image, isAuth, selectedVariantId, selectedUnit, selectedSizeName);
+                await window.addToCart(PRODUCT_DATA.id, PRODUCT_DATA.name, quantity, pcsPerCarton, PRODUCT_DATA.image, isAuth, selectedVariantId, selectedUnit, selectedSizeName, selectedSizeId);
                 return;
             }
 
@@ -817,6 +824,7 @@
                         console.warn('2. Product variant has no sizes');
                         console.warn('3. selectedSizeName was not set during size selection');
                     }
+                    if (selectedSizeId) formData.append('size_id', selectedSizeId);
 
                     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
 
@@ -852,11 +860,19 @@
                     i.product_id === PRODUCT_DATA.id &&
                     i.variant_id === selectedVariantId &&
                     i.unit_type === selectedUnit &&
+                    Number(i.size_id || 0) === Number(selectedSizeId || 0) &&
                     (i.size_name || '') === (selectedSizeName || '')
                 );
 
                 if (idx !== -1) {
+                    let previousUnitQuantity = Number(cart[idx].unit_quantity);
+                    if (!Number.isFinite(previousUnitQuantity) || previousUnitQuantity < 1) {
+                        previousUnitQuantity = selectedUnit === 'carton'
+                            ? Number(cart[idx].quantity) / Number(cart[idx].pcs_carton || pcsPerCarton || 1)
+                            : Number(cart[idx].quantity);
+                    }
                     cart[idx].quantity += quantityInPieces;
+                    cart[idx].unit_quantity = previousUnitQuantity + quantity;
                 } else {
                     cart.push({
                         product_id: PRODUCT_DATA.id,
@@ -868,6 +884,8 @@
                         color_id: selectedColorId,
                         color_name: selectedColorName,
                         size_name: selectedSizeName,
+                        size_id: selectedSizeId,
+                        unit_quantity: quantity,
                         unit_type: selectedUnit,
                         added_at: new Date().toISOString()
                     });

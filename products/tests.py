@@ -7,6 +7,8 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
+from api.v1.serializers.products import ProductDetailSerializer
+
 from .models import Product, ProductSize, ProductVariant, Size, VariantSize
 
 
@@ -73,3 +75,18 @@ class ProductDetailSizeQuantityTests(TestCase):
 
         self.assertEqual(first_response.json()['pcs_carton'], 36)
         self.assertEqual(second_response.json()['pcs_carton'], 60)
+
+    def test_api_exposes_carton_quantity_for_each_size(self):
+        product = Product.objects.create(name='منتج API', pcs_carton=24, image=_image_file())
+        direct_size = Size.objects.create(name='مباشر')
+        ProductSize.objects.create(product=product, size=direct_size, pcs_carton=40)
+        variant = ProductVariant.objects.create(product=product, name='نمط API', pcs_carton=30)
+        variant_size = Size.objects.create(name='نمط')
+        VariantSize.objects.create(variant=variant, size=variant_size, pcs_carton=70)
+
+        data = ProductDetailSerializer(product).data
+
+        self.assertEqual(data['size_options'][0]['id'], direct_size.pk)
+        self.assertEqual(data['size_options'][0]['pcs_carton'], 40)
+        self.assertEqual(data['variants'][0]['size_options'][0]['id'], variant_size.pk)
+        self.assertEqual(data['variants'][0]['size_options'][0]['pcs_carton'], 70)
