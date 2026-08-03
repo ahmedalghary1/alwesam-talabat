@@ -9,6 +9,8 @@
 {% block nav_home %}active{% endblock %}
 
 {% block extra_css %}
+<link rel="preload" as="image" href="{% static 'images/slide1.webp' %}?v=20260803" type="image/webp"
+    fetchpriority="high">
 <link rel="stylesheet" href="{% static 'css/home.css' %}">
 
 
@@ -22,19 +24,20 @@
         <div class="slider-slides">
             <!-- Slide 1 -->
             <div class="slide slide-1">
-                <img src="{% static 'images/slide1.webp' %}"
+                <img src="{% static 'images/slide1.webp' %}?v=20260803"
+                    width="4100" height="1772" fetchpriority="high" decoding="async"
                     alt="الوسام - موزع أدوات كهربائية بالجملة في مصر - مستلزمات كهرباء للتجار">
             </div>
-
             <!-- Slide 2 -->
             <div class="slide slide-2">
-                <img src="{% static 'images/slide2.webp' %}"
+                <img src="{% static 'images/slide2.webp' %}?v=20260803"
+                    width="4100" height="1772" loading="lazy" decoding="async"
                     alt="مستودع الوسام للأدوات الكهربائية بالجملة - معدات كهربائية أصلية">
             </div>
-
             <!-- Slide 3 -->
             <div class="slide slide-3">
-                <img src="{% static 'images/slide3.webp' %}"
+                <img src="{% static 'images/slide3.webp' %}?v=20260803"
+                    width="4100" height="1772" loading="lazy" decoding="async"
                     alt="صالة عرض الوسام - منتجات كهربائية بالجملة لتجار القاهرة والجيزة">
             </div>
         </div>
