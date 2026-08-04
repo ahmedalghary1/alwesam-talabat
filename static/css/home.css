@@ -107,35 +107,9 @@ main {
     object-fit: contain;
     object-position: center;
     display: block;
-    transform-origin: center center;
-    /* Smooth continuous zoom animation */
-    animation: smoothZoom 20s ease-in-out infinite;
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-}
-
-/* Smooth repeating zoom keyframes */
-@keyframes smoothZoom {
-
-    0%,
-    100% {
-        transform: scale(1);
-    }
-
-    50% {
-        transform: scale(1.08);
-    }
-}
-
-@keyframes zoomIn {
-    0% {
-        transform: scale(1);
-    }
-
-    100% {
-        transform: scale(1.1);
-    }
 }
 
 

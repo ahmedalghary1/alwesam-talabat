@@ -191,14 +191,6 @@
         dots.forEach((dot, i) => {
             dot.classList.toggle('active', i === currentSlideIndex);
         });
-
-        // إعادة تشغيل animation التكبير للصورة الحالية
-        const currentImg = slides[currentSlideIndex].querySelector('img');
-        if (currentImg) {
-            currentImg.style.animation = 'none';
-            void currentImg.offsetWidth; // Force reflow
-            currentImg.style.animation = 'zoomIn 3s ease-out forwards';
-        }
     }
 
     function moveSlide(direction) {
