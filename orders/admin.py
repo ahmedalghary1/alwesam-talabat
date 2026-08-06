@@ -22,7 +22,13 @@ class OrderAdmin(admin.ModelAdmin):
     )
     readonly_fields = ('created_at', 'updated_at')
     inlines = [OrderItemInline]
-    date_hierarchy = 'created_at'
+
+    # Django's date hierarchy uses MySQL's CONVERT_TZ() when USE_TZ is enabled.
+    # Some shared-hosting MySQL installations don't have the time-zone tables
+    # loaded, so CONVERT_TZ() returns NULL and the changelist crashes with
+    # "Database returned an invalid datetime value".  The created/updated date
+    # filters above don't require that database-side conversion.
+    date_hierarchy = None
     
     def get_total_pieces(self, obj):
         """Display total pieces in admin list"""
