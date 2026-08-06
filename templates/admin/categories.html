@@ -48,7 +48,7 @@
                     <i class="fas fa-edit"></i>
                     تعديل
                 </a>
-                <button onclick="deleteCategory(this)" data-category-id="{{ category.id }}"
+                <button type="button" onclick="deleteCategory(this)" data-category-id="{{ category.id }}"
                     data-category-name="{{ category.name }}"
                     data-delete-url="{% url 'admin_app:admin_category_delete' category.id %}"
                     style="flex: 1; background: transparent; border: 2px solid #ef4444; color: #ef4444; padding: 0.625rem; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 0.875rem; transition: all 0.3s ease;">
@@ -84,7 +84,7 @@
         const deleteUrl = button.dataset.deleteUrl;
 
         showConfirmModal(
-            `سيتم حذف القسم "${categoryName}" وجميع المنتجات المرتبطة به`,
+            `سيتم حذف القسم "${categoryName}" وستبقى منتجاته بلا قسم`,
             'تأكيد الحذف',
             function () {
                 const form = document.getElementById('delete-form');

@@ -2,20 +2,15 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 from django.http import JsonResponse
-from django.db.models import Count, Q, Prefetch
+from django.db.models import Max, Count, Q, Prefetch
+from django.views.decorators.http import require_POST
 from .models import CustomerMessage, MessageReply
-import json
-
-import logging
-logger = logging.getLogger(__name__)
 
 @staff_member_required
 def messages_list(request):
     """
     show list of all conversations grouped by user
     """
-    from django.db.models import Max, Count, Q
-    
     # Get last message for each user with unread count
     users_with_messages = CustomerMessage.objects.values('user').annotate(
         last_message_date=Max('created_at'),
@@ -75,88 +70,77 @@ def conversation_detail(request, message_id):
 
 
 @staff_member_required
+@require_POST
 def send_reply(request, message_id):
     """
     send reply to a customer message.
     
     Marks message as read after sending reply.
     """
-    if request.method == 'POST':
-        message = get_object_or_404(CustomerMessage, id=message_id)
-        reply_text = request.POST.get('reply', '').strip()
+    message = get_object_or_404(CustomerMessage, id=message_id)
+    reply_text = request.POST.get('reply', '').strip()
         
-        if reply_text:
-            reply = MessageReply.objects.create(
-                customer_message=message,
-                admin_user=request.user,
-                reply=reply_text
-            )
+    if reply_text:
+        reply = MessageReply.objects.create(
+            customer_message=message,
+            admin_user=request.user,
+            reply=reply_text
+        )
             
-            # Mark message as read
-            if not message.is_read:
-                message.is_read = True
-                message.save()
+        # Mark message as read
+        if not message.is_read:
+            message.is_read = True
+            message.save(update_fields=['is_read'])
             
-            # if AJAX request, return JSON
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return JsonResponse({
-                    'success': True,
-                    'reply': {
-                        'id': reply.id,
-                        'text': reply.reply,
-                        'admin_name': reply.admin_user.username if reply.admin_user else 'خدمة العملاء',
-                        'created_at': reply.created_at.strftime('%Y-%m-%d %H:%M')
-                    }
-                })
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'reply': {
+                    'id': reply.id,
+                    'text': reply.reply,
+                    'admin_name': reply.admin_user.username if reply.admin_user else 'خدمة العملاء',
+                    'created_at': reply.created_at.strftime('%Y-%m-%d %H:%M')
+                }
+            })
             
-            messages.success(request, 'تم إرسال الرد بنجاح')
-        else:
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return JsonResponse({
-                    'success': False,
-                    'error': 'الرد فارغ'
-                }, status=400)
-            messages.error(request, 'الرد فارغ')
+        messages.success(request, 'تم إرسال الرد بنجاح')
+    else:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': False,
+                'error': 'الرد فارغ'
+            }, status=400)
+        messages.error(request, 'الرد فارغ')
     
     return redirect('admin_support:conversation_detail', message_id=message_id)
 
 
 @staff_member_required
+@require_POST
 def mark_as_read(request, message_id):
     """
     Mark message as read.
     
     AJAX endpoint to update message read status.
     """
-    if request.method == 'POST':
-        message = get_object_or_404(CustomerMessage, id=message_id)
+    message = get_object_or_404(CustomerMessage, id=message_id)
+    if not message.is_read:
         message.is_read = True
-        message.save()
-        
-        return JsonResponse({
-            'success': True,
-            'message': 'تم تحديد الرسالة كمقروءة'
-        })
-    
+        message.save(update_fields=['is_read'])
     return JsonResponse({
-        'success': False,
-        'error': 'طريقة غير صحيحة'
-    }, status=400)
+        'success': True,
+        'message': 'تم تحديد الرسالة كمقروءة'
+    })
 
 
 @staff_member_required
+@require_POST
 def delete_message(request, message_id):
     """
     Delete all messages of a user (full conversation)
     """
-    if request.method == 'POST':
-        message = get_object_or_404(CustomerMessage, id=message_id)
-        user = message.user
-        
-        # Delete all messages from this user (replies deleted automatically via CASCADE)
-        deleted_count = CustomerMessage.objects.filter(user=user).delete()[0]
-        
-        messages.success(request, f'تم حذف {deleted_count} رسالة من المحادثة بنجاح')
-        return redirect('admin_support:messages_list')
-    
+    message = get_object_or_404(CustomerMessage, id=message_id)
+    user = message.user
+    deleted_count = CustomerMessage.objects.filter(user=user).delete()[0]
+    messages.success(request, f'تم حذف {deleted_count} رسالة من المحادثة بنجاح')
     return redirect('admin_support:messages_list')

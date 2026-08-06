@@ -1,9 +1,10 @@
-{% extends "base.html" %}
+{% extends "admin/admin_base.html" %}
 {% load static %}
 
-{% block title %}محادثة مع {{ user.username }} - لوحة التحكم{% endblock %}
+{% block title %}محادثة مع {{ client.username }} - لوحة التحكم{% endblock %}
+{% block sidebar_support %}active{% endblock %}
 
-{% block extra_css %}
+{% block admin_extra_css %}
 <link rel="stylesheet" href="{% static 'css/admin.css' %}">
 <style>
     .conversation-container {
@@ -266,13 +267,13 @@
 </style>
 {% endblock %}
 
-{% block content %}
+{% block admin_content %}
 <div class="container">
     <div class="conversation-container">
         <div class="conversation-header">
             <h1>
                 <i class="fas fa-comment-dots"></i>
-                محادثة مع {{ user.username }}
+                محادثة مع {{ client.username }}
             </h1>
             <a href="{% url 'admin_support:messages_list' %}" class="back-btn">
                 <i class="fas fa-arrow-right"></i>
@@ -285,17 +286,17 @@
                 <div class="user-detail-item">
                     <i class="fas fa-user"></i>
                     <strong>الاسم:</strong>
-                    {{ user.username }}
+                    {{ client.username }}
                 </div>
                 <div class="user-detail-item">
                     <i class="fas fa-envelope"></i>
                     <strong>البريد:</strong>
-                    {{ user.email }}
+                    {{ client.email }}
                 </div>
                 <div class="user-detail-item">
                     <i class="fas fa-phone"></i>
                     <strong>الهاتف:</strong>
-                    {{ user.phone|default:"غير متوفر" }}
+                    {{ client.phone|default:"غير متوفر" }}
                 </div>
                 <div class="user-detail-item">
                     <i class="fas fa-comments"></i>
@@ -313,7 +314,7 @@
                 <div class="message-meta">
                     <span class="message-sender">
                         <i class="fas fa-user-circle"></i>
-                        {{ user.username }}
+                        {{ client.username }}
                     </span>
                     <span class="message-time">{{ msg.created_at|date:"Y-m-d H:i" }}</span>
                 </div>
@@ -375,6 +376,9 @@
     </div>
 </div>
 
+{% endblock %}
+
+{% block admin_extra_js %}
 <script>
     // CSRF Token
     function getCsrfToken() {
@@ -434,7 +438,7 @@
                         <div class="message-meta">
                             <span class="message-sender">
                                 <i class="fas fa-headset"></i>
-                                ${data.reply.admin_name}
+                                ${escapeHtml(data.reply.admin_name)}
                             </span>
                             <span class="message-time">${data.reply.created_at}</span>
                         </div>

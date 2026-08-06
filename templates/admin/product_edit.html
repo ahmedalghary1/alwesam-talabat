@@ -357,6 +357,7 @@
         const variantName = escapeHtml(variant.name || '');
         const variantCode = escapeHtml(variant.code || '');
         const variantPcs = variant.pcs_carton || 24;
+        const variantOrder = variant.order || 0;
         const variantAvailable = variant.is_available !== false;
         const variantColorId = variant.color_id || '';
         const variantAttributeIds = variant.attribute_ids || [];
@@ -413,6 +414,10 @@
                     <label style="display: block; font-size: 0.875rem; margin-bottom: 0.25rem;">عدد القطع/كرتون *</label>
                     <input type="number" name="variant_pcs_carton[]" class="form-input" style="padding: 0.625rem;" value="${variantPcs}" min="1" required>
                 </div>
+                <div>
+                    <label style="display:block; font-size:.875rem; margin-bottom:.25rem;">ترتيب النمط</label>
+                    <input type="number" name="variant_order[]" class="form-input" style="padding:.625rem;" value="${variantOrder}" min="0">
+                </div>
                 <div style="grid-column: span 2;">
                     <label style="display:block; font-size:.875rem; margin-bottom:.5rem; font-weight:600;"><i class="fas fa-tags"></i> خصائص النمط</label>
                     ${buildAttributeFields(formKey, variantAttributeIds)}
@@ -445,6 +450,11 @@
     // تحميل الأنماط الحالية
     function loadExistingVariants() {
         variantsData.forEach(v => addVariant(v));
+        const marker = document.createElement('input');
+        marker.type = 'hidden';
+        marker.name = 'variants_form_initialized';
+        marker.value = '1';
+        document.querySelector('.form-card form').appendChild(marker);
     }
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', loadExistingVariants);

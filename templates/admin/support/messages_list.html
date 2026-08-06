@@ -187,10 +187,10 @@
         </h1>
 
         <div class="filter-tabs">
-            <button class="filter-tab active" onclick="filterMessages('all')">
+            <button type="button" class="filter-tab active" onclick="filterMessages('all', this)">
                 الكل ({{ conversations|length }})
             </button>
-            <button class="filter-tab" onclick="filterMessages('unread')">
+            <button type="button" class="filter-tab" onclick="filterMessages('unread', this)">
                 غير المقروءة ({{ unread_count }})
             </button>
         </div>
@@ -262,14 +262,15 @@
 
 {% block admin_extra_js %}
 <script>
-    function filterMessages(filter) {
+    function filterMessages(filter, activeButton) {
         const table = document.getElementById('messagesTable');
-        const rows = table.querySelectorAll('tbody tr');
         const tabs = document.querySelectorAll('.filter-tab');
 
-        // update buttons
         tabs.forEach(tab => tab.classList.remove('active'));
-        event.target.classList.add('active');
+        activeButton.classList.add('active');
+
+        if (!table) return;
+        const rows = table.querySelectorAll('tbody tr');
 
         // filter rows
         rows.forEach(row => {

@@ -160,6 +160,7 @@ def admin_product_add(request):
         name = request.POST.get('name')
         description = request.POST.get('description', '')
         pcs_carton = request.POST.get('pcs_carton', 1)
+        product_order = request.POST.get('order', 0)
         category_id = request.POST.get('category')
         image = request.FILES.get('image')
 
@@ -175,6 +176,7 @@ def admin_product_add(request):
                     slug='',
                     description=description,
                     pcs_carton=_positive_int(pcs_carton, 1),
+                    order=max(int(product_order or 0), 0),
                     category_id=category_id if category_id else None,
                     image=image,
                     is_available='is_available' in request.POST
@@ -200,6 +202,7 @@ def admin_product_add(request):
                 variant_names = request.POST.getlist('variant_name[]')
                 variant_codes = request.POST.getlist('variant_code[]')
                 variant_pcs = request.POST.getlist('variant_pcs_carton[]')
+                variant_orders = request.POST.getlist('variant_order[]')
                 variant_available = request.POST.getlist('variant_available[]')
                 variant_color_ids = request.POST.getlist('variant_color[]')
                 variant_length_labels = request.POST.getlist('variant_length_label[]')
@@ -215,6 +218,11 @@ def admin_product_add(request):
                         name=variant_names[i].strip(),
                         code=variant_codes[i] if i < len(variant_codes) and variant_codes[i] else None,
                         pcs_carton=_positive_int(variant_pcs[i], 24) if i < len(variant_pcs) else 24,
+                        order=(
+                            max(int(variant_orders[i] or 0), 0)
+                            if i < len(variant_orders)
+                            else 0
+                        ),
                         is_available=form_key in variant_available,
                         length_label=(variant_length_labels[i] or None) if i < len(variant_length_labels) else None,
                     )
@@ -302,6 +310,7 @@ def admin_product_edit(request, product_id):
             'name': variant.name,
             'code': variant.code,
             'pcs_carton': variant.pcs_carton,
+            'order': variant.order,
             'is_available': variant.is_available,
             'color_id': variant.selected_color_id,
             'attribute_ids': variant.selected_attribute_ids,
@@ -418,6 +427,14 @@ def admin_product_edit(request, product_id):
 
             updated_variant_ids = []
             updated_variants = []
+            should_sync_variants = (
+                request.POST.get('variants_form_initialized') == '1'
+                or bool(variant_names)
+            )
+            if not should_sync_variants:
+                updated_variant_ids = list(
+                    product.variants.values_list('id', flat=True)
+                )
 
             for i in range(len(variant_names)):
                 if variant_names[i].strip():
@@ -467,9 +484,10 @@ def admin_product_edit(request, product_id):
                         VariantSize.objects.create(variant=variant, size_id=size_id, pcs_carton=pcs)
 
             # ========== Delete variants that were removed ==========
-            deleted_count = product.variants.exclude(id__in=updated_variant_ids).delete()
-            if deleted_count[0] > 0:
-                messages.info(request, f'تم حذف {deleted_count[0]} نمط/أنماط')
+            if should_sync_variants:
+                deleted_count = product.variants.exclude(id__in=updated_variant_ids).delete()
+                if deleted_count[0] > 0:
+                    messages.info(request, f'تم حذف {deleted_count[0]} نمط/أنماط')
 
             # ========== Variant images ==========
             # Delete selected images
@@ -547,22 +565,22 @@ def admin_variant_image_delete(request, product_id, image_id):
 
 
 @staff_member_required
+@require_POST
 def admin_product_delete(request, product_id):
     """Delete product"""
-    if request.method == 'POST':
-        product = get_object_or_404(Product, id=product_id)
-        product_name = product.name
-        try:
-            product.delete()
-            messages.success(request, f'تم حذف المنتج {product_name}')
-        except ProtectedError:
-            product.is_available = False
-            product.save(update_fields=['is_available', 'updated_at'])
-            messages.warning(
-                request,
-                f'لا يمكن حذف المنتج {product_name} لأنه موجود في طلبات سابقة. '
-                'تم إخفاؤه من المتجر بدلًا من ذلك.',
-            )
+    product = get_object_or_404(Product, id=product_id)
+    product_name = product.name
+    try:
+        product.delete()
+        messages.success(request, f'تم حذف المنتج {product_name}')
+    except ProtectedError:
+        product.is_available = False
+        product.save(update_fields=['is_available', 'updated_at'])
+        messages.warning(
+            request,
+            f'لا يمكن حذف المنتج {product_name} لأنه موجود في طلبات سابقة. '
+            'تم إخفاؤه من المتجر بدلًا من ذلك.',
+        )
     return redirect('admin_app:admin_products')
 
 
@@ -604,13 +622,21 @@ def admin_order_detail(request, order_id):
         new_status = request.POST.get('status')
         if new_status in dict(Order.STATUS_CHOICES).keys():
             order.status = new_status
-            order.save()
+            order.save(update_fields=['status', 'updated_at'])
 
             try:
                 from utils.email_tasks import send_order_status_email_task
                 send_order_status_email_task.delay(order.id, new_status, order.user.email)
-            except Exception as e:
-                messages.success(request, f'تم تحديث حالة الطلب (فشل جدولة إرسال البريد الإلكتروني: {str(e)})')
+            except Exception:
+                messages.warning(
+                    request,
+                    'تم تحديث حالة الطلب، لكن تعذر جدولة رسالة البريد الإلكتروني.',
+                )
+            else:
+                messages.success(request, 'تم تحديث حالة الطلب بنجاح')
+        else:
+            messages.error(request, 'حالة الطلب المحددة غير صحيحة')
+        return redirect('admin_app:admin_order_detail', order_id=order.id)
 
     context = {
         'order': order,
@@ -622,7 +648,7 @@ def admin_order_detail(request, order_id):
 @staff_member_required
 def admin_categories(request):
     """Category management"""
-    categories = Category.objects.all().order_by('name')
+    categories = Category.objects.all().order_by('order', 'name')
     return render(request, 'admin/categories.html', {'categories': categories})
 
 
@@ -633,19 +659,28 @@ def admin_category_add(request):
         name = request.POST.get('name')
         description = request.POST.get('description', '')
         image = request.FILES.get('image')
+        order = request.POST.get('order', 0)
 
         try:
+            name = (name or '').strip()
+            if not name:
+                raise ValueError('اسم القسم مطلوب')
+            if not image:
+                raise ValueError('صورة القسم مطلوبة')
             category = Category.objects.create(
                 name=name,
                 description=description,
-                image=image
+                image=image,
+                order=max(int(order or 0), 0),
             )
             messages.success(request, f'تم إضافة القسم "{category.name}" بنجاح')
             return redirect('admin_app:admin_categories')
         except Exception as e:
             messages.error(request, f'حدث خطأ: {str(e)}')
 
-    return render(request, 'admin/category_add.html')
+    return render(request, 'admin/category_add.html', {
+        'form_data': request.POST if request.method == 'POST' else {},
+    })
 
 
 @staff_member_required
@@ -654,27 +689,36 @@ def admin_category_edit(request, category_id):
     category = get_object_or_404(Category, id=category_id)
 
     if request.method == 'POST':
-        category.name = request.POST.get('name', category.name)
-        category.description = request.POST.get('description', category.description)
+        try:
+            old_name = category.name
+            category.name = request.POST.get('name', category.name).strip()
+            if not category.name:
+                raise ValueError('اسم القسم مطلوب')
+            category.description = request.POST.get('description', category.description)
+            category.order = max(int(request.POST.get('order') or 0), 0)
 
-        if 'image' in request.FILES:
-            category.image = request.FILES['image']
+            if 'image' in request.FILES:
+                category.image = request.FILES['image']
+            if old_name != category.name:
+                category.slug = ''
 
-        category.save()
-        messages.success(request, 'تم تحديث القسم بنجاح')
-        return redirect('admin_app:admin_categories')
+            category.save()
+            messages.success(request, 'تم تحديث القسم بنجاح')
+            return redirect('admin_app:admin_categories')
+        except Exception as e:
+            messages.error(request, f'حدث خطأ: {str(e)}')
 
     return render(request, 'admin/category_edit.html', {'category': category})
 
 
 @staff_member_required
+@require_POST
 def admin_category_delete(request, category_id):
     """Delete category"""
-    if request.method == 'POST':
-        category = get_object_or_404(Category, id=category_id)
-        category_name = category.name
-        category.delete()
-        messages.success(request, f'تم حذف القسم {category_name}')
+    category = get_object_or_404(Category, id=category_id)
+    category_name = category.name
+    category.delete()
+    messages.success(request, f'تم حذف القسم {category_name}')
     return redirect('admin_app:admin_categories')
 
 
@@ -922,55 +966,55 @@ def admin_export_users_excel(request):
 
 
 @staff_member_required
+@require_POST
 def admin_approve_user(request, user_id):
     """Approve user registration"""
     from accounts.models import CustomUser
-    if request.method == 'POST':
-        user = get_object_or_404(CustomUser, id=user_id, is_staff=False)
-        user.is_active = True
-        user.save()
+    user = get_object_or_404(CustomUser, id=user_id, is_staff=False)
+    user.is_active = True
+    user.save(update_fields=['is_active'])
 
+    try:
+        from utils.email_tasks import send_activation_email_task
+        login_url = request.build_absolute_uri('/accounts/login/')
+        send_activation_email_task.delay(user.id, login_url)
+        messages.success(request, f'تم تفعيل حساب "{user.username}" وتم إضافة إرسال البريد الإلكتروني إلى قائمة الانتظار')
+    except Exception:
+        messages.warning(request, f'تم تفعيل حساب "{user.username}" لكن تعذر جدولة البريد الإلكتروني')
+
+    return redirect('admin_app:pending_users')
+
+
+@staff_member_required
+@require_POST
+def admin_reject_user(request, user_id):
+    """Reject user and delete account"""
+    from accounts.models import CustomUser
+    user = get_object_or_404(CustomUser, id=user_id, is_staff=False)
+    username = user.username
+    user.delete()
+    messages.success(request, f'تم رفض وحذف طلب انضمام "{username}"')
+    return redirect('admin_app:pending_users')
+
+
+@staff_member_required
+@require_POST
+def admin_toggle_user_status(request, user_id):
+    """Toggle user active status (deactivate/activate)"""
+    from accounts.models import CustomUser
+    user = get_object_or_404(CustomUser, id=user_id, is_staff=False)
+    user.is_active = not user.is_active
+    user.save(update_fields=['is_active'])
+
+    if user.is_active:
         try:
             from utils.email_tasks import send_activation_email_task
             login_url = request.build_absolute_uri('/accounts/login/')
             send_activation_email_task.delay(user.id, login_url)
-            messages.success(request, f'تم تفعيل حساب "{user.username}" وتم إضافة إرسال البريد الإلكتروني إلى قائمة الانتظار')
-        except Exception as e:
-            messages.success(request, f'تم تفعيل حساب "{user.username}" (فشل جدولة إرسال البريد الإلكتروني: {str(e)})')
-
-    return redirect('admin_app:pending_users')
-
-
-@staff_member_required
-def admin_reject_user(request, user_id):
-    """Reject user and delete account"""
-    from accounts.models import CustomUser
-    if request.method == 'POST':
-        user = get_object_or_404(CustomUser, id=user_id, is_staff=False)
-        username = user.username
-        user.delete()
-        messages.success(request, f'تم رفض وحذف طلب انضمام "{username}"')
-    return redirect('admin_app:pending_users')
-
-
-@staff_member_required
-def admin_toggle_user_status(request, user_id):
-    """Toggle user active status (deactivate/activate)"""
-    from accounts.models import CustomUser
-    if request.method == 'POST':
-        user = get_object_or_404(CustomUser, id=user_id, is_staff=False)
-        user.is_active = not user.is_active
-        user.save()
-
-        if user.is_active:
-            try:
-                from utils.email_tasks import send_activation_email_task
-                login_url = request.build_absolute_uri('/accounts/login/')
-                send_activation_email_task.delay(user.id, login_url)
-                messages.success(request, f'تم تفعيل حساب "{user.username}" وتم إرسال البريد الإلكتروني')
-            except Exception as e:
-                messages.success(request, f'تم تفعيل حساب "{user.username}" (فشل إرسال البريد الإلكتروني: {str(e)})')
-        else:
-            messages.success(request, f'تم إيقاف حساب المستخدم "{user.username}" بنجاح')
+            messages.success(request, f'تم تفعيل حساب "{user.username}" وتم إرسال البريد الإلكتروني')
+        except Exception:
+            messages.warning(request, f'تم تفعيل حساب "{user.username}" لكن تعذر جدولة البريد الإلكتروني')
+    else:
+        messages.success(request, f'تم إيقاف حساب المستخدم "{user.username}" بنجاح')
 
     return redirect('admin_app:all_users')

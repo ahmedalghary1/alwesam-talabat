@@ -2,6 +2,7 @@ import os
 import shutil
 import tempfile
 from io import BytesIO
+from unittest.mock import patch
 
 from PIL import Image
 from django.contrib.auth import get_user_model
@@ -12,10 +13,10 @@ from openpyxl import load_workbook
 
 from orders.models import Order
 from products.models import (
-    Product, ProductImages, ProductSize, ProductVariant, Size,
+    Category, Product, ProductImages, ProductSize, ProductVariant, Size,
     VariantAttribute, VariantAttributeValue, VariantImage, VariantSize,
 )
-from support.models import CustomerMessage
+from support.models import CustomerMessage, MessageReply
 
 from .admin_views import _excel_safe_text, _valid_model_ids, _variant_sizes_from_post
 
@@ -275,6 +276,190 @@ class ProductAdminFlowTests(TestCase):
         self.assertTrue(ProductImages.objects.filter(pk=other_image.pk).exists())
         self.assertFalse(os.path.exists(product_image_path))
         self.assertFalse(os.path.exists(variant_image_path))
+
+    def test_edit_without_initialized_javascript_keeps_existing_variants(self):
+        product = Product.objects.create(name='منتج آمن', image=_image_file())
+        variant = ProductVariant.objects.create(product=product, name='نمط محفوظ')
+
+        response = self.client.post(
+            reverse('admin_app:admin_product_edit', args=[product.pk]),
+            {'name': product.name, 'pcs_carton': '24', 'order': '0'},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(ProductVariant.objects.filter(pk=variant.pk).exists())
+
+    def test_add_product_saves_product_and_variant_order(self):
+        response = self.client.post(
+            reverse('admin_app:admin_product_add'),
+            {
+                'name': 'منتج مرتب',
+                'image': _image_file('ordered.png'),
+                'pcs_carton': '24',
+                'order': '8',
+                'variant_form_key[]': ['0'],
+                'variant_name[]': ['نمط مرتب'],
+                'variant_code[]': [''],
+                'variant_pcs_carton[]': ['24'],
+                'variant_order[]': ['6'],
+                'variant_available[]': ['0'],
+                'variant_length_label[]': [''],
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        product = Product.objects.get(name='منتج مرتب')
+        self.assertEqual(product.order, 8)
+        self.assertEqual(product.variants.get().order, 6)
+
+
+class AdminPanelReliabilityTests(TestCase):
+    def setUp(self):
+        self.media_root = tempfile.mkdtemp()
+        self.override = override_settings(MEDIA_ROOT=self.media_root)
+        self.override.enable()
+        self.addCleanup(self.override.disable)
+        self.addCleanup(shutil.rmtree, self.media_root, True)
+
+        user_model = get_user_model()
+        self.staff = user_model.objects.create_user(
+            email='panel-admin@example.com',
+            username='panel-admin',
+            password='password',
+            phone='01000000011',
+            address='الإدارة',
+            is_staff=True,
+            is_active=True,
+        )
+        self.customer = user_model.objects.create_user(
+            email='panel-customer@example.com',
+            username='عميل اللوحة',
+            password='password',
+            phone='01000000012',
+            address='عنوان العميل',
+            is_active=False,
+        )
+        self.client.force_login(self.staff)
+        self.category = Category.objects.create(
+            name='قسم الاختبار', image=_image_file('category.png')
+        )
+        self.product = Product.objects.create(
+            name='منتج لوحة الإدارة',
+            category=self.category,
+            image=_image_file('panel-product.png'),
+        )
+        self.order = Order.objects.create(
+            user=self.customer,
+            phone_number=self.customer.phone,
+            address=self.customer.address,
+            status='confirmed',
+        )
+        self.message = CustomerMessage.objects.create(
+            user=self.customer,
+            message='رسالة اختبار لوحة الإدارة',
+        )
+
+    def test_main_admin_pages_render_with_working_controls(self):
+        page_urls = [
+            reverse('admin_app:dashboard'),
+            reverse('admin_app:admin_products'),
+            reverse('admin_app:admin_categories'),
+            reverse('admin_app:admin_orders'),
+            reverse('admin_app:admin_order_detail', args=[self.order.pk]),
+            reverse('admin_app:pending_users'),
+            reverse('admin_app:all_users'),
+            reverse('admin_support:messages_list'),
+            reverse('admin_support:conversation_detail', args=[self.message.pk]),
+        ]
+
+        responses = [self.client.get(url) for url in page_urls]
+
+        self.assertTrue(all(response.status_code == 200 for response in responses))
+        dashboard, products, _, orders, _, pending, _, messages_page, conversation = responses
+        self.assertContains(dashboard, self.order.get_status_display())
+        self.assertContains(products, 'name="search"')
+        self.assertContains(products, 'name="category"')
+        self.assertContains(orders, self.order.get_status_display())
+        self.assertContains(pending, 'onclick="showUserDetails(this)"')
+        self.assertContains(messages_page, "filterMessages('all', this)")
+        self.assertNotContains(messages_page, 'event.target')
+        self.assertContains(conversation, f'محادثة مع {self.customer.username}')
+        self.assertContains(conversation, 'admin-layout')
+
+    def test_product_search_and_category_filter_work_together(self):
+        Product.objects.create(name='منتج خارج البحث', image=_image_file('outside.png'))
+
+        response = self.client.get(reverse('admin_app:admin_products'), {
+            'search': 'لوحة الإدارة',
+            'category': self.category.slug,
+        })
+
+        self.assertContains(response, self.product.name)
+        self.assertNotContains(response, 'منتج خارج البحث')
+
+    def test_category_validation_order_and_rename_work(self):
+        response = self.client.post(reverse('admin_app:admin_category_add'), {
+            'name': 'قسم بلا صورة',
+            'order': '3',
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Category.objects.filter(name='قسم بلا صورة').exists())
+
+        response = self.client.post(
+            reverse('admin_app:admin_category_edit', args=[self.category.pk]),
+            {'name': 'قسم بعد التعديل', 'description': 'وصف', 'order': '9'},
+        )
+        self.assertEqual(response.status_code, 302)
+        self.category.refresh_from_db()
+        self.assertEqual(self.category.name, 'قسم بعد التعديل')
+        self.assertEqual(self.category.order, 9)
+        self.assertEqual(self.category.slug, 'قسم-بعد-التعديل')
+
+    @patch('utils.email_tasks.send_order_status_email_task.delay')
+    def test_order_status_update_redirects_and_confirms_success(self, delay):
+        response = self.client.post(
+            reverse('admin_app:admin_order_detail', args=[self.order.pk]),
+            {'status': 'delivered'},
+            follow=True,
+        )
+
+        self.order.refresh_from_db()
+        self.assertEqual(self.order.status, 'delivered')
+        self.assertContains(response, 'تم تحديث حالة الطلب بنجاح')
+        delay.assert_called_once()
+
+    def test_mutating_admin_endpoints_reject_get_requests(self):
+        urls = [
+            reverse('admin_app:admin_product_delete', args=[self.product.pk]),
+            reverse('admin_app:admin_category_delete', args=[self.category.pk]),
+            reverse('admin_app:approve_user', args=[self.customer.pk]),
+            reverse('admin_app:reject_user', args=[self.customer.pk]),
+            reverse('admin_app:toggle_user_status', args=[self.customer.pk]),
+            reverse('admin_support:send_reply', args=[self.message.pk]),
+            reverse('admin_support:mark_as_read', args=[self.message.pk]),
+            reverse('admin_support:delete_message', args=[self.message.pk]),
+        ]
+
+        responses = [self.client.get(url) for url in urls]
+
+        self.assertTrue(all(response.status_code == 405 for response in responses))
+        self.assertTrue(Product.objects.filter(pk=self.product.pk).exists())
+        self.assertTrue(Category.objects.filter(pk=self.category.pk).exists())
+        self.assertTrue(CustomerMessage.objects.filter(pk=self.message.pk).exists())
+
+    def test_support_ajax_reply_returns_and_saves_reply(self):
+        response = self.client.post(
+            reverse('admin_support:send_reply', args=[self.message.pk]),
+            {'reply': 'رد من الإدارة'},
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()['success'])
+        self.assertTrue(MessageReply.objects.filter(
+            customer_message=self.message,
+            reply='رد من الإدارة',
+        ).exists())
 
     def test_image_delete_buttons_use_direct_post_endpoints(self):
         product = Product.objects.create(name='منتج الحذف المباشر', image=_image_file())

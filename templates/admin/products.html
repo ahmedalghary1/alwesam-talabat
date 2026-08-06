@@ -103,11 +103,48 @@
         color: var(--text-primary);
     }
 
+    .products-filters {
+        display: grid;
+        grid-template-columns: minmax(220px, 1fr) minmax(180px, 280px) auto auto;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+        padding: 1rem;
+        background: var(--card-bg);
+        border: 2px solid var(--border-color);
+        border-radius: 12px;
+    }
+
+    .products-filters input,
+    .products-filters select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+    }
+
+    .products-filters button,
+    .products-filters .btn-clear-filter {
+        padding: 0.75rem 1rem;
+        border: 0;
+        border-radius: 8px;
+        font-weight: 700;
+        cursor: pointer;
+        text-decoration: none;
+        text-align: center;
+    }
+
+    .products-filters button { background: #FFC400; color: #1a1a1a; }
+    .products-filters .btn-clear-filter { background: var(--bg-secondary); color: var(--text-primary); }
+
     @media (max-width: 640px) {
         .product-image,
         .product-placeholder {
             height: clamp(260px, 82vw, 380px);
         }
+
+        .products-filters { grid-template-columns: 1fr; }
     }
 
     .product-meta {
@@ -171,6 +208,20 @@
         إضافة منتج جديد
     </a>
 </div>
+
+<form method="get" class="products-filters">
+    <input type="search" name="search" value="{{ search_query }}" placeholder="ابحث باسم المنتج أو الوصف...">
+    <select name="category">
+        <option value="">كل الأقسام</option>
+        {% for category in categories %}
+        <option value="{{ category.slug }}" {% if category_filter == category.slug %}selected{% endif %}>{{ category.name }}</option>
+        {% endfor %}
+    </select>
+    <button type="submit"><i class="fas fa-search"></i> بحث</button>
+    {% if search_query or category_filter %}
+    <a href="{% url 'admin_app:admin_products' %}" class="btn-clear-filter">مسح</a>
+    {% endif %}
+</form>
 
 {% if products %}
 <div class="products-grid">

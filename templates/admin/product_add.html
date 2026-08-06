@@ -337,6 +337,11 @@
         </div>
 
         <div class="form-group">
+            <label class="form-label"><i class="fas fa-sort"></i> ترتيب المنتج</label>
+            <input type="number" name="order" class="form-input" value="0" min="0">
+        </div>
+
+        <div class="form-group">
             <label class="form-label"><i class="fas fa-images"></i> صور إضافية (اختياري)</label>
             <input type="file" name="additional_images[]" class="form-input" accept="image/*" multiple
                 id="additional-images">
@@ -466,6 +471,10 @@
                 <div>
                     <label>عدد القطع/كرتون *</label>
                     <input type="number" name="variant_pcs_carton[]" class="form-input" value="24" min="1" required>
+                </div>
+                <div>
+                    <label>ترتيب النمط</label>
+                    <input type="number" name="variant_order[]" class="form-input" value="0" min="0">
                 </div>
                 <div class="full-width">
                     <label>خصائص النمط (اختياري)</label>
