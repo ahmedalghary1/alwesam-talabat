@@ -61,6 +61,42 @@ def _variant_sizes_from_post(request, form_key):
     return result
 
 
+def _attribute_groups_data():
+    """Serialize every variant attribute group for the custom admin forms."""
+    groups = VariantAttribute.objects.prefetch_related('values').order_by('name')
+    return [
+        {
+            'id': group.id,
+            'name': group.name,
+            'values': [
+                {'id': value.id, 'name': value.value}
+                for value in sorted(
+                    group.values.all(), key=lambda item: item.value.casefold()
+                )
+            ],
+        }
+        for group in groups
+    ]
+
+
+def _set_variant_attributes_from_post(request, variant, form_key, colors=None, color_id=None):
+    """Save all submitted attributes while accepting the legacy color field."""
+    field_name = f'variant_{form_key}_attribute_ids[]'
+    if field_name in request.POST:
+        attribute_ids = _valid_model_ids(request.POST.getlist(field_name))
+        variant.attributes.set(VariantAttributeValue.objects.filter(id__in=attribute_ids))
+        return
+
+    old_colors = variant.attributes.filter(attribute__name__in=["لون", "Color"])
+    if old_colors.exists():
+        variant.attributes.remove(*old_colors)
+    if color_id and colors is not None:
+        try:
+            variant.attributes.add(colors.get(id=color_id))
+        except VariantAttributeValue.DoesNotExist:
+            pass
+
+
 @staff_member_required
 def admin_dashboard(request):
     """Admin dashboard with statistics and recent orders"""
@@ -116,6 +152,7 @@ def admin_product_add(request):
         attribute__name__in=["لون", "Color"]
     ).all()
     sizes = Size.objects.all()
+    attribute_groups_data = _attribute_groups_data()
 
     if request.method == 'POST':
         name = request.POST.get('name')
@@ -180,13 +217,15 @@ def admin_product_add(request):
                         length_label=(variant_length_labels[i] or None) if i < len(variant_length_labels) else None,
                     )
 
-                    # Add color attribute
-                    if i < len(variant_color_ids) and variant_color_ids[i]:
-                        try:
-                            color_value = colors.get(id=variant_color_ids[i])
-                            variant.attributes.add(color_value)
-                        except VariantAttributeValue.DoesNotExist:
-                            pass
+                    # Add every selected attribute (color, material, model, etc.).
+                    color_id = (
+                        variant_color_ids[i]
+                        if i < len(variant_color_ids) and variant_color_ids[i]
+                        else None
+                    )
+                    _set_variant_attributes_from_post(
+                        request, variant, form_key, colors=colors, color_id=color_id
+                    )
 
                     # ========== Variant sizes with quantities (VariantSize) ==========
                     for size_id, pcs in _variant_sizes_from_post(request, form_key):
@@ -213,7 +252,8 @@ def admin_product_add(request):
     return render(request, 'admin/product_add.html', {
         'categories': categories,
         'colors': colors,
-        'sizes': sizes
+        'sizes': sizes,
+        'attribute_groups_data': attribute_groups_data,
     })
 
 
@@ -227,6 +267,7 @@ def admin_product_edit(request, product_id):
         attribute__name__in=["لون", "Color"]
     ).select_related('attribute').all()
     sizes = Size.objects.all().order_by('order')
+    attribute_groups_data = _attribute_groups_data()
 
     # Prepare variants with their size data (through VariantSize)
     variants = product.variants.prefetch_related(
@@ -235,8 +276,17 @@ def admin_product_edit(request, product_id):
     ).all().order_by('order')
 
     for variant in variants:
-        color_attr = variant.attributes.filter(attribute__name__in=["لون", "Color"]).first()
+        variant_attributes = list(variant.attributes.all())
+        color_attr = next(
+            (
+                attribute
+                for attribute in variant_attributes
+                if attribute.attribute.name in ["لون", "Color"]
+            ),
+            None,
+        )
         variant.selected_color_id = color_attr.id if color_attr else None
+        variant.selected_attribute_ids = [attribute.id for attribute in variant_attributes]
         # Get size data with pcs_carton from VariantSize
         variant.size_data = list(variant.size_prices.select_related('size').values(
             'id', 'size_id', 'size__name', 'pcs_carton'
@@ -252,6 +302,7 @@ def admin_product_edit(request, product_id):
             'pcs_carton': variant.pcs_carton,
             'is_available': variant.is_available,
             'color_id': variant.selected_color_id,
+            'attribute_ids': variant.selected_attribute_ids,
             'length_label': variant.length_label,
             'size_data': list(variant.size_prices.select_related('size').values(
                 'size_id', 'pcs_carton'
@@ -380,41 +431,22 @@ def admin_product_edit(request, product_id):
                                 setattr(variant, key, value)
                             variant.save()
 
-                            # Update color
-                            old_colors = variant.attributes.filter(attribute__name__in=["لون", "Color"])
-                            if old_colors.exists():
-                                variant.attributes.remove(*old_colors)
-                            if color_id:
-                                try:
-                                    color_value = colors.get(id=color_id)
-                                    variant.attributes.add(color_value)
-                                except VariantAttributeValue.DoesNotExist:
-                                    pass
-
                             updated_variant_ids.append(variant.id)
                             updated_variants.append((form_key, variant))
                         except ProductVariant.DoesNotExist:
                             # If ID invalid, create new
                             variant = ProductVariant.objects.create(**variant_data)
-                            if color_id:
-                                try:
-                                    color_value = colors.get(id=color_id)
-                                    variant.attributes.add(color_value)
-                                except VariantAttributeValue.DoesNotExist:
-                                    pass
                             updated_variant_ids.append(variant.id)
                             updated_variants.append((form_key, variant))
                     else:
                         # Create new variant
                         variant = ProductVariant.objects.create(**variant_data)
-                        if color_id:
-                            try:
-                                color_value = colors.get(id=color_id)
-                                variant.attributes.add(color_value)
-                            except VariantAttributeValue.DoesNotExist:
-                                pass
                         updated_variant_ids.append(variant.id)
                         updated_variants.append((form_key, variant))
+
+                    _set_variant_attributes_from_post(
+                        request, variant, form_key, colors=colors, color_id=color_id
+                    )
 
                     # ========== Variant sizes (VariantSize) ==========
                     # Delete all existing sizes for this variant and recreate
@@ -472,6 +504,7 @@ def admin_product_edit(request, product_id):
         'colors_data': [
             {'id': color.id, 'name': str(color)} for color in colors
         ],
+        'attribute_groups_data': attribute_groups_data,
         'total_variants': variants.count(),
         'total_images': product_images.count(),
     }

@@ -169,6 +169,7 @@
 {{ variants_data|json_script:"variants-data" }}
 {{ sizes_data|json_script:"sizes-data" }}
 {{ colors_data|json_script:"colors-data" }}
+{{ attribute_groups_data|json_script:"attribute-groups-data" }}
 {% endblock %}
 
 {% block extra_js %}
@@ -297,9 +298,31 @@
     const variantsData = JSON.parse(document.getElementById('variants-data')?.textContent || '[]');
     window.allSizes = JSON.parse(document.getElementById('sizes-data')?.textContent || '[]');
     window.colorsData = JSON.parse(document.getElementById('colors-data')?.textContent || '[]');
+    const attributeGroups = JSON.parse(document.getElementById('attribute-groups-data')?.textContent || '[]');
     const escapeHtml = value => String(value ?? '').replace(/[&<>'"]/g, char => ({
         '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
     })[char]);
+
+    function buildAttributeFields(formKey, selectedIds = []) {
+        if (!attributeGroups.length) return '<small>لا توجد خصائص معرفة حالياً.</small>';
+        const selected = new Set(selectedIds.map(String));
+        return `
+            <input type="hidden" name="variant_${formKey}_attribute_ids[]" value="">
+            <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:.75rem;">
+                ${attributeGroups.map(group => `
+                    <fieldset style="border:1px solid var(--border-color); border-radius:8px; padding:.75rem;">
+                        <legend style="padding:0 .35rem; font-weight:600;">${escapeHtml(group.name)}</legend>
+                        ${group.values.map(value => `
+                            <label style="display:flex; align-items:center; gap:.4rem; margin:.3rem 0;">
+                                <input type="checkbox" name="variant_${formKey}_attribute_ids[]" value="${value.id}" ${selected.has(String(value.id)) ? 'checked' : ''}>
+                                <span>${escapeHtml(value.name)}</span>
+                            </label>
+                        `).join('')}
+                    </fieldset>
+                `).join('')}
+            </div>
+        `;
+    }
 
     function addNewProductSizeRow() {
         const container = document.getElementById('new-product-sizes-container');
@@ -335,6 +358,7 @@
         const variantPcs = variant.pcs_carton || 24;
         const variantAvailable = variant.is_available !== false;
         const variantColorId = variant.color_id || '';
+        const variantAttributeIds = variant.attribute_ids || [];
         const variantLengthLabel = escapeHtml(variant.length_label || '');
         const sizeData = variant.size_data || [];
 
@@ -389,12 +413,9 @@
                     <label style="display: block; font-size: 0.875rem; margin-bottom: 0.25rem;">عدد القطع/كرتون *</label>
                     <input type="number" name="variant_pcs_carton[]" class="form-input" style="padding: 0.625rem;" value="${variantPcs}" min="1" required>
                 </div>
-                <div>
-                    <label style="display: block; font-size: 0.875rem; margin-bottom: 0.25rem;"><i class="fas fa-palette"></i> اللون</label>
-                    <select name="variant_color[]" class="form-select" style="padding: 0.625rem;">
-                        <option value="">بدون لون</option>
-                        ${window.colorsData.map(c => `<option value="${c.id}" ${variantColorId == c.id ? 'selected' : ''}>${escapeHtml(c.name)}</option>`).join('')}
-                    </select>
+                <div style="grid-column: span 2;">
+                    <label style="display:block; font-size:.875rem; margin-bottom:.5rem; font-weight:600;"><i class="fas fa-tags"></i> خصائص النمط</label>
+                    ${buildAttributeFields(formKey, variantAttributeIds)}
                 </div>
                 <div>
                     <label style="display: block; font-size: 0.875rem; margin-bottom: 0.25rem;">متوفر؟</label>
@@ -422,9 +443,14 @@
     }
 
     // تحميل الأنماط الحالية
-    document.addEventListener('DOMContentLoaded', function () {
+    function loadExistingVariants() {
         variantsData.forEach(v => addVariant(v));
-    });
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', loadExistingVariants);
+    } else {
+        loadExistingVariants();
+    }
 
     function removeVariant(id) {
         const row = document.getElementById(`variant-${id}`);
@@ -433,52 +459,56 @@
 
     // حذف صورة النمط (تمييز للحذف)
     function deleteVariantImage(imageId, button) {
-        if (!confirm('هل أنت متأكد من حذف هذه الصورة؟')) return;
         const container = button.closest('[data-image-id]');
+        if (container.dataset.pendingDeletion === 'true') {
+            restoreVariantImage(imageId, button, container);
+            return;
+        }
+        if (!confirm('هل أنت متأكد من حذف هذه الصورة؟')) return;
         const deleteInput = container.querySelector('.delete-image-input');
         deleteInput.value = imageId;
         deleteInput.disabled = false;
+        container.dataset.pendingDeletion = 'true';
         container.style.opacity = '0.3';
-        button.disabled = true;
         button.innerHTML = '<i class="fas fa-undo"></i>';
         button.title = 'استعادة';
-        button.onclick = (e) => restoreVariantImage(imageId, button, container);
     }
 
     function restoreVariantImage(imageId, button, container) {
         const deleteInput = container.querySelector('.delete-image-input');
         deleteInput.value = '';
         deleteInput.disabled = true;
+        delete container.dataset.pendingDeletion;
         container.style.opacity = '1';
-        button.disabled = false;
         button.innerHTML = '<i class="fas fa-times"></i>';
         button.title = 'حذف';
-        button.onclick = (e) => deleteVariantImage(imageId, button);
     }
 
     // حذف صورة المنتج
     function deleteProductImage(imageId, button) {
-        if (!confirm('هل أنت متأكد من حذف هذه الصورة؟')) return;
         const container = button.closest('[data-image-id]');
+        if (container.dataset.pendingDeletion === 'true') {
+            restoreProductImage(imageId, button, container);
+            return;
+        }
+        if (!confirm('هل أنت متأكد من حذف هذه الصورة؟')) return;
         const deleteInput = container.querySelector('.delete-image-input');
         deleteInput.value = imageId;
         deleteInput.disabled = false;
+        container.dataset.pendingDeletion = 'true';
         container.style.opacity = '0.3';
-        button.disabled = true;
         button.innerHTML = '<i class="fas fa-undo"></i>';
         button.title = 'استعادة';
-        button.onclick = (e) => restoreProductImage(imageId, button, container);
     }
 
     function restoreProductImage(imageId, button, container) {
         const deleteInput = container.querySelector('.delete-image-input');
         deleteInput.value = '';
         deleteInput.disabled = true;
+        delete container.dataset.pendingDeletion;
         container.style.opacity = '1';
-        button.disabled = false;
         button.innerHTML = '<i class="fas fa-times"></i>';
         button.title = 'حذف';
-        button.onclick = (e) => deleteProductImage(imageId, button);
     }
 
     // معاينة الصور

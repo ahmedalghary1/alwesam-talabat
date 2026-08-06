@@ -1,3 +1,4 @@
+import os
 import shutil
 import tempfile
 from io import BytesIO
@@ -11,7 +12,8 @@ from openpyxl import load_workbook
 
 from orders.models import Order
 from products.models import (
-    Product, ProductSize, ProductVariant, Size, VariantImage, VariantSize,
+    Product, ProductImages, ProductSize, ProductVariant, Size,
+    VariantAttribute, VariantAttributeValue, VariantImage, VariantSize,
 )
 from support.models import CustomerMessage
 
@@ -166,6 +168,113 @@ class ProductAdminFlowTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'id="variants-data"')
         self.assertNotContains(response, '<نمط>')
+
+    def test_edit_page_includes_all_variants_and_attribute_types(self):
+        product = Product.objects.create(name='منتج متعدد الأنماط', image=_image_file())
+        material = VariantAttribute.objects.create(name='الخامة')
+        cotton = VariantAttributeValue.objects.create(attribute=material, value='قطن')
+        variants = [
+            ProductVariant.objects.create(product=product, name=f'نمط {number}')
+            for number in range(1, 4)
+        ]
+        variants[-1].attributes.add(cotton)
+
+        response = self.client.get(f'/admin-panel/products/{product.pk}/edit/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context['variants_data']), 3)
+        self.assertEqual(
+            response.context['variants_data'][-1]['attribute_ids'], [cotton.pk]
+        )
+        self.assertEqual(
+            response.context['attribute_groups_data'][0]['values'][0]['name'],
+            'قطن',
+        )
+        self.assertContains(response, 'id="attribute-groups-data"')
+
+    def test_edit_saves_and_clears_all_variant_attribute_types(self):
+        product = Product.objects.create(name='منتج الخصائص', image=_image_file())
+        material = VariantAttribute.objects.create(name='الخامة')
+        cotton = VariantAttributeValue.objects.create(attribute=material, value='قطن')
+        model = VariantAttribute.objects.create(name='الموديل')
+        modern = VariantAttributeValue.objects.create(attribute=model, value='مودرن')
+        variant = ProductVariant.objects.create(product=product, name='نمط الخصائص')
+        base_data = {
+            'name': product.name,
+            'pcs_carton': '24',
+            'order': '0',
+            'variant_form_key[]': ['4'],
+            'variant_id[]': [str(variant.pk)],
+            'variant_name[]': [variant.name],
+            'variant_code[]': [''],
+            'variant_pcs_carton[]': ['24'],
+            'variant_available[]': ['4'],
+            'variant_length_label[]': [''],
+        }
+
+        response = self.client.post(
+            f'/admin-panel/products/{product.pk}/edit/',
+            {
+                **base_data,
+                'variant_4_attribute_ids[]': ['', str(cotton.pk), str(modern.pk)],
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertSetEqual(
+            set(variant.attributes.values_list('pk', flat=True)),
+            {cotton.pk, modern.pk},
+        )
+
+        response = self.client.post(
+            f'/admin-panel/products/{product.pk}/edit/',
+            {**base_data, 'variant_4_attribute_ids[]': ['']},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(variant.attributes.exists())
+
+    def test_edit_deletes_selected_product_and_variant_images_only(self):
+        product = Product.objects.create(name='منتج الصور', image=_image_file())
+        other_product = Product.objects.create(name='منتج آخر', image=_image_file('other-main.png'))
+        product_image = ProductImages.objects.create(
+            product=product, image=_image_file('delete-product.png')
+        )
+        other_image = ProductImages.objects.create(
+            product=other_product, image=_image_file('keep-product.png')
+        )
+        variant = ProductVariant.objects.create(product=product, name='نمط الصور')
+        variant_image = VariantImage.objects.create(
+            variant=variant, image=_image_file('delete-variant.png')
+        )
+        product_image_path = product_image.image.path
+        variant_image_path = variant_image.image.path
+
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.post(
+                f'/admin-panel/products/{product.pk}/edit/',
+                {
+                    'name': product.name,
+                    'pcs_carton': '24',
+                    'order': '0',
+                    'variant_form_key[]': ['0'],
+                    'variant_id[]': [str(variant.pk)],
+                    'variant_name[]': [variant.name],
+                    'variant_code[]': [''],
+                    'variant_pcs_carton[]': ['24'],
+                    'variant_available[]': ['0'],
+                    'variant_length_label[]': [''],
+                    'delete_product_images[]': [str(product_image.pk)],
+                    'delete_variant_images[]': [str(variant_image.pk)],
+                },
+            )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(ProductImages.objects.filter(pk=product_image.pk).exists())
+        self.assertFalse(VariantImage.objects.filter(pk=variant_image.pk).exists())
+        self.assertTrue(ProductImages.objects.filter(pk=other_image.pk).exists())
+        self.assertFalse(os.path.exists(product_image_path))
+        self.assertFalse(os.path.exists(variant_image_path))
 
 
 class UserExcelExportTests(TestCase):

@@ -379,10 +379,37 @@
         </div>
     </form>
 </div>
+{{ attribute_groups_data|json_script:"attribute-groups-data" }}
 {% endblock %}
 
 {% block extra_js %}
 <script>
+    const attributeGroups = JSON.parse(document.getElementById('attribute-groups-data')?.textContent || '[]');
+    const escapeHtml = value => String(value ?? '').replace(/[&<>'"]/g, char => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+    })[char]);
+
+    function buildAttributeFields(formKey, selectedIds = []) {
+        if (!attributeGroups.length) return '<small>لا توجد خصائص معرفة حالياً.</small>';
+        const selected = new Set(selectedIds.map(String));
+        return `
+            <input type="hidden" name="variant_${formKey}_attribute_ids[]" value="">
+            <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:.75rem;">
+                ${attributeGroups.map(group => `
+                    <fieldset style="border:1px solid var(--border-color); border-radius:8px; padding:.75rem;">
+                        <legend style="padding:0 .35rem; font-weight:600;">${escapeHtml(group.name)}</legend>
+                        ${group.values.map(value => `
+                            <label style="display:flex; align-items:center; gap:.4rem; margin:.3rem 0;">
+                                <input type="checkbox" name="variant_${formKey}_attribute_ids[]" value="${value.id}" ${selected.has(String(value.id)) ? 'checked' : ''}>
+                                <span>${escapeHtml(value.name)}</span>
+                            </label>
+                        `).join('')}
+                    </fieldset>
+                `).join('')}
+            </div>
+        `;
+    }
+
     // ========== Direct sizes ==========
     let directSizeCounter = 0;
     function addDirectSizeRow() {
@@ -440,14 +467,9 @@
                     <label>عدد القطع/كرتون *</label>
                     <input type="number" name="variant_pcs_carton[]" class="form-input" value="24" min="1" required>
                 </div>
-                <div>
-                    <label>اللون (اختياري)</label>
-                    <select name="variant_color[]" class="form-select">
-                        <option value="">بدون لون</option>
-                        {% for color in colors %}
-                        <option value="{{ color.id }}">{{ color.name }}</option>
-                        {% endfor %}
-                    </select>
+                <div class="full-width">
+                    <label>خصائص النمط (اختياري)</label>
+                    ${buildAttributeFields(variantId)}
                 </div>
                 <div>
                     <label>نوع الطول (اختياري)</label>
