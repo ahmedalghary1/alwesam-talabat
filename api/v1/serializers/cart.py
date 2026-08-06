@@ -4,6 +4,7 @@ Serializers for cart app - Shopping cart and cart items.
 from rest_framework import serializers
 from cart.models import Cart, CartItem
 from products.models import Product
+from core.constants import MAX_QUANTITY_PER_ITEM
 
 
 class CartItemSerializer(serializers.ModelSerializer):
@@ -36,7 +37,10 @@ class AddToCartSerializer(serializers.Serializer):
     """Serializer for adding items to cart."""
     product_id = serializers.IntegerField()
     variant_id = serializers.IntegerField(required=False, allow_null=True)
-    quantity = serializers.IntegerField(min_value=1)
+    quantity = serializers.IntegerField(
+        min_value=1,
+        max_value=MAX_QUANTITY_PER_ITEM,
+    )
     unit_type = serializers.ChoiceField(choices=['piece', 'carton'])
     size_name = serializers.CharField(required=False, allow_blank=True)
     size_id = serializers.IntegerField(required=False, allow_null=True, min_value=1)
@@ -50,6 +54,16 @@ class AddToCartSerializer(serializers.Serializer):
         # Product ownership and size compatibility are validated together in
         # the view, where the selected product is available.
         return value
+
+
+class UpdateCartItemSerializer(serializers.Serializer):
+    """Validate a cart item update in the unit selected by the customer."""
+
+    item_id = serializers.IntegerField(min_value=1)
+    quantity = serializers.IntegerField(
+        min_value=1,
+        max_value=MAX_QUANTITY_PER_ITEM,
+    )
 
 
 class CartSerializer(serializers.ModelSerializer):

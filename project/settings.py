@@ -17,8 +17,7 @@ from datetime import timedelta
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = config('SECRET_KEY')
-DEBUG=True
-#DEBUG = config('DEBUG', default=False, cast=bool)
+DEBUG = config('DJANGO_DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = config(
     'ALLOWED_HOSTS',
@@ -130,24 +129,28 @@ TEMPLATES = [
 WSGI_APPLICATION = 'project.wsgi.application'
 
 # ==================================================
-# Database (PostgreSQL Docker)
+# Database
 # ==================================================
 
+DB_ENGINE = config('DB_ENGINE', default='django.db.backends.mysql')
+DB_DEFAULT_PORT = '5432' if DB_ENGINE.endswith('postgresql') else '3306'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'elwsamst_alwesam_store',
-        'USER': 'elwsamst_alwesam_user',
-        'PASSWORD': '3]qi04F*#6{k3]qi04F*#6{k3]qi04F*#6{k',
-        'HOST': 'localhost',
-        'PORT': '3306',
-        'OPTIONS': {
-            'charset': 'utf8mb4',
-            'init_command': "SET NAMES 'utf8mb4'"
-        },
+        'ENGINE': DB_ENGINE,
+        'NAME': config('DB_NAME', default='elwsamst_alwesam_store'),
+        'USER': config('DB_USER', default='elwsamst_alwesam_user'),
+        'PASSWORD': config('DB_PASSWORD', default=''),
+        'HOST': config('DB_HOST', default='localhost'),
+        'PORT': config('DB_PORT', default=DB_DEFAULT_PORT),
     }
 }
+
+if DB_ENGINE.endswith('mysql'):
+    DATABASES['default']['OPTIONS'] = {
+        'charset': 'utf8mb4',
+        'init_command': "SET NAMES 'utf8mb4'",
+    }
 # ==================================================
 # Auth
 # ==================================================
@@ -246,6 +249,12 @@ SIMPLE_JWT = {
     'SIGNING_KEY': SECRET_KEY,
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
+
+CELERY_BROKER_URL = config(
+    'CELERY_BROKER_URL',
+    default='redis://localhost:6379/0',
+)
+CELERY_RESULT_BACKEND = config('CELERY_RESULT_BACKEND', default='django-db')
 
 STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.FileSystemFinder',

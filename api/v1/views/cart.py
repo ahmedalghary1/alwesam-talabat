@@ -8,7 +8,13 @@ from rest_framework.permissions import IsAuthenticated
 from cart.models import Cart, CartItem
 from cart.services import InvalidProductSelection, resolve_product_selection
 from products.models import Product
-from ..serializers.cart import CartSerializer, AddToCartSerializer, CartItemSerializer
+from ..serializers.cart import (
+    CartSerializer,
+    AddToCartSerializer,
+    CartItemSerializer,
+    UpdateCartItemSerializer,
+)
+from core.constants import MAX_QUANTITY_PER_ITEM
 import logging
 logger = logging.getLogger(__name__)
 
@@ -65,13 +71,33 @@ class CartViewSet(viewsets.ViewSet):
             variant=variant,
             unit_type=unit_type,
             size_name=size_name,
-            defaults={'quantity': quantity, 'size': selection.size}
+            defaults={
+                'quantity': quantity,
+                'size': selection.size,
+                'pcs_carton_snapshot': selection.pcs_carton,
+            }
         )
         
         if not created:
-            cart_item.quantity += quantity
+            pcs_carton = cart_item.get_pcs_carton()
+            added_pieces = (
+                serializer.validated_data['quantity'] * pcs_carton
+                if unit_type == 'carton'
+                else serializer.validated_data['quantity']
+            )
+            current_units = (
+                cart_item.quantity // pcs_carton
+                if unit_type == 'carton'
+                else cart_item.quantity
+            )
+            if current_units + serializer.validated_data['quantity'] > MAX_QUANTITY_PER_ITEM:
+                return Response(
+                    {'quantity': [f'الكمية القصوى هي {MAX_QUANTITY_PER_ITEM}']},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            cart_item.quantity += added_pieces
             cart_item.size = selection.size
-            cart_item.save()
+            cart_item.save(update_fields=['quantity', 'size'])
         
         return Response(
             CartItemSerializer(cart_item).data,
@@ -96,14 +122,20 @@ class CartViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['post'])
     def update_item(self, request):
         """Update item quantity."""
-        item_id = request.data.get('item_id')
-        new_quantity = request.data.get('quantity')
+        serializer = UpdateCartItemSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        item_id = serializer.validated_data['item_id']
+        new_quantity = serializer.validated_data['quantity']
         
         try:
             cart = Cart.objects.get(user=request.user)
             item = CartItem.objects.get(id=item_id, cart=cart)
-            item.quantity = new_quantity
-            item.save()
+            item.quantity = (
+                new_quantity * item.get_pcs_carton()
+                if item.unit_type == 'carton'
+                else new_quantity
+            )
+            item.save(update_fields=['quantity'])
             return Response(CartItemSerializer(item).data)
         except (Cart.DoesNotExist, CartItem.DoesNotExist):
             return Response(

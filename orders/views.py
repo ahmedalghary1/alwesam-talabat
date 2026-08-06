@@ -122,7 +122,13 @@ def create_order(request):
             # إرسال إيميل التأكيد بشكل غير متزامن (اختياري)
             try:
                 from utils.email_tasks import send_order_confirmation_email_task
-                send_order_confirmation_email_task.delay(order.id, request.user.email)
+                transaction.on_commit(
+                    lambda: send_order_confirmation_email_task.delay(
+                        order.id,
+                        request.user.email,
+                    ),
+                    robust=True,
+                )
             except Exception as e:
                 logger.error(f'فشل في إرسال إيميل التأكيد للطلب {order.id}: {str(e)}')
 

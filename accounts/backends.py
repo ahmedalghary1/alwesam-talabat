@@ -40,6 +40,11 @@ class EmailPhoneBackend(ModelBackend):
             except CustomUser.DoesNotExist:
                 logger.warning(f'No user found with email or phone: {username}')
                 return None
+            except CustomUser.MultipleObjectsReturned:
+                # A database upgraded from an older release may still contain
+                # duplicate phone numbers until migration 0005 is applied.
+                logger.error('Duplicate phone number prevents authentication: %s', username)
+                return None
         
         # Verify password
         if user and user.check_password(password):

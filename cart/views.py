@@ -13,6 +13,7 @@ from products.models import Product
 
 from .models import Cart, CartItem
 from .services import InvalidProductSelection, resolve_product_selection
+from .forms import UpdateCartForm
 
 logger = logging.getLogger(__name__)
 
@@ -142,12 +143,33 @@ def add_to_cart(request, product_id):
         variant=variant,
         unit_type=unit_type,
         size_name=size_name,
-        defaults={"quantity": quantity_in_pieces, "size": selection.size},
+        defaults={
+            "quantity": quantity_in_pieces,
+            "size": selection.size,
+            "pcs_carton_snapshot": pcs_carton,
+        },
     )
 
     if not item_created:
+        item_pcs_carton = cart_item.get_pcs_carton()
+        current_unit_quantity = (
+            cart_item.quantity // item_pcs_carton
+            if unit_type == "carton"
+            else cart_item.quantity
+        )
+        if current_unit_quantity + quantity > MAX_QUANTITY_PER_ITEM:
+            message = f"الكمية القصوى هي {MAX_QUANTITY_PER_ITEM}"
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return JsonResponse({"success": False, "message": message}, status=400)
+            messages.error(request, message)
+            return redirect("products:product_detail", slug=product.slug)
+
         # Item already exists, increase quantity (in pieces)
-        cart_item.quantity += quantity_in_pieces
+        cart_item.quantity += (
+            quantity * item_pcs_carton
+            if unit_type == "carton"
+            else quantity
+        )
         # Update size_name in case user selected a different size
         if size_name:
             cart_item.size_name = size_name
@@ -210,9 +232,15 @@ def update_cart_item(request, item_id):
     """
     if request.method == "POST":
         cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
+        form = UpdateCartForm(request.POST)
+        if not form.is_valid():
+            message = next(iter(form.errors.values()))[0]
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return JsonResponse({"success": False, "message": message}, status=400)
+            messages.error(request, message)
+            return redirect("cart:cart_view")
 
-        # Get the new quantity from the request
-        quantity = int(request.POST.get("quantity", 1))
+        quantity = form.cleaned_data["quantity"]
 
         # Important: Keep the existing unit_type, convert quantity based on it
         if cart_item.unit_type == "carton":
@@ -223,11 +251,8 @@ def update_cart_item(request, item_id):
             # User is updating piece quantity directly
             quantity_in_pieces = quantity
 
-        if quantity_in_pieces > 0:
-            cart_item.quantity = quantity_in_pieces
-            cart_item.save()
-        else:
-            cart_item.delete()
+        cart_item.quantity = quantity_in_pieces
+        cart_item.save(update_fields=["quantity"])
 
         if request.headers.get("X-Requested-With") == "XMLHttpRequest":
             cart = Cart.objects.get(user=request.user)
@@ -298,13 +323,29 @@ def sync_cart_from_local(request):
                     variant=selection.variant,
                     unit_type=unit_type,
                     size_name=size_name,
-                    defaults={"quantity": quantity_in_pieces, "size": selection.size},
+                    defaults={
+                        "quantity": quantity_in_pieces,
+                        "size": selection.size,
+                        "pcs_carton_snapshot": selection.pcs_carton,
+                    },
                 )
 
                 if not created:
-                    cart_item.quantity += quantity_in_pieces
+                    item_pcs_carton = cart_item.get_pcs_carton()
+                    current_unit_quantity = (
+                        cart_item.quantity // item_pcs_carton
+                        if unit_type == "carton"
+                        else cart_item.quantity
+                    )
+                    if current_unit_quantity + unit_quantity > MAX_QUANTITY_PER_ITEM:
+                        raise ValueError("Quantity limit exceeded")
+                    cart_item.quantity += (
+                        unit_quantity * item_pcs_carton
+                        if unit_type == "carton"
+                        else unit_quantity
+                    )
                     cart_item.size = selection.size
-                    cart_item.save()
+                    cart_item.save(update_fields=["quantity", "size"])
 
                 synced_count += 1
             except (Product.DoesNotExist, InvalidProductSelection, TypeError, ValueError) as exc:

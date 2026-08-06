@@ -47,6 +47,10 @@ class CartItem(models.Model):
         related_name='cart_items',
     )
     size_name = models.CharField(max_length=100, blank=True, help_text="اسم الطول/المقاس المختار")
+    pcs_carton_snapshot = models.PositiveIntegerField(
+        default=0,
+        verbose_name="عدد القطع في الكرتونة وقت الإضافة للسلة",
+    )
 
     class Meta:
         # Prevent duplicate items with same product/variant/unit/size
@@ -55,8 +59,20 @@ class CartItem(models.Model):
         verbose_name_plural='تفاصيل السلات '
 
         
+    def save(self, *args, **kwargs):
+        if not self.pcs_carton_snapshot:
+            self.pcs_carton_snapshot = self._get_current_pcs_carton()
+        super().save(*args, **kwargs)
+
     def get_pcs_carton(self):
-        """Get the carton quantity for the selected variant and size."""
+        """Get the carton quantity captured when the item entered the cart."""
+        if self.pcs_carton_snapshot and self.pcs_carton_snapshot > 0:
+            return self.pcs_carton_snapshot
+
+        return self._get_current_pcs_carton()
+
+    def _get_current_pcs_carton(self):
+        """Resolve current product data when creating or migrating an item."""
         if self.variant:
             if self.size_id:
                 size_price = self.variant.size_prices.filter(

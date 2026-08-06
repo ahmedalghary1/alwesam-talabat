@@ -48,7 +48,9 @@ class OrderItem(models.Model):
     ]
 
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    # Keep historical order lines intact. Products referenced by an order must
+    # be archived (is_available=False) instead of being physically deleted.
+    product = models.ForeignKey(Product, on_delete=models.PROTECT)
     variant = models.ForeignKey(ProductVariant, on_delete=models.SET_NULL, null=True, blank=True)
     quantity = models.PositiveIntegerField(default=1)  # مخزنة بالقطع دائماً
     unit_type = models.CharField(max_length=10, choices=UNIT_TYPE_CHOICES, default='carton')

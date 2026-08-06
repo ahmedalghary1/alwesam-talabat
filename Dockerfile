@@ -15,5 +15,5 @@ COPY . .
 RUN mkdir -p /app/media /app/staticfiles \
  && chmod -R 775 /app/media /app/staticfiles
 
-RUN chmod +x /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh /app/entrypoint.worker.sh
 ENTRYPOINT ["/app/entrypoint.sh"]

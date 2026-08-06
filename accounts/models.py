@@ -15,7 +15,7 @@ class CustomUser(AbstractUser):
     username = models.CharField(max_length=150, unique=True, verbose_name="اسم المستخدم")
     email = models.EmailField(unique=True, verbose_name="البريد الإلكتروني")
     # Indexed for performance when searching/filtering users by phone
-    phone = models.CharField(max_length=20, verbose_name="رقم الهاتف", db_index=True)
+    phone = models.CharField(max_length=20, unique=True, verbose_name="رقم الهاتف")
     address = models.TextField(verbose_name="العنوان")
     
     # Email is used for login instead of username

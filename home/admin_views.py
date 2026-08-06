@@ -3,6 +3,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Q, Count, Max
+from django.db.models.deletion import ProtectedError
 from products.models import (
     Product, Category, ProductImages, ProductVariant,
     VariantAttributeValue, VariantAttribute, Size,
@@ -477,8 +478,17 @@ def admin_product_delete(request, product_id):
     if request.method == 'POST':
         product = get_object_or_404(Product, id=product_id)
         product_name = product.name
-        product.delete()
-        messages.success(request, f'تم حذف المنتج {product_name}')
+        try:
+            product.delete()
+            messages.success(request, f'تم حذف المنتج {product_name}')
+        except ProtectedError:
+            product.is_available = False
+            product.save(update_fields=['is_available', 'updated_at'])
+            messages.warning(
+                request,
+                f'لا يمكن حذف المنتج {product_name} لأنه موجود في طلبات سابقة. '
+                'تم إخفاؤه من المتجر بدلًا من ذلك.',
+            )
     return redirect('admin_app:admin_products')
 
 
@@ -524,7 +534,7 @@ def admin_order_detail(request, order_id):
 
             try:
                 from utils.email_tasks import send_order_status_email_task
-                send_order_status_email_task(order.id, new_status, order.user.email)
+                send_order_status_email_task.delay(order.id, new_status, order.user.email)
             except Exception as e:
                 messages.success(request, f'تم تحديث حالة الطلب (فشل جدولة إرسال البريد الإلكتروني: {str(e)})')
 
@@ -648,7 +658,7 @@ def admin_approve_user(request, user_id):
         try:
             from utils.email_tasks import send_activation_email_task
             login_url = request.build_absolute_uri('/accounts/login/')
-            send_activation_email_task(user.id, login_url)
+            send_activation_email_task.delay(user.id, login_url)
             messages.success(request, f'تم تفعيل حساب "{user.username}" وتم إضافة إرسال البريد الإلكتروني إلى قائمة الانتظار')
         except Exception as e:
             messages.success(request, f'تم تفعيل حساب "{user.username}" (فشل جدولة إرسال البريد الإلكتروني: {str(e)})')
@@ -681,7 +691,7 @@ def admin_toggle_user_status(request, user_id):
             try:
                 from utils.email_tasks import send_activation_email_task
                 login_url = request.build_absolute_uri('/accounts/login/')
-                send_activation_email_task(user.id, login_url)
+                send_activation_email_task.delay(user.id, login_url)
                 messages.success(request, f'تم تفعيل حساب "{user.username}" وتم إرسال البريد الإلكتروني')
             except Exception as e:
                 messages.success(request, f'تم تفعيل حساب "{user.username}" (فشل إرسال البريد الإلكتروني: {str(e)})')

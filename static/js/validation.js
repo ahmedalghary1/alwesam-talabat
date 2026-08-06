@@ -4,7 +4,7 @@
  */
 
 // Constants (should match backend constants)
-const MAX_QUANTITY_PER_ITEM = 1000;
+const MAX_QUANTITY_PER_ITEM = 100;
 const MIN_QUANTITY = 1;
 
 /**

@@ -28,10 +28,14 @@ def create_default_superuser():
     # Get superuser credentials from environment variables with defaults
     username = os.getenv('DJANGO_SUPERUSER_USERNAME', 'admin')
     email = os.getenv('DJANGO_SUPERUSER_EMAIL', 'admin@example.com')
-    password = os.getenv('DJANGO_SUPERUSER_PASSWORD', 'admin123')
+    password = os.getenv('DJANGO_SUPERUSER_PASSWORD')
     phone = os.getenv('DJANGO_SUPERUSER_PHONE', '01000000000')
     address = os.getenv('DJANGO_SUPERUSER_ADDRESS', 'Admin Address')
     
+    if not password:
+        print("❌ DJANGO_SUPERUSER_PASSWORD must be set; refusing to create an insecure default admin.")
+        return False
+
     try:
         # Create the superuser
         user = User.objects.create_superuser(
@@ -45,8 +49,6 @@ def create_default_superuser():
         print("✅ Default superuser created successfully!")
         print(f"   Username: {username}")
         print(f"   Email: {email}")
-        print(f"   Password: {password}")
-        print("   ⚠️  IMPORTANT: Please change the password after first login!")
         print("   🔗 Access admin at: http://localhost:8000/admin/")
         
         return True

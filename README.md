@@ -317,8 +317,10 @@ python test_email_tasks.py
 
 ```env
 SECRET_KEY=your-secret-key
-DEBUG=True
+DJANGO_DEBUG=False
 ALLOWED_HOSTS=localhost,127.0.0.1
+DB_ENGINE=django.db.backends.postgresql
+DB_HOST=db
 ```
 
 ### Custom User Model

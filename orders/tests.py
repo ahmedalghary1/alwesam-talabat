@@ -8,6 +8,7 @@ from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from django.db.models.deletion import ProtectedError
 
 from cart.models import Cart, CartItem
 from products.models import Product, ProductSize, Size
@@ -50,10 +51,11 @@ class OrderSizeQuantityTests(TestCase):
             quantity=120,
         )
 
-        response = self.client.post(reverse('orders:create_order'), {
-            'phone_number': self.user.phone,
-            'address': self.user.address,
-        })
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.post(reverse('orders:create_order'), {
+                'phone_number': self.user.phone,
+                'address': self.user.address,
+            })
 
         self.assertEqual(response.status_code, 302)
         item = OrderItem.objects.get(product=product)
@@ -61,4 +63,22 @@ class OrderSizeQuantityTests(TestCase):
         self.assertEqual(item.get_quantity_in_cartons(), 2)
         send_email.assert_called_once_with(item.order_id, self.user.email)
 
-# Create your tests here.
+    def test_product_delete_keeps_historical_order_items(self):
+        product = Product.objects.create(name='منتج تاريخي', pcs_carton=24, image=_image_file())
+        cart, _ = Cart.objects.get_or_create(user=self.user)
+        CartItem.objects.create(
+            cart=cart,
+            product=product,
+            unit_type='carton',
+            quantity=24,
+        )
+        with patch('utils.email_tasks.send_order_confirmation_email_task.delay'):
+            self.client.post(reverse('orders:create_order'), {
+                'phone_number': self.user.phone,
+                'address': self.user.address,
+            })
+
+        with self.assertRaises(ProtectedError):
+            product.delete()
+
+        self.assertEqual(OrderItem.objects.filter(product=product).count(), 1)

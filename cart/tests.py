@@ -160,3 +160,56 @@ class CartSizeQuantityTests(TestCase):
         self.assertEqual(response.status_code, 201)
         item = CartItem.objects.get(product=product, size=size)
         self.assertEqual(item.quantity, 108)
+
+    def test_api_update_converts_cartons_to_pieces(self):
+        product = Product.objects.create(name='منتج تحديث API', image=_image_file(), pcs_carton=24)
+        item = CartItem.objects.create(
+            cart=self.user.cart,
+            product=product,
+            unit_type='carton',
+            quantity=48,
+        )
+        request = APIRequestFactory().post('/api/v1/cart/update_item/', {
+            'item_id': item.pk,
+            'quantity': 3,
+        }, format='json')
+        force_authenticate(request, user=self.user)
+
+        response = CartViewSet.as_view({'post': 'update_item'})(request)
+
+        self.assertEqual(response.status_code, 200)
+        item.refresh_from_db()
+        self.assertEqual(item.quantity, 72)
+        self.assertEqual(item.get_quantity_in_cartons(), 3)
+
+    def test_carton_snapshot_survives_product_changes(self):
+        product = Product.objects.create(name='منتج لقطة', image=_image_file(), pcs_carton=24)
+        item = CartItem.objects.create(
+            cart=self.user.cart,
+            product=product,
+            unit_type='carton',
+            quantity=48,
+        )
+
+        product.pcs_carton = 30
+        product.save(update_fields=['pcs_carton'])
+        item.refresh_from_db()
+
+        self.assertEqual(item.get_pcs_carton(), 24)
+        self.assertEqual(item.get_quantity_in_cartons(), 2)
+
+    def test_repeated_add_cannot_exceed_quantity_limit(self):
+        product = Product.objects.create(name='منتج حد الكمية', image=_image_file())
+        first = self.client.post(reverse('cart:add_to_cart', args=[product.pk]), {
+            'quantity': 60,
+            'unit_type': 'piece',
+        })
+        second = self.client.post(
+            reverse('cart:add_to_cart', args=[product.pk]),
+            {'quantity': 50, 'unit_type': 'piece'},
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+
+        self.assertEqual(first.status_code, 302)
+        self.assertEqual(second.status_code, 400)
+        self.assertEqual(CartItem.objects.get(product=product).quantity, 60)

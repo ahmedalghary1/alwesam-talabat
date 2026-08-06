@@ -6,8 +6,12 @@ services:
       - postgres_data:/var/lib/postgresql/data
     env_file:
       - .env
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $DB_USER -d $DB_NAME"]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -26,8 +30,6 @@ services:
     build: .
     container_name: web
     command: >
-      sh -c "
-      /app/entrypoint.sh &&
       gunicorn project.wsgi:application
       --bind 0.0.0.0:8000
       --workers 3
@@ -36,7 +38,6 @@ services:
       --graceful-timeout 30
       --access-logfile /app/logs/gunicorn_access.log
       --error-logfile /app/logs/gunicorn_error.log
-      "
     volumes:
       - static_volume:/app/staticfiles
       - media_volume:/app/media
@@ -54,6 +55,7 @@ services:
   celery:
     build: .
     container_name: celery
+    entrypoint: /app/entrypoint.worker.sh
     command: celery -A project worker -l info --logfile=/app/logs/celery_worker.log
 
     volumes:
@@ -62,8 +64,10 @@ services:
     env_file:
       - .env
     depends_on:
-      - redis
-      - db
+      redis:
+        condition: service_started
+      db:
+        condition: service_healthy
     restart: unless-stopped
     
     networks:
@@ -72,6 +76,7 @@ services:
   celery-beat:
     build: .
     container_name: celery-beat
+    entrypoint: /app/entrypoint.worker.sh
     command: celery -A project beat -l info --logfile=/app/logs/celery_beat.log
     volumes:
       - logs_volume:/app/logs  
@@ -79,8 +84,10 @@ services:
     env_file:
       - .env
     depends_on:
-      - redis
-      - db
+      redis:
+        condition: service_started
+      db:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - backend
@@ -108,4 +115,3 @@ volumes:
   static_volume:
   media_volume:
   logs_volume:
-
