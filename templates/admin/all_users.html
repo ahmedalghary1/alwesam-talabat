@@ -13,12 +13,18 @@
 {% include 'includes/messages.html' %}
 
 <div class="admin-container">
-    <div class="page-header">
-        <h1>
-            <i class="fas fa-users"></i>
-            إدارة المستخدمين
-        </h1>
-        <p>جميع المستخدمين المسجلين في النظام</p>
+    <div class="page-header users-page-header">
+        <div>
+            <h1>
+                <i class="fas fa-users"></i>
+                إدارة المستخدمين
+            </h1>
+            <p>جميع المستخدمين المسجلين في النظام</p>
+        </div>
+        <a href="{% url 'admin_app:export_users_excel' %}" class="btn-export-users">
+            <i class="fas fa-file-excel"></i>
+            استخراج جميع المستخدمين إلى Excel
+        </a>
     </div>
 
     <!-- Search and Filter -->
@@ -133,6 +139,35 @@
 
 {% block admin_extra_css %}
 <style>
+    .users-page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1.5rem;
+    }
+
+    .btn-export-users {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.65rem;
+        padding: 0.8rem 1.25rem;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #16a34a, #15803d);
+        color: #fff;
+        font-weight: 700;
+        text-decoration: none;
+        white-space: nowrap;
+        box-shadow: 0 4px 14px rgba(22, 163, 74, 0.25);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .btn-export-users:hover {
+        color: #fff;
+        transform: translateY(-2px);
+        box-shadow: 0 7px 18px rgba(22, 163, 74, 0.35);
+    }
+
     .filters-card {
         background: var(--card-bg);
         border: 2px solid var(--border-color);
@@ -380,6 +415,15 @@
     }
 
     @media (max-width: 768px) {
+        .users-page-header {
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+        .btn-export-users {
+            width: 100%;
+        }
+
         .filter-form {
             flex-direction: column;
         }

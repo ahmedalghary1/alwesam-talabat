@@ -18,8 +18,8 @@ urlpatterns = [
     # User Management
     path('users/pending/', admin_views.admin_pending_users, name='pending_users'),
     path('users/', admin_views.admin_all_users, name='all_users'),
+    path('users/export/excel/', admin_views.admin_export_users_excel, name='export_users_excel'),
     path('users/<int:user_id>/approve/', admin_views.admin_approve_user, name='approve_user'),
     path('users/<int:user_id>/reject/', admin_views.admin_reject_user, name='reject_user'),
     path('users/<int:user_id>/toggle/', admin_views.admin_toggle_user_status, name='toggle_user_status'),
 ]
-

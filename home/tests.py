@@ -6,12 +6,16 @@ from PIL import Image
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import RequestFactory, SimpleTestCase, TestCase, override_settings
+from django.urls import reverse
+from openpyxl import load_workbook
 
+from orders.models import Order
 from products.models import (
     Product, ProductSize, ProductVariant, Size, VariantImage, VariantSize,
 )
+from support.models import CustomerMessage
 
-from .admin_views import _valid_model_ids, _variant_sizes_from_post
+from .admin_views import _excel_safe_text, _valid_model_ids, _variant_sizes_from_post
 
 
 class ValidModelIdsTests(SimpleTestCase):
@@ -35,6 +39,11 @@ class ValidModelIdsTests(SimpleTestCase):
         })
 
         self.assertEqual(_variant_sizes_from_post(request, '7'), [(2, 12), (9, 30)])
+
+    def test_excel_text_cannot_be_interpreted_as_a_formula(self):
+        self.assertEqual(_excel_safe_text('=2+2'), "'=2+2")
+        self.assertEqual(_excel_safe_text('+201000000000'), "'+201000000000")
+        self.assertEqual(_excel_safe_text('بيانات عربية'), 'بيانات عربية')
 
 
 def _image_file(name='test.png', color='red'):
@@ -158,4 +167,85 @@ class ProductAdminFlowTests(TestCase):
         self.assertContains(response, 'id="variants-data"')
         self.assertNotContains(response, '<نمط>')
 
-# Create your tests here.
+
+class UserExcelExportTests(TestCase):
+    def setUp(self):
+        user_model = get_user_model()
+        self.staff = user_model.objects.create_user(
+            email='admin@example.com',
+            username='admin',
+            password='password',
+            phone='01000000000',
+            address='القاهرة',
+            is_staff=True,
+            is_active=True,
+        )
+        self.user = user_model.objects.create_user(
+            email='customer@example.com',
+            username='عميل-الوسام',
+            password='customer-password',
+            phone='01012345678',
+            address='القاهرة، مدينة نصر',
+            first_name='محمد',
+            last_name='علي',
+            is_active=True,
+        )
+        self.user.profile.bio = 'عميل جملة'
+        self.user.profile.save()
+        Order.objects.create(
+            user=self.user,
+            phone_number=self.user.phone,
+            address=self.user.address,
+        )
+        CustomerMessage.objects.create(user=self.user, message='رسالة اختبار')
+        self.export_url = reverse('admin_app:export_users_excel')
+
+    def test_only_staff_can_export_users(self):
+        response = self.client.get(self.export_url)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/admin/login/', response.url)
+
+    def test_users_page_shows_the_excel_export_button(self):
+        self.client.force_login(self.staff)
+
+        response = self.client.get(reverse('admin_app:all_users'))
+
+        self.assertContains(response, self.export_url)
+        self.assertContains(response, 'استخراج جميع المستخدمين إلى Excel')
+
+    def test_export_is_a_complete_arabic_excel_workbook(self):
+        self.client.force_login(self.staff)
+        self.staff.profile.delete()
+
+        response = self.client.get(self.export_url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response['Content-Type'],
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        self.assertIn('.xlsx', response['Content-Disposition'])
+        workbook = load_workbook(BytesIO(response.content), data_only=False)
+        worksheet = workbook['المستخدمون']
+
+        self.assertTrue(worksheet.sheet_view.rightToLeft)
+        self.assertEqual(worksheet.freeze_panes, 'A5')
+        headers = [cell.value for cell in worksheet[4]]
+        self.assertIn('رقم الهاتف', headers)
+        self.assertIn('النبذة الشخصية', headers)
+        self.assertIn('عدد الطلبات', headers)
+        self.assertNotIn('كلمة المرور', headers)
+
+        rows = list(worksheet.iter_rows(min_row=5, values_only=True))
+        customer_row = next(row for row in rows if row[0] == self.user.pk)
+        self.assertEqual(customer_row[1], 'عميل-الوسام')
+        self.assertEqual(customer_row[4], 'محمد علي')
+        self.assertEqual(customer_row[6], '01012345678')
+        self.assertEqual(customer_row[7], 'القاهرة، مدينة نصر')
+        self.assertEqual(customer_row[8], 'عميل جملة')
+        self.assertEqual(customer_row[18], 1)
+        self.assertEqual(customer_row[20], 1)
+
+        exported_ids = {row[0] for row in rows}
+        self.assertEqual(exported_ids, {self.staff.pk, self.user.pk})

@@ -1,9 +1,14 @@
+from io import BytesIO
+from urllib.parse import quote
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Q, Count, Max
 from django.db.models.deletion import ProtectedError
+from django.http import HttpResponse
+from django.utils import timezone
 from products.models import (
     Product, Category, ProductImages, ProductVariant,
     VariantAttributeValue, VariantAttribute, Size,
@@ -644,6 +649,207 @@ def admin_all_users(request):
         'all_users_active': 'active',
     }
     return render(request, 'admin/all_users.html', context)
+
+
+def _excel_safe_text(value):
+    """Return untrusted text without allowing Excel formula injection."""
+    if value is None:
+        return ''
+    value = str(value)
+    if value.startswith(('=', '+', '-', '@')):
+        return f"'{value}"
+    return value
+
+
+def _excel_datetime(value):
+    """Convert an aware Django datetime to an Excel-compatible local datetime."""
+    if value is None:
+        return None
+    if timezone.is_aware(value):
+        value = timezone.localtime(value)
+    return value.replace(tzinfo=None)
+
+
+@staff_member_required
+def admin_export_users_excel(request):
+    """Export every user and their non-secret account data to an Arabic XLSX file."""
+    from accounts.models import CustomUser, Profile
+    from openpyxl import Workbook
+    from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+
+    users = (
+        CustomUser.objects.all()
+        .select_related('profile')
+        .prefetch_related('groups', 'user_permissions__content_type')
+        .annotate(
+            orders_count=Count('orders', distinct=True),
+            support_messages_count=Count('customer_messages', distinct=True),
+            cart_items_count=Count('cart__items', distinct=True),
+            last_order_at=Max('orders__created_at'),
+        )
+        .order_by('id')
+    )
+    users_count = users.count()
+
+    headers = [
+        'رقم المستخدم',
+        'اسم المستخدم',
+        'الاسم الأول',
+        'الاسم الأخير',
+        'الاسم الكامل',
+        'البريد الإلكتروني',
+        'رقم الهاتف',
+        'العنوان',
+        'النبذة الشخصية',
+        'صورة الملف الشخصي',
+        'حالة الحساب',
+        'نوع الحساب',
+        'موظف',
+        'مدير عام',
+        'المجموعات',
+        'الصلاحيات المباشرة',
+        'تاريخ الانضمام',
+        'آخر تسجيل دخول',
+        'عدد الطلبات',
+        'تاريخ آخر طلب',
+        'عدد رسائل الدعم',
+        'عدد عناصر السلة',
+    ]
+
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = 'المستخدمون'
+    worksheet.sheet_view.rightToLeft = True
+    worksheet.freeze_panes = 'A5'
+    worksheet.sheet_properties.pageSetUpPr.fitToPage = True
+    worksheet.page_setup.orientation = 'landscape'
+    worksheet.page_setup.fitToWidth = 1
+    worksheet.page_setup.fitToHeight = 0
+    worksheet.print_title_rows = '1:4'
+
+    workbook.properties.title = 'بيانات مستخدمي متجر الوسام'
+    workbook.properties.subject = 'تصدير جميع المستخدمين من لوحة التحكم'
+    workbook.properties.creator = 'متجر الوسام'
+
+    last_column = worksheet.cell(row=1, column=len(headers)).column_letter
+    worksheet.merge_cells(f'A1:{last_column}1')
+    title_cell = worksheet['A1']
+    title_cell.value = 'بيانات جميع مستخدمي متجر الوسام'
+    title_cell.font = Font(name='Arial', size=16, bold=True, color='1A1A1A')
+    title_cell.fill = PatternFill('solid', fgColor='FFC400')
+    title_cell.alignment = Alignment(horizontal='center', vertical='center')
+    worksheet.row_dimensions[1].height = 30
+
+    exported_at = timezone.localtime(timezone.now()).strftime('%Y/%m/%d %H:%M')
+    worksheet.merge_cells(f'A2:{last_column}2')
+    summary_cell = worksheet['A2']
+    summary_cell.value = f'عدد المستخدمين: {users_count} — تاريخ التصدير: {exported_at}'
+    summary_cell.font = Font(name='Arial', size=11, color='4B5563')
+    summary_cell.alignment = Alignment(horizontal='right', vertical='center')
+    worksheet.row_dimensions[2].height = 22
+
+    header_fill = PatternFill('solid', fgColor='1A1A1A')
+    header_font = Font(name='Arial', bold=True, color='FFFFFF')
+    thin_gray = Side(style='thin', color='D1D5DB')
+    cell_border = Border(left=thin_gray, right=thin_gray, top=thin_gray, bottom=thin_gray)
+
+    for column, header in enumerate(headers, start=1):
+        cell = worksheet.cell(row=4, column=column, value=header)
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.border = cell_border
+        cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+    worksheet.row_dimensions[4].height = 32
+
+    date_columns = {17, 18, 20}
+    centered_columns = {1, 11, 12, 13, 14, 17, 18, 19, 20, 21, 22}
+
+    for row_number, user in enumerate(users.iterator(chunk_size=500), start=5):
+        try:
+            profile = user.profile
+        except Profile.DoesNotExist:
+            profile = None
+
+        image_url = ''
+        if profile and profile.image:
+            try:
+                image_url = request.build_absolute_uri(profile.image.url)
+            except ValueError:
+                image_url = profile.image.name
+
+        group_names = '، '.join(group.name for group in user.groups.all())
+        permission_names = '، '.join(
+            f'{permission.content_type.app_label}.{permission.codename}'
+            for permission in user.user_permissions.all()
+        )
+        account_type = 'مدير عام' if user.is_superuser else ('موظف' if user.is_staff else 'عميل')
+
+        values = [
+            user.pk,
+            _excel_safe_text(user.username),
+            _excel_safe_text(user.first_name),
+            _excel_safe_text(user.last_name),
+            _excel_safe_text(user.get_full_name()),
+            _excel_safe_text(user.email),
+            _excel_safe_text(user.phone),
+            _excel_safe_text(user.address),
+            _excel_safe_text(profile.bio if profile else ''),
+            _excel_safe_text(image_url),
+            'نشط' if user.is_active else 'موقوف',
+            account_type,
+            'نعم' if user.is_staff else 'لا',
+            'نعم' if user.is_superuser else 'لا',
+            _excel_safe_text(group_names),
+            _excel_safe_text(permission_names),
+            _excel_datetime(user.date_joined),
+            _excel_datetime(user.last_login),
+            user.orders_count,
+            _excel_datetime(user.last_order_at),
+            user.support_messages_count,
+            user.cart_items_count,
+        ]
+
+        for column, value in enumerate(values, start=1):
+            cell = worksheet.cell(row=row_number, column=column, value=value)
+            cell.font = Font(name='Arial', size=10)
+            cell.border = cell_border
+            cell.alignment = Alignment(
+                horizontal='center' if column in centered_columns else 'right',
+                vertical='top',
+                wrap_text=True,
+            )
+            if column in date_columns and value is not None:
+                cell.number_format = 'yyyy/mm/dd hh:mm'
+            if row_number % 2 == 0:
+                cell.fill = PatternFill('solid', fgColor='FFF9E6')
+
+    data_last_row = max(4, worksheet.max_row)
+    worksheet.auto_filter.ref = f'A4:{last_column}{data_last_row}'
+
+    column_widths = [
+        14, 22, 18, 18, 24, 32, 18, 40, 38, 45, 15,
+        15, 12, 14, 28, 45, 21, 21, 14, 21, 18, 17,
+    ]
+    for index, width in enumerate(column_widths, start=1):
+        worksheet.column_dimensions[worksheet.cell(row=4, column=index).column_letter].width = width
+
+    output = BytesIO()
+    workbook.save(output)
+    output.seek(0)
+
+    filename = f"alwesam-users-{timezone.localdate().isoformat()}.xlsx"
+    arabic_filename = f"مستخدمي-الوسام-{timezone.localdate().isoformat()}.xlsx"
+    response = HttpResponse(
+        output.getvalue(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
+    response['Content-Disposition'] = (
+        f'attachment; filename="{filename}"; filename*=UTF-8\'\'{quote(arabic_filename)}'
+    )
+    response['Cache-Control'] = 'private, no-store'
+    response['Pragma'] = 'no-cache'
+    response['X-Content-Type-Options'] = 'nosniff'
+    return response
 
 
 @staff_member_required
