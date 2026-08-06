@@ -276,6 +276,63 @@ class ProductAdminFlowTests(TestCase):
         self.assertFalse(os.path.exists(product_image_path))
         self.assertFalse(os.path.exists(variant_image_path))
 
+    def test_image_delete_buttons_use_direct_post_endpoints(self):
+        product = Product.objects.create(name='منتج الحذف المباشر', image=_image_file())
+        product_image = ProductImages.objects.create(
+            product=product, image=_image_file('direct-product.png')
+        )
+        variant = ProductVariant.objects.create(product=product, name='نمط مباشر')
+        variant_image = VariantImage.objects.create(
+            variant=variant, image=_image_file('direct-variant.png')
+        )
+        product_image_path = product_image.image.path
+        variant_image_path = variant_image.image.path
+        product_delete_url = reverse(
+            'admin_app:admin_product_image_delete',
+            args=[product.pk, product_image.pk],
+        )
+        variant_delete_url = reverse(
+            'admin_app:admin_variant_image_delete',
+            args=[product.pk, variant_image.pk],
+        )
+
+        page_response = self.client.get(
+            reverse('admin_app:admin_product_edit', args=[product.pk])
+        )
+        self.assertContains(page_response, product_delete_url)
+        self.assertContains(page_response, variant_delete_url)
+        self.assertContains(page_response, 'deleteImageImmediately')
+
+        with self.captureOnCommitCallbacks(execute=True):
+            product_response = self.client.post(product_delete_url)
+            variant_response = self.client.post(variant_delete_url)
+
+        self.assertEqual(product_response.status_code, 200)
+        self.assertTrue(product_response.json()['deleted'])
+        self.assertEqual(variant_response.status_code, 200)
+        self.assertTrue(variant_response.json()['deleted'])
+        self.assertFalse(ProductImages.objects.filter(pk=product_image.pk).exists())
+        self.assertFalse(VariantImage.objects.filter(pk=variant_image.pk).exists())
+        self.assertFalse(os.path.exists(product_image_path))
+        self.assertFalse(os.path.exists(variant_image_path))
+
+    def test_direct_image_delete_cannot_delete_another_products_image(self):
+        product = Product.objects.create(name='المنتج المطلوب', image=_image_file())
+        other_product = Product.objects.create(
+            name='منتج آخر', image=_image_file('other-direct-main.png')
+        )
+        other_image = ProductImages.objects.create(
+            product=other_product, image=_image_file('other-direct-extra.png')
+        )
+
+        response = self.client.post(reverse(
+            'admin_app:admin_product_image_delete',
+            args=[product.pk, other_image.pk],
+        ))
+
+        self.assertEqual(response.status_code, 404)
+        self.assertTrue(ProductImages.objects.filter(pk=other_image.pk).exists())
+
 
 class UserExcelExportTests(TestCase):
     def setUp(self):

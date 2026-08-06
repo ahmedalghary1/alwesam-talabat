@@ -7,8 +7,10 @@ from django.contrib import messages
 from django.db import transaction
 from django.db.models import Q, Count, Max
 from django.db.models.deletion import ProtectedError
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
+from django.urls import reverse
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 from products.models import (
     Product, Category, ProductImages, ProductVariant,
     VariantAttributeValue, VariantAttribute, Size,
@@ -307,7 +309,17 @@ def admin_product_edit(request, product_id):
             'size_data': list(variant.size_prices.select_related('size').values(
                 'size_id', 'pcs_carton'
             )),
-            'images': [{'id': img.id, 'url': img.image.url} for img in variant.images.all()]
+            'images': [
+                {
+                    'id': img.id,
+                    'url': img.image.url,
+                    'delete_url': reverse(
+                        'admin_app:admin_variant_image_delete',
+                        args=[product.id, img.id],
+                    ),
+                }
+                for img in variant.images.all()
+            ]
         }
         variants_data.append(variant_dict)
 
@@ -509,6 +521,30 @@ def admin_product_edit(request, product_id):
         'total_images': product_images.count(),
     }
     return render(request, 'admin/product_edit.html', context)
+
+
+@staff_member_required
+@require_POST
+def admin_product_image_delete(request, product_id, image_id):
+    """Delete one additional product image directly from the custom admin."""
+    product = get_object_or_404(Product, id=product_id)
+    image = get_object_or_404(ProductImages, id=image_id, product=product)
+    image.delete()
+    return JsonResponse({'deleted': True, 'image_id': image_id})
+
+
+@staff_member_required
+@require_POST
+def admin_variant_image_delete(request, product_id, image_id):
+    """Delete one variant image directly from the custom admin."""
+    image = get_object_or_404(
+        VariantImage,
+        id=image_id,
+        variant__product_id=product_id,
+    )
+    image.delete()
+    return JsonResponse({'deleted': True, 'image_id': image_id})
+
 
 @staff_member_required
 def admin_product_delete(request, product_id):

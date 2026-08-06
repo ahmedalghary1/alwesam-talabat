@@ -8,6 +8,16 @@ urlpatterns = [
     path('products/', admin_views.admin_products, name='admin_products'),
     path('products/add/', admin_views.admin_product_add, name='admin_product_add'),
     path('products/<int:product_id>/edit/', admin_views.admin_product_edit, name='admin_product_edit'),
+    path(
+        'products/<int:product_id>/images/<int:image_id>/delete/',
+        admin_views.admin_product_image_delete,
+        name='admin_product_image_delete',
+    ),
+    path(
+        'products/<int:product_id>/variant-images/<int:image_id>/delete/',
+        admin_views.admin_variant_image_delete,
+        name='admin_variant_image_delete',
+    ),
     path('products/<int:product_id>/delete/', admin_views.admin_product_delete, name='admin_product_delete'),
     path('categories/', admin_views.admin_categories, name='admin_categories'),
     path('categories/add/', admin_views.admin_category_add, name='admin_category_add'),

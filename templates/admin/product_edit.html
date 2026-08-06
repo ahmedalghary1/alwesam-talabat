@@ -63,12 +63,13 @@
                     <div class="existing-image-tile" data-image-id="{{ pimg.id }}">
                         <img src="{{ pimg.image.url }}" alt="صورة إضافية"
                             class="existing-image-thumb">
-                        <button type="button" onclick="deleteProductImage({{ pimg.id }}, this)"
+                        <button type="button" onclick="deleteProductImage(this)"
+                            data-delete-url="{% url 'admin_app:admin_product_image_delete' product.id pimg.id %}"
                             style="position: absolute; top: -8px; right: -8px; background: #ef4444; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"
+                            aria-label="حذف الصورة"
                             title="حذف الصورة">
                             <i class="fas fa-times"></i>
                         </button>
-                        <input type="hidden" name="delete_product_images[]" value="" class="delete-image-input" disabled>
                     </div>
                     {% endfor %}
                 </div>
@@ -383,8 +384,7 @@
                 existingImagesHtml += `
                     <div class="variant-existing-image" data-image-id="${img.id}">
                         <img src="${img.url}" alt="${variantName}" class="existing-image-thumb">
-                        <button type="button" onclick="deleteVariantImage(${img.id}, this)" style="position: absolute; top: -6px; right: -6px; background: #ef4444; color: white; border: none; border-radius: 50%; width: 22px; height: 22px; cursor: pointer;"><i class="fas fa-times"></i></button>
-                        <input type="hidden" name="delete_variant_images[]" value="" class="delete-image-input" disabled>
+                        <button type="button" onclick="deleteVariantImage(this)" data-delete-url="${escapeHtml(img.delete_url)}" aria-label="حذف الصورة" title="حذف الصورة" style="position: absolute; top: -6px; right: -6px; background: #ef4444; color: white; border: none; border-radius: 50%; width: 22px; height: 22px; cursor: pointer;"><i class="fas fa-times"></i></button>
                     </div>
                 `;
             });
@@ -457,58 +457,43 @@
         if (row) row.remove();
     }
 
-    // حذف صورة النمط (تمييز للحذف)
-    function deleteVariantImage(imageId, button) {
-        const container = button.closest('[data-image-id]');
-        if (container.dataset.pendingDeletion === 'true') {
-            restoreVariantImage(imageId, button, container);
-            return;
-        }
+    async function deleteImageImmediately(button) {
         if (!confirm('هل أنت متأكد من حذف هذه الصورة؟')) return;
-        const deleteInput = container.querySelector('.delete-image-input');
-        deleteInput.value = imageId;
-        deleteInput.disabled = false;
-        container.dataset.pendingDeletion = 'true';
-        container.style.opacity = '0.3';
-        button.innerHTML = '<i class="fas fa-undo"></i>';
-        button.title = 'استعادة';
-    }
 
-    function restoreVariantImage(imageId, button, container) {
-        const deleteInput = container.querySelector('.delete-image-input');
-        deleteInput.value = '';
-        deleteInput.disabled = true;
-        delete container.dataset.pendingDeletion;
-        container.style.opacity = '1';
-        button.innerHTML = '<i class="fas fa-times"></i>';
-        button.title = 'حذف';
-    }
-
-    // حذف صورة المنتج
-    function deleteProductImage(imageId, button) {
         const container = button.closest('[data-image-id]');
-        if (container.dataset.pendingDeletion === 'true') {
-            restoreProductImage(imageId, button, container);
-            return;
+        const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]')?.value;
+        button.disabled = true;
+        container.style.opacity = '0.45';
+
+        try {
+            const response = await fetch(button.dataset.deleteUrl, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            const contentType = response.headers.get('content-type') || '';
+            if (!response.ok || !contentType.includes('application/json')) {
+                throw new Error('تعذر حذف الصورة');
+            }
+            const result = await response.json();
+            if (!result.deleted) throw new Error('تعذر حذف الصورة');
+            container.remove();
+        } catch (error) {
+            container.style.opacity = '1';
+            button.disabled = false;
+            alert('لم يتم حذف الصورة. يرجى تحديث الصفحة والمحاولة مرة أخرى.');
         }
-        if (!confirm('هل أنت متأكد من حذف هذه الصورة؟')) return;
-        const deleteInput = container.querySelector('.delete-image-input');
-        deleteInput.value = imageId;
-        deleteInput.disabled = false;
-        container.dataset.pendingDeletion = 'true';
-        container.style.opacity = '0.3';
-        button.innerHTML = '<i class="fas fa-undo"></i>';
-        button.title = 'استعادة';
     }
 
-    function restoreProductImage(imageId, button, container) {
-        const deleteInput = container.querySelector('.delete-image-input');
-        deleteInput.value = '';
-        deleteInput.disabled = true;
-        delete container.dataset.pendingDeletion;
-        container.style.opacity = '1';
-        button.innerHTML = '<i class="fas fa-times"></i>';
-        button.title = 'حذف';
+    function deleteVariantImage(button) {
+        deleteImageImmediately(button);
+    }
+
+    function deleteProductImage(button) {
+        deleteImageImmediately(button);
     }
 
     // معاينة الصور
