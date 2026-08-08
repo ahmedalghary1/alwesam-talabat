@@ -82,3 +82,28 @@ class OrderSizeQuantityTests(TestCase):
             product.delete()
 
         self.assertEqual(OrderItem.objects.filter(product=product).count(), 1)
+
+    @patch('utils.email_tasks.send_order_confirmation_email_task.delay')
+    def test_order_without_email_does_not_schedule_confirmation(self, send_email):
+        self.user.email = None
+        self.user.save(update_fields=['email'])
+        product = Product.objects.create(
+            name='Order without email', pcs_carton=24, image=_image_file()
+        )
+        cart, _ = Cart.objects.get_or_create(user=self.user)
+        CartItem.objects.create(
+            cart=cart,
+            product=product,
+            unit_type='carton',
+            quantity=24,
+        )
+
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.post(reverse('orders:create_order'), {
+                'phone_number': self.user.phone,
+                'address': self.user.address,
+            })
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(OrderItem.objects.filter(product=product).exists())
+        send_email.assert_not_called()

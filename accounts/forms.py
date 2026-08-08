@@ -19,6 +19,10 @@ class SignupForm(forms.ModelForm):
     
     image = forms.ImageField(label='صورة الملف الشخصي', required=False, widget=forms.FileInput(attrs={'class': 'form-input'}))
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['email'].required = False
+
     def clean_username(self):
         username = self.cleaned_data.get('username', '').strip()
         if CustomUser.objects.filter(username__iexact=username).exists():
@@ -26,7 +30,9 @@ class SignupForm(forms.ModelForm):
         return username
 
     def clean_email(self):
-        email = self.cleaned_data.get('email', '').strip().lower()
+        email = (self.cleaned_data.get('email') or '').strip().lower()
+        if not email:
+            return None
         if CustomUser.objects.filter(email__iexact=email).exists():
             raise forms.ValidationError("البريد الإلكتروني هذا مستخدم بالفعل")
         return email
@@ -112,6 +118,10 @@ class ProfileUpdateForm(forms.ModelForm):
                 'placeholder': 'أدخل عنوانك الكامل'
             }),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['email'].required = False
     
     def clean_username(self):
         """Validate that username is unique"""
@@ -125,7 +135,9 @@ class ProfileUpdateForm(forms.ModelForm):
     
     def clean_email(self):
         """Validate that email is unique"""
-        email = self.cleaned_data.get('email')
+        email = (self.cleaned_data.get('email') or '').strip().lower()
+        if not email:
+            return None
         if email:
             # Check if email already exists for another user
             existing_user = CustomUser.objects.filter(email=email).exclude(pk=self.instance.pk).first()

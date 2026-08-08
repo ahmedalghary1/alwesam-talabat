@@ -13,7 +13,12 @@ class CustomUser(AbstractUser):
     before they can log in. This allows for business verification of wholesale customers.
     """
     username = models.CharField(max_length=150, unique=True, verbose_name="اسم المستخدم")
-    email = models.EmailField(unique=True, verbose_name="البريد الإلكتروني")
+    email = models.EmailField(
+        unique=True,
+        blank=True,
+        null=True,
+        verbose_name="البريد الإلكتروني",
+    )
     # Indexed for performance when searching/filtering users by phone
     phone = models.CharField(max_length=20, unique=True, verbose_name="رقم الهاتف")
     address = models.TextField(verbose_name="العنوان")
@@ -25,9 +30,14 @@ class CustomUser(AbstractUser):
     class Meta:
         verbose_name = "مستخدم"
         verbose_name_plural = "المستخدمين"
+
+    def save(self, *args, **kwargs):
+        if not self.email:
+            self.email = None
+        super().save(*args, **kwargs)
         
     def __str__(self):
-        return self.email
+        return self.email or self.username
 
 
 User = settings.AUTH_USER_MODEL
@@ -51,5 +61,5 @@ class Profile(ImageCompressionMixin, models.Model):
         verbose_name='حساب المستخدم '
         verbose_name_plural='حسابات المستخدمين'
     def __str__(self):
-        return f"ملف {self.user.email}"
+        return f"ملف {self.user.email or self.user.username}"
     

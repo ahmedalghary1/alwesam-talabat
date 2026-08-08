@@ -42,6 +42,44 @@ class PhoneUniquenessTests(TestCase):
         self.assertIn('phone', serializer.errors)
 
 
+class OptionalEmailTests(TestCase):
+    def setUp(self):
+        self.user_model = get_user_model()
+
+    def test_database_allows_multiple_users_without_email(self):
+        first = self.user_model.objects.create_user(
+            username='no-email-one',
+            email=None,
+            phone='01000000101',
+            address='Cairo',
+            password='StrongPass123!',
+        )
+        second = self.user_model.objects.create_user(
+            username='no-email-two',
+            email=None,
+            phone='01000000102',
+            address='Giza',
+            password='StrongPass123!',
+        )
+
+        self.assertIsNone(first.email)
+        self.assertIsNone(second.email)
+
+    def test_api_registration_accepts_missing_email(self):
+        serializer = RegisterSerializer(data={
+            'username': 'api-no-email',
+            'phone': '01000000103',
+            'address': 'Cairo',
+            'password': 'StrongPass123!',
+            'password_confirm': 'StrongPass123!',
+        })
+
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+        user = serializer.save()
+        self.assertIsNone(user.email)
+        self.assertFalse(user.is_active)
+
+
 @override_settings(RATELIMIT_ENABLE=False)
 class AccountPageTests(TestCase):
     def setUp(self):
@@ -73,6 +111,43 @@ class AccountPageTests(TestCase):
             'تم إنشاء حسابك بنجاح وإرساله إلى المسؤول للمراجعة.',
             [str(message) for message in get_messages(response.wsgi_request)],
         )
+
+    def test_signup_accepts_missing_email_and_keeps_it_optional(self):
+        page = self.client.get(reverse('accounts:signup'))
+        self.assertFalse(page.context['form'].fields['email'].required)
+        self.assertContains(page, 'البريد الإلكتروني (اختياري)')
+
+        response = self.client.post(reverse('accounts:signup'), {
+            'username': 'web-no-email',
+            'email': '',
+            'phone': '01000000104',
+            'address': 'Cairo',
+            'password1': 'AnotherStrongPass123!',
+            'password2': 'AnotherStrongPass123!',
+        })
+
+        self.assertRedirects(response, reverse('accounts:pending_approval'))
+        user = self.user_model.objects.get(username='web-no-email')
+        self.assertIsNone(user.email)
+        self.assertFalse(user.is_active)
+
+    def test_user_without_email_can_login_with_username(self):
+        user = self.user_model.objects.create_user(
+            username='username-only',
+            email=None,
+            phone='01000000105',
+            address='Cairo',
+            password='StrongPass123!',
+            is_active=True,
+        )
+
+        response = self.client.post(reverse('accounts:login'), {
+            'email': 'username-only',
+            'password': 'StrongPass123!',
+        })
+
+        self.assertRedirects(response, reverse('home:home'))
+        self.assertEqual(int(self.client.session['_auth_user_id']), user.pk)
 
     def test_invalid_signup_keeps_entered_address_and_shows_password_error(self):
         response = self.client.post(reverse('accounts:signup'), {

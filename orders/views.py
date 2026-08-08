@@ -120,17 +120,18 @@ def create_order(request):
             cart.items.all().delete()
 
             # إرسال إيميل التأكيد بشكل غير متزامن (اختياري)
-            try:
-                from utils.email_tasks import send_order_confirmation_email_task
-                transaction.on_commit(
-                    lambda: send_order_confirmation_email_task.delay(
-                        order.id,
-                        request.user.email,
-                    ),
-                    robust=True,
-                )
-            except Exception as e:
-                logger.error(f'فشل في إرسال إيميل التأكيد للطلب {order.id}: {str(e)}')
+            if request.user.email:
+                try:
+                    from utils.email_tasks import send_order_confirmation_email_task
+                    transaction.on_commit(
+                        lambda: send_order_confirmation_email_task.delay(
+                            order.id,
+                            request.user.email,
+                        ),
+                        robust=True,
+                    )
+                except Exception as e:
+                    logger.error(f'فشل في إرسال إيميل التأكيد للطلب {order.id}: {str(e)}')
 
             messages.success(request, f'✅ تم إنشاء الطلب #{order.id} بنجاح')
             return redirect('orders:order_detail', order_id=order.id)

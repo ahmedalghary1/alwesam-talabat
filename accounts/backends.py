@@ -51,7 +51,7 @@ class EmailUsernameBackend(ModelBackend):
         
         # Verify password
         if user and user.check_password(password):
-            logger.info(f'Password verified for user: {user.email}')
+            logger.info('Password verified for user: %s', user.email or user.username)
             return user
         
         logger.warning(f'Password verification failed for: {username}')

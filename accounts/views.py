@@ -32,7 +32,7 @@ def signup_view(request):
                 user.save()
                 form.save_profile_image(user)
             
-            logger.info(f'New user registered (inactive): {user.email}')
+            logger.info('New user registered (inactive): %s', user.email or user.username)
             messages.success(
                 request,
                 'تم إنشاء حسابك بنجاح وإرساله إلى المسؤول للمراجعة.'
@@ -66,12 +66,12 @@ def login_view(request):
             if user is not None:
                 # Check if user account is active
                 if not user.is_active:
-                    logger.warning(f'Login attempt for inactive user: {user.email}')
+                    logger.warning('Login attempt for inactive user: %s', user.email or user.username)
                     messages.warning(request, 'حسابك في انتظار موافقة المسؤول. سيتم إشعارك عند تفعيل حسابك.')
                     return render(request, 'accounts/login.html', {'form': form})
 
                 login(request, user)
-                logger.info(f'User {user.email} logged in successfully')
+                logger.info('User %s logged in successfully', user.email or user.username)
 
                 # Sync cart from localStorage to database
                 sync_cart_on_login(request)

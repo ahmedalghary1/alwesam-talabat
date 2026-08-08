@@ -497,6 +497,41 @@ class AdminPanelReliabilityTests(TestCase):
         self.assertContains(response, 'تم تحديث حالة الطلب بنجاح')
         delay.assert_called_once()
 
+    @patch('utils.email_tasks.send_order_status_email_task.delay')
+    def test_order_status_without_email_does_not_schedule_email(self, delay):
+        self.customer.email = None
+        self.customer.save(update_fields=['email'])
+
+        response = self.client.post(
+            reverse('admin_app:admin_order_detail', args=[self.order.pk]),
+            {'status': 'delivered'},
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        delay.assert_not_called()
+
+    @patch('utils.email_tasks.send_activation_email_task.delay')
+    def test_approve_user_without_email_does_not_schedule_email(self, delay):
+        customer = get_user_model().objects.create_user(
+            username='approval-without-email',
+            email=None,
+            phone='01000000019',
+            address='Cairo',
+            password='password',
+            is_active=False,
+        )
+
+        response = self.client.post(
+            reverse('admin_app:approve_user', args=[customer.pk]),
+            follow=True,
+        )
+
+        customer.refresh_from_db()
+        self.assertTrue(customer.is_active)
+        self.assertEqual(response.status_code, 200)
+        delay.assert_not_called()
+
     def test_mutating_admin_endpoints_reject_get_requests(self):
         urls = [
             reverse('admin_app:admin_product_delete', args=[self.product.pk]),

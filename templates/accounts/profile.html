@@ -178,7 +178,7 @@
             {% endif %}
         </div>
         <h1 class="profile-name">{{ user.username }}</h1>
-        <p class="profile-email">{{ user.email }}</p>
+        <p class="profile-email">{{ user.email|default:"غير محدد" }}</p>
     </div>
 
     <div class="profile-grid">
@@ -195,7 +195,7 @@
 
             <div class="info-item">
                 <span class="info-label">البريد الإلكتروني:</span>
-                <span class="info-value">{{ user.email }}</span>
+                <span class="info-value">{{ user.email|default:"غير محدد" }}</span>
             </div>
 
             <div class="info-item">

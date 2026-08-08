@@ -742,14 +742,17 @@ def admin_order_detail(request, order_id):
             order.status = new_status
             order.save(update_fields=['status', 'updated_at'])
 
-            try:
-                from utils.email_tasks import send_order_status_email_task
-                send_order_status_email_task.delay(order.id, new_status, order.user.email)
-            except Exception:
-                messages.warning(
-                    request,
-                    'تم تحديث حالة الطلب، لكن تعذر جدولة رسالة البريد الإلكتروني.',
-                )
+            if order.user.email:
+                try:
+                    from utils.email_tasks import send_order_status_email_task
+                    send_order_status_email_task.delay(order.id, new_status, order.user.email)
+                except Exception:
+                    messages.warning(
+                        request,
+                        'تم تحديث حالة الطلب، لكن تعذر جدولة رسالة البريد الإلكتروني.',
+                    )
+                else:
+                    messages.success(request, 'تم تحديث حالة الطلب بنجاح')
             else:
                 messages.success(request, 'تم تحديث حالة الطلب بنجاح')
         else:
@@ -1092,13 +1095,16 @@ def admin_approve_user(request, user_id):
     user.is_active = True
     user.save(update_fields=['is_active'])
 
-    try:
-        from utils.email_tasks import send_activation_email_task
-        login_url = request.build_absolute_uri('/accounts/login/')
-        send_activation_email_task.delay(user.id, login_url)
-        messages.success(request, f'تم تفعيل حساب "{user.username}" وتم إضافة إرسال البريد الإلكتروني إلى قائمة الانتظار')
-    except Exception:
-        messages.warning(request, f'تم تفعيل حساب "{user.username}" لكن تعذر جدولة البريد الإلكتروني')
+    if user.email:
+        try:
+            from utils.email_tasks import send_activation_email_task
+            login_url = request.build_absolute_uri('/accounts/login/')
+            send_activation_email_task.delay(user.id, login_url)
+            messages.success(request, f'تم تفعيل حساب "{user.username}" وتم إضافة إرسال البريد الإلكتروني إلى قائمة الانتظار')
+        except Exception:
+            messages.warning(request, f'تم تفعيل حساب "{user.username}" لكن تعذر جدولة البريد الإلكتروني')
+    else:
+        messages.success(request, f'تم تفعيل حساب "{user.username}" بنجاح')
 
     return redirect('admin_app:pending_users')
 
@@ -1124,7 +1130,7 @@ def admin_toggle_user_status(request, user_id):
     user.is_active = not user.is_active
     user.save(update_fields=['is_active'])
 
-    if user.is_active:
+    if user.is_active and user.email:
         try:
             from utils.email_tasks import send_activation_email_task
             login_url = request.build_absolute_uri('/accounts/login/')
@@ -1132,6 +1138,8 @@ def admin_toggle_user_status(request, user_id):
             messages.success(request, f'تم تفعيل حساب "{user.username}" وتم إرسال البريد الإلكتروني')
         except Exception:
             messages.warning(request, f'تم تفعيل حساب "{user.username}" لكن تعذر جدولة البريد الإلكتروني')
+    elif user.is_active:
+        messages.success(request, f'تم تفعيل حساب المستخدم "{user.username}" بنجاح')
     else:
         messages.success(request, f'تم إيقاف حساب المستخدم "{user.username}" بنجاح')
 

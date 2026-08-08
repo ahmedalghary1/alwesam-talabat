@@ -31,6 +31,9 @@ def send_activation_email_task(self, user_id, login_url):
         
         # Get user from database
         user = CustomUser.objects.get(id=user_id)
+        if not user.email:
+            logger.info('Activation email skipped for user %s without email', user_id)
+            return f'Activation email skipped for user {user_id}'
         
         subject = 'تم تفعيل حسابك - الوسام طلبات'
         
@@ -75,6 +78,10 @@ def send_order_confirmation_email_task(self, order_id, user_email):
     Returns:
         str: Success or error message
     """
+    if not user_email:
+        logger.info('Order confirmation email skipped for order %s without email', order_id)
+        return f'Order confirmation email skipped for order {order_id}'
+
     try:
         from orders.models import Order
         
@@ -136,6 +143,10 @@ def send_order_status_email_task(self, order_id, new_status, user_email):
     Returns:
         str: Success or error message
     """
+    if not user_email:
+        logger.info('Order status email skipped for order %s without email', order_id)
+        return f'Order status email skipped for order {order_id}'
+
     try:
         from orders.models import Order
         

@@ -234,9 +234,9 @@
                 <div class="form-group">
                     <label class="form-label">
                         <i class="fas fa-envelope" style="color: #FFC400;"></i>
-                        البريد الإلكتروني
+                        البريد الإلكتروني (اختياري)
                     </label>
-                    <input type="email" name="email" class="form-input" placeholder="example@email.com" required
+                    <input type="email" name="email" class="form-input" placeholder="example@email.com"
                         value="{{ form.email.value|default:'' }}">
                     {% if form.email.errors %}
                     <div class="error-text" style="color: #ef4444; font-size: 0.85rem; margin-top: 0.25rem;">
