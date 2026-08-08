@@ -5,6 +5,10 @@ app_name = 'admin_app'
 
 urlpatterns = [
     path('dashboard/', admin_views.admin_dashboard, name='dashboard'),
+    path('slides/', admin_views.admin_slides, name='admin_slides'),
+    path('slides/add/', admin_views.admin_slide_add, name='admin_slide_add'),
+    path('slides/<int:slide_id>/edit/', admin_views.admin_slide_edit, name='admin_slide_edit'),
+    path('slides/<int:slide_id>/delete/', admin_views.admin_slide_delete, name='admin_slide_delete'),
     path('products/', admin_views.admin_products, name='admin_products'),
     path('products/add/', admin_views.admin_product_add, name='admin_product_add'),
     path('products/<int:product_id>/edit/', admin_views.admin_product_edit, name='admin_product_edit'),

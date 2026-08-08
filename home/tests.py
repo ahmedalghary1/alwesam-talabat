@@ -21,6 +21,7 @@ from products.models import (
 )
 from products.admin import ProductSizeInline, VariantSizeInline
 from support.models import CustomerMessage, MessageReply
+from .models import HomeSlide
 
 from .admin_views import _excel_safe_text, _valid_model_ids, _variant_sizes_from_post
 
@@ -57,6 +58,121 @@ def _image_file(name='test.png', color='red'):
     output = BytesIO()
     Image.new('RGB', (20, 20), color).save(output, format='PNG')
     return SimpleUploadedFile(name, output.getvalue(), content_type='image/png')
+
+
+class HomeSlideManagementTests(TestCase):
+    def setUp(self):
+        self.media_root = tempfile.mkdtemp()
+        self.override = override_settings(MEDIA_ROOT=self.media_root)
+        self.override.enable()
+        self.addCleanup(self.override.disable)
+        self.addCleanup(shutil.rmtree, self.media_root, True)
+
+        self.staff = get_user_model().objects.create_user(
+            username='slide-admin',
+            email='slide-admin@example.com',
+            phone='01000000901',
+            address='Cairo',
+            password='password',
+            is_staff=True,
+            is_active=True,
+        )
+
+    def test_home_keeps_static_slides_until_an_active_slide_is_added(self):
+        response = self.client.get(reverse('home:home'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'images/slide1.webp')
+        self.assertEqual(response.context['slides'], [])
+
+    def test_home_displays_only_active_slides_in_configured_order(self):
+        later = HomeSlide.objects.create(
+            title='السلايد الثاني',
+            image=_image_file('later.png', 'blue'),
+            alt_text='النص الثاني',
+            order=20,
+        )
+        first = HomeSlide.objects.create(
+            title='السلايد الأول',
+            image=_image_file('first.png', 'green'),
+            alt_text='النص الأول',
+            order=5,
+        )
+        inactive = HomeSlide.objects.create(
+            title='سلايد متوقف',
+            image=_image_file('inactive.png'),
+            order=1,
+            is_active=False,
+        )
+
+        response = self.client.get(reverse('home:home'))
+
+        self.assertEqual([slide.pk for slide in response.context['slides']], [first.pk, later.pk])
+        self.assertContains(response, first.image.url)
+        self.assertContains(response, later.image.url)
+        self.assertContains(response, 'النص الأول')
+        self.assertNotContains(response, inactive.image.url)
+        self.assertNotContains(response, 'images/slide1.webp')
+
+    def test_custom_admin_can_add_edit_and_delete_a_slide(self):
+        self.client.force_login(self.staff)
+
+        create_response = self.client.post(reverse('admin_app:admin_slide_add'), {
+            'title': 'عرض جديد',
+            'image': _image_file('new-slide.png'),
+            'alt_text': 'وصف العرض الجديد',
+            'order': '7',
+            'is_active': 'on',
+        })
+
+        self.assertRedirects(create_response, reverse('admin_app:admin_slides'))
+        slide = HomeSlide.objects.get(title='عرض جديد')
+        self.assertEqual(slide.order, 7)
+        self.assertTrue(slide.is_active)
+        self.assertGreater(slide.image_width, 0)
+        self.assertGreater(slide.image_height, 0)
+
+        edit_response = self.client.post(
+            reverse('admin_app:admin_slide_edit', args=[slide.pk]),
+            {
+                'title': 'عرض بعد التعديل',
+                'alt_text': 'وصف معدل',
+                'order': '2',
+            },
+        )
+
+        self.assertRedirects(edit_response, reverse('admin_app:admin_slides'))
+        slide.refresh_from_db()
+        self.assertEqual(slide.title, 'عرض بعد التعديل')
+        self.assertEqual(slide.order, 2)
+        self.assertFalse(slide.is_active)
+
+        self.assertEqual(
+            self.client.get(reverse('admin_app:admin_slide_delete', args=[slide.pk])).status_code,
+            405,
+        )
+        delete_response = self.client.post(
+            reverse('admin_app:admin_slide_delete', args=[slide.pk]),
+        )
+        self.assertRedirects(delete_response, reverse('admin_app:admin_slides'))
+        self.assertFalse(HomeSlide.objects.filter(pk=slide.pk).exists())
+
+    def test_slide_management_requires_staff_access(self):
+        response = self.client.get(reverse('admin_app:admin_slides'))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/admin/login/', response.url)
+
+    def test_slide_is_registered_in_django_admin(self):
+        self.assertTrue(admin.site.is_registered(HomeSlide))
+
+    def test_dashboard_links_to_slide_management(self):
+        self.client.force_login(self.staff)
+
+        response = self.client.get(reverse('admin_app:dashboard'))
+
+        self.assertContains(response, reverse('admin_app:admin_slides'))
+        self.assertContains(response, 'شرائح الرئيسية النشطة')
 
 
 class ProductAdminFlowTests(TestCase):

@@ -1,0 +1,218 @@
+{% extends 'admin/admin_base.html' %}
+
+{% block title %}{{ page_title }} - الوسام{% endblock %}
+{% block sidebar_slides %}active{% endblock %}
+
+{% block admin_extra_css %}
+<style>
+    .slide-form-title {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin: 0 0 1.5rem;
+        color: var(--text-primary);
+        font-size: 1.8rem;
+        font-weight: 800;
+    }
+
+    .slide-form-title i {
+        color: #FFC400;
+    }
+
+    .slide-form-card {
+        width: min(100%, 820px);
+        padding: 1.5rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background: var(--card-bg);
+    }
+
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 0.45rem;
+        color: var(--text-primary);
+        font-weight: 700;
+    }
+
+    .form-label i {
+        width: 18px;
+        margin-left: 0.35rem;
+        color: #FFC400;
+        text-align: center;
+    }
+
+    .form-input {
+        width: 100%;
+        min-height: 44px;
+        padding: 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        font: inherit;
+    }
+
+    .form-input:focus {
+        border-color: #FFC400;
+        outline: 3px solid rgba(255, 196, 0, 0.16);
+    }
+
+    input[type="file"].form-input {
+        height: auto;
+    }
+
+    .form-help {
+        display: block;
+        margin-top: 0.4rem;
+        color: var(--text-secondary);
+        font-size: 0.8rem;
+    }
+
+    .form-error {
+        margin: 0.4rem 0 0;
+        color: #ef4444;
+        font-size: 0.82rem;
+    }
+
+    .current-slide-preview {
+        width: 100%;
+        margin-bottom: 0.75rem;
+        aspect-ratio: 2 / 1;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background: #f2f2f2;
+        object-fit: contain;
+    }
+
+    .active-toggle {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        width: fit-content;
+        cursor: pointer;
+        color: var(--text-primary);
+        font-weight: 700;
+    }
+
+    .form-checkbox {
+        width: 20px;
+        height: 20px;
+        accent-color: #FFC400;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+    }
+
+    .form-submit,
+    .form-cancel {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        min-height: 44px;
+        padding: 0.75rem 1.25rem;
+        border-radius: 8px;
+        font: inherit;
+        font-weight: 700;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .form-submit {
+        border: 1px solid #FFC400;
+        background: #FFC400;
+        color: #1a1a1a;
+    }
+
+    .form-cancel {
+        border: 1px solid var(--border-color);
+        background: transparent;
+        color: var(--text-primary);
+    }
+
+    @media (max-width: 520px) {
+        .slide-form-card {
+            padding: 1rem;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block admin_content %}
+<h1 class="slide-form-title"><i class="fas fa-image"></i> {{ page_title }}</h1>
+
+<form class="slide-form-card" method="post" enctype="multipart/form-data" novalidate>
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+    <div class="form-error">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <div class="form-group">
+        <label class="form-label" for="{{ form.title.id_for_label }}"><i class="fas fa-tag"></i> اسم السلايد</label>
+        {{ form.title }}
+        {% for error in form.title.errors %}<p class="form-error">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div class="form-group">
+        <label class="form-label" for="{{ form.image.id_for_label }}"><i class="fas fa-upload"></i> الصورة</label>
+        {% if slide and slide.image %}
+        <img class="current-slide-preview" id="slide-image-preview" src="{{ slide.image.url }}" alt="معاينة السلايد الحالي">
+        {% else %}
+        <img class="current-slide-preview" id="slide-image-preview" alt="معاينة الصورة" hidden>
+        {% endif %}
+        {{ form.image }}
+        <small class="form-help">الصيغ المدعومة: JPG وPNG وWebP، بحد أقصى 12 ميجابايت.</small>
+        {% for error in form.image.errors %}<p class="form-error">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div class="form-group">
+        <label class="form-label" for="{{ form.alt_text.id_for_label }}"><i class="fas fa-align-right"></i> النص البديل</label>
+        {{ form.alt_text }}
+        <small class="form-help">يصف محتوى الصورة لمحركات البحث وقارئات الشاشة.</small>
+        {% for error in form.alt_text.errors %}<p class="form-error">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div class="form-group">
+        <label class="form-label" for="{{ form.order.id_for_label }}"><i class="fas fa-sort-numeric-down"></i> الترتيب</label>
+        {{ form.order }}
+        <small class="form-help">الأرقام الأقل تظهر أولاً.</small>
+        {% for error in form.order.errors %}<p class="form-error">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div class="form-group">
+        <label class="active-toggle" for="{{ form.is_active.id_for_label }}">
+            {{ form.is_active }}
+            عرض السلايد في الصفحة الرئيسية
+        </label>
+        {% for error in form.is_active.errors %}<p class="form-error">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div class="form-actions">
+        <button class="form-submit" type="submit"><i class="fas fa-save"></i> {{ submit_label }}</button>
+        <a class="form-cancel" href="{% url 'admin_app:admin_slides' %}"><i class="fas fa-times"></i> إلغاء</a>
+    </div>
+</form>
+
+<script>
+    document.getElementById('{{ form.image.id_for_label }}')?.addEventListener('change', function () {
+        const preview = document.getElementById('slide-image-preview');
+        const file = this.files && this.files[0];
+        if (!file || !preview) return;
+        preview.src = URL.createObjectURL(file);
+        preview.hidden = false;
+        preview.onload = () => URL.revokeObjectURL(preview.src);
+    });
+</script>
+{% endblock %}

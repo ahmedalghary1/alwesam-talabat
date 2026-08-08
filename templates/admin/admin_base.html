@@ -342,6 +342,12 @@
                 <span>الأقسام</span>
             </a>
 
+            <a href="{% url 'admin_app:admin_slides' %}"
+                class="sidebar-link {% block sidebar_slides %}{% endblock %}">
+                <i class="fas fa-images"></i>
+                <span>سلايدر الرئيسية</span>
+            </a>
+
             <a href="{% url 'admin_app:admin_orders' %}" class="sidebar-link {% block sidebar_orders %}{% endblock %}">
                 <i class="fas fa-shopping-bag"></i>
                 <span>الطلبات</span>

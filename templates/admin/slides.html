@@ -1,0 +1,243 @@
+{% extends 'admin/admin_base.html' %}
+
+{% block title %}إدارة سلايدر الرئيسية - الوسام{% endblock %}
+{% block sidebar_slides %}active{% endblock %}
+
+{% block admin_extra_css %}
+<style>
+    .slides-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .slides-title {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin: 0;
+        color: var(--text-primary);
+        font-size: 1.8rem;
+        font-weight: 800;
+    }
+
+    .slides-title i {
+        color: #FFC400;
+    }
+
+    .add-slide-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        background: #FFC400;
+        color: #1a1a1a;
+        text-decoration: none;
+        font-weight: 700;
+    }
+
+    .slides-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+        gap: 1rem;
+    }
+
+    .slide-card {
+        overflow: hidden;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background: var(--card-bg);
+    }
+
+    .slide-preview {
+        width: 100%;
+        aspect-ratio: 2 / 1;
+        background: #f2f2f2;
+    }
+
+    .slide-preview img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+    .slide-details {
+        padding: 1rem;
+    }
+
+    .slide-name-row,
+    .slide-meta,
+    .slide-actions {
+        display: flex;
+        align-items: center;
+    }
+
+    .slide-name-row {
+        justify-content: space-between;
+        gap: 0.75rem;
+    }
+
+    .slide-name {
+        margin: 0;
+        color: var(--text-primary);
+        font-size: 1.05rem;
+        font-weight: 700;
+        overflow-wrap: anywhere;
+    }
+
+    .status-badge {
+        flex: 0 0 auto;
+        padding: 0.25rem 0.5rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+
+    .status-active {
+        background: rgba(34, 197, 94, 0.14);
+        color: #16a34a;
+    }
+
+    .status-inactive {
+        background: rgba(107, 114, 128, 0.14);
+        color: var(--text-secondary);
+    }
+
+    .slide-meta {
+        flex-wrap: wrap;
+        gap: 0.5rem 1rem;
+        margin: 0.75rem 0 1rem;
+        color: var(--text-secondary);
+        font-size: 0.8rem;
+    }
+
+    .slide-actions {
+        gap: 0.5rem;
+    }
+
+    .slide-action {
+        display: inline-flex;
+        flex: 1;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        min-height: 40px;
+        border-radius: 8px;
+        font: inherit;
+        font-size: 0.875rem;
+        font-weight: 700;
+        cursor: pointer;
+        text-decoration: none;
+    }
+
+    .slide-edit {
+        border: 1px solid #FFC400;
+        background: #FFC400;
+        color: #1a1a1a;
+    }
+
+    .slide-delete {
+        border: 1px solid #ef4444;
+        background: transparent;
+        color: #ef4444;
+    }
+
+    .slides-empty {
+        padding: 3rem 1rem;
+        text-align: center;
+        color: var(--text-secondary);
+    }
+
+    .slides-empty i {
+        display: block;
+        margin-bottom: 1rem;
+        color: #FFC400;
+        font-size: 3rem;
+    }
+
+    @media (max-width: 600px) {
+        .slides-header {
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+        .add-slide-btn {
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block admin_content %}
+<div class="slides-header">
+    <h1 class="slides-title"><i class="fas fa-images"></i> إدارة سلايدر الرئيسية</h1>
+    <a class="add-slide-btn" href="{% url 'admin_app:admin_slide_add' %}">
+        <i class="fas fa-plus"></i> إضافة سلايد
+    </a>
+</div>
+
+{% if slides %}
+<div class="slides-grid">
+    {% for slide in slides %}
+    <article class="slide-card">
+        <div class="slide-preview">
+            <img src="{{ slide.image.url }}" alt="{{ slide.alt_text|default:slide.title }}">
+        </div>
+        <div class="slide-details">
+            <div class="slide-name-row">
+                <h2 class="slide-name">{{ slide.title }}</h2>
+                {% if slide.is_active %}
+                <span class="status-badge status-active">نشط</span>
+                {% else %}
+                <span class="status-badge status-inactive">متوقف</span>
+                {% endif %}
+            </div>
+            <div class="slide-meta">
+                <span><i class="fas fa-sort"></i> الترتيب: {{ slide.order }}</span>
+                <span><i class="fas fa-expand"></i> {{ slide.image_width }}×{{ slide.image_height }}</span>
+            </div>
+            <div class="slide-actions">
+                <a class="slide-action slide-edit" href="{% url 'admin_app:admin_slide_edit' slide.id %}">
+                    <i class="fas fa-edit"></i> تعديل
+                </a>
+                <button class="slide-action slide-delete" type="button"
+                    data-title="{{ slide.title }}"
+                    data-delete-url="{% url 'admin_app:admin_slide_delete' slide.id %}"
+                    onclick="confirmSlideDelete(this)">
+                    <i class="fas fa-trash"></i> حذف
+                </button>
+            </div>
+        </div>
+    </article>
+    {% endfor %}
+</div>
+{% else %}
+<div class="slides-empty">
+    <i class="fas fa-images"></i>
+    <h2>لم تتم إضافة شرائح بعد</h2>
+    <p>ستظل الصور الافتراضية ظاهرة في الصفحة الرئيسية حتى تضيف أول سلايد.</p>
+</div>
+{% endif %}
+
+<form id="slide-delete-form" method="post" hidden>
+    {% csrf_token %}
+</form>
+
+<script>
+    function confirmSlideDelete(button) {
+        showConfirmModal(
+            `سيتم حذف السلايد "${button.dataset.title}" نهائياً`,
+            'تأكيد حذف السلايد',
+            function () {
+                const form = document.getElementById('slide-delete-form');
+                form.action = button.dataset.deleteUrl;
+                form.submit();
+            }
+        );
+    }
+</script>
+{% endblock %}

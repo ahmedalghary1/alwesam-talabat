@@ -203,6 +203,16 @@
         </div>
     </div>
 
+    <a class="stat-card" href="{% url 'admin_app:admin_slides' %}" style="text-decoration: none;">
+        <div class="stat-icon">
+            <i class="fas fa-images"></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-label">شرائح الرئيسية النشطة</div>
+            <div class="stat-value">{{ total_slides|default:0 }}</div>
+        </div>
+    </a>
+
     <div class="stat-card">
         <div class="stat-icon">
             <i class="fas fa-shopping-bag"></i>

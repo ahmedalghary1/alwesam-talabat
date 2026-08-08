@@ -18,6 +18,8 @@ from products.models import (
     VariantSizeImage,
 )
 from orders.models import Order, OrderItem
+from .forms import HomeSlideForm
+from .models import HomeSlide
 
 
 def _valid_model_ids(values):
@@ -121,6 +123,7 @@ def admin_dashboard(request):
     """Admin dashboard with statistics and recent orders"""
     total_products = Product.objects.count()
     total_categories = Category.objects.count()
+    total_slides = HomeSlide.objects.filter(is_active=True).count()
     total_orders = Order.objects.count()
     pending_orders = Order.objects.filter(status='pending').count()
 
@@ -129,11 +132,62 @@ def admin_dashboard(request):
     context = {
         'total_products': total_products,
         'total_categories': total_categories,
+        'total_slides': total_slides,
         'total_orders': total_orders,
         'pending_orders': pending_orders,
         'recent_orders': recent_orders,
     }
     return render(request, 'admin/dashboard.html', context)
+
+
+@staff_member_required
+def admin_slides(request):
+    """List and manage home-page slides."""
+    slides = HomeSlide.objects.all()
+    return render(request, 'admin/slides.html', {'slides': slides})
+
+
+@staff_member_required
+def admin_slide_add(request):
+    """Add a new home-page slide."""
+    form = HomeSlideForm(request.POST or None, request.FILES or None)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        messages.success(request, 'تمت إضافة السلايد بنجاح')
+        return redirect('admin_app:admin_slides')
+    return render(request, 'admin/slide_form.html', {
+        'form': form,
+        'page_title': 'إضافة سلايد جديد',
+        'submit_label': 'إضافة السلايد',
+    })
+
+
+@staff_member_required
+def admin_slide_edit(request, slide_id):
+    """Edit an existing home-page slide."""
+    slide = get_object_or_404(HomeSlide, pk=slide_id)
+    form = HomeSlideForm(request.POST or None, request.FILES or None, instance=slide)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        messages.success(request, 'تم تحديث السلايد بنجاح')
+        return redirect('admin_app:admin_slides')
+    return render(request, 'admin/slide_form.html', {
+        'form': form,
+        'slide': slide,
+        'page_title': 'تعديل السلايد',
+        'submit_label': 'حفظ التعديلات',
+    })
+
+
+@staff_member_required
+@require_POST
+def admin_slide_delete(request, slide_id):
+    """Delete a home-page slide and its uploaded image."""
+    slide = get_object_or_404(HomeSlide, pk=slide_id)
+    slide_title = slide.title
+    slide.delete()
+    messages.success(request, f'تم حذف السلايد "{slide_title}" بنجاح')
+    return redirect('admin_app:admin_slides')
 
 
 @staff_member_required

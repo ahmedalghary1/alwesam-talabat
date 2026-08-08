@@ -10,6 +10,11 @@
             <span>المنتجات</span>
         </a>
 
+        <a href="{% url 'admin_app:admin_slides' %}" class="sidebar-link {{ slides_active }}">
+            <i class="fas fa-images"></i>
+            <span>سلايدر الرئيسية</span>
+        </a>
+
         <a href="{% url 'admin_app:admin_orders' %}" class="sidebar-link {{ orders_active }}">
             <i class="fas fa-shopping-bag"></i>
             <span>الطلبات</span>
