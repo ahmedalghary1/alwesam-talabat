@@ -11,7 +11,7 @@
 {% block extra_css %}
 <link rel="preload" as="image" href="{% static 'images/slide1.webp' %}?v=20260808" type="image/webp"
     fetchpriority="high">
-<link rel="stylesheet" href="{% static 'css/home.css' %}?v=20260808-3">
+<link rel="stylesheet" href="{% static 'css/home.css' %}?v=20260808-4">
 
 
 {% endblock %}
@@ -186,8 +186,6 @@
             currentSlideIndex = index;
         }
 
-        updateSliderAspectRatio(slides[currentSlideIndex]);
-
         // Move slides (direction: ltr في CSS، لذا نستخدم translateX سالب)
         const slidesContainer = document.querySelector('.slider-slides');
         slidesContainer.style.transform = `translateX(-${currentSlideIndex * 100}%)`;
@@ -214,20 +212,6 @@
     function currentSlide(index) {
         showSlide(index);
         resetAutoSlide();
-    }
-
-    function updateSliderAspectRatio(activeSlide) {
-        const slider = document.querySelector('.slider-container');
-        if (!slider) return;
-
-        const image = activeSlide?.querySelector('img');
-        if (!image) return;
-
-        const width = image.naturalWidth || Number(image.getAttribute('width'));
-        const height = image.naturalHeight || Number(image.getAttribute('height'));
-        if (width && height) {
-            slider.style.aspectRatio = `${width} / ${height}`;
-        }
     }
 
     function autoSlide() {
