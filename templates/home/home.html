@@ -41,9 +41,6 @@
                     alt="صالة عرض الوسام - منتجات كهربائية بالجملة لتجار القاهرة والجيزة">
             </div>
         </div>
-        <!-- Dots -->
-        <div class="slider-dots" role="tablist" aria-label="اختيار العرض">
-        </div>
     </div>
 
 
@@ -146,31 +143,6 @@
     let currentSlideIndex = 0;
     let autoSlideInterval;
 
-    // Function to update dots
-    function updateDots() {
-        const dotsContainer = document.querySelector('.slider-dots');
-        const slides = document.querySelectorAll('.slide');
-
-        // Clear existing dots
-        dotsContainer.innerHTML = '';
-
-        // Create dots for all slides
-        slides.forEach((slide, index) => {
-            const dot = document.createElement('button');
-            dot.type = 'button';
-            dot.className = index === 0 ? 'dot active' : 'dot';
-            dot.setAttribute('data-slide', index);
-            dot.setAttribute('role', 'tab');
-            dot.setAttribute('aria-label', `العرض ${index + 1}`);
-            dot.setAttribute('aria-selected', index === 0 ? 'true' : 'false');
-            dot.addEventListener('click', function () {
-                showSlide(parseInt(this.getAttribute('data-slide')));
-                resetAutoSlide();
-            });
-            dotsContainer.appendChild(dot);
-        });
-    }
-
     function showSlide(index) {
         const slides = document.querySelectorAll('.slide');
         const totalSlides = slides.length;
@@ -189,13 +161,6 @@
         // Move slides (direction: ltr في CSS، لذا نستخدم translateX سالب)
         const slidesContainer = document.querySelector('.slider-slides');
         slidesContainer.style.transform = `translateX(-${currentSlideIndex * 100}%)`;
-
-        // Update dots
-        const dots = document.querySelectorAll('.dot');
-        dots.forEach((dot, i) => {
-            dot.classList.toggle('active', i === currentSlideIndex);
-            dot.setAttribute('aria-selected', i === currentSlideIndex ? 'true' : 'false');
-        });
 
         slides.forEach((slide, i) => {
             const isActive = i === currentSlideIndex;
@@ -230,7 +195,6 @@
 
     // Initialize on page load
     function initHomeSlider() {
-        updateDots();
         showSlide(0);
         resetAutoSlide();
 
