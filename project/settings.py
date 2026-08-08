@@ -158,7 +158,7 @@ if DB_ENGINE.endswith('mysql'):
 AUTH_USER_MODEL = 'accounts.CustomUser'
 
 AUTHENTICATION_BACKENDS = [
-    'accounts.backends.EmailPhoneBackend',
+    'accounts.backends.EmailUsernameBackend',
     'django.contrib.auth.backends.ModelBackend',
 ]
 

@@ -36,14 +36,14 @@ class AuthViewSet(viewsets.ViewSet):
     
     @action(detail=False, methods=['post'])
     def login(self, request):
-        """Login with email or phone."""
+        """Login with email or username."""
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         
-        username_or_phone = serializer.validated_data['username']
+        identifier = serializer.validated_data['username']
         password = serializer.validated_data['password']
         
-        user = authenticate(request, username=username_or_phone, password=password)
+        user = authenticate(request, username=identifier, password=password)
         
         if user is None:
             return Response(

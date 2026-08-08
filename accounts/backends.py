@@ -5,19 +5,19 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class EmailPhoneBackend(ModelBackend):
+class EmailUsernameBackend(ModelBackend):
     """
     Custom authentication backend that allows users to login with either:
     - Email address
-    - Phone number
+    - Username
     """
     
     def authenticate(self, request, username=None, password=None, **kwargs):
         """
-        Authenticate user using email or phone number
+        Authenticate user using email or username
         
         Args:
-            username: Can be either email or phone number
+            username: Can be either email address or username
             password: User's password
         
         Returns:
@@ -35,17 +35,15 @@ class EmailPhoneBackend(ModelBackend):
             user = CustomUser.objects.get(email__iexact=username)
             logger.info(f'User found by email: {username}')
         except CustomUser.DoesNotExist:
-            # Try to find user by phone number
+            # Try to find user by username
             try:
-                user = CustomUser.objects.get(phone=username)
-                logger.info(f'User found by phone: {username}')
+                user = CustomUser.objects.get(username__iexact=username)
+                logger.info(f'User found by username: {username}')
             except CustomUser.DoesNotExist:
-                logger.warning(f'No user found with email or phone: {username}')
+                logger.warning(f'No user found with email or username: {username}')
                 return None
             except CustomUser.MultipleObjectsReturned:
-                # A database upgraded from an older release may still contain
-                # duplicate phone numbers until migration 0005 is applied.
-                logger.error('Duplicate phone number prevents authentication: %s', username)
+                logger.error('Duplicate username prevents authentication: %s', username)
                 return None
         except CustomUser.MultipleObjectsReturned:
             logger.error('Duplicate email prevents authentication: %s', username)
@@ -67,3 +65,7 @@ class EmailPhoneBackend(ModelBackend):
             return CustomUser.objects.get(pk=user_id)
         except CustomUser.DoesNotExist:
             return None
+
+
+# Keep existing authenticated sessions valid after renaming the backend.
+EmailPhoneBackend = EmailUsernameBackend

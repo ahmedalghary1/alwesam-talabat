@@ -98,14 +98,24 @@ class AccountPageTests(TestCase):
         self.assertRedirects(response, reverse('home:home'))
         self.assertEqual(int(self.client.session['_auth_user_id']), self.active_user.pk)
 
-    def test_login_accepts_phone_number(self):
+    def test_login_accepts_username_case_insensitively(self):
         response = self.client.post(reverse('accounts:login'), {
-            'email': '01000000002',
+            'email': 'ACTIVE-USER',
             'password': 'StrongPass123!',
         })
 
         self.assertRedirects(response, reverse('home:home'))
         self.assertEqual(int(self.client.session['_auth_user_id']), self.active_user.pk)
+
+    def test_login_does_not_accept_phone_number(self):
+        response = self.client.post(reverse('accounts:login'), {
+            'email': '01000000002',
+            'password': 'StrongPass123!',
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'البريد الإلكتروني/اسم المستخدم أو كلمة المرور غير صحيحة')
+        self.assertNotIn('_auth_user_id', self.client.session)
 
     def test_failed_login_keeps_identifier_visible(self):
         response = self.client.post(reverse('accounts:login'), {
@@ -115,7 +125,7 @@ class AccountPageTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'active@example.com')
-        self.assertContains(response, 'البريد الإلكتروني/رقم الهاتف أو كلمة المرور غير صحيحة')
+        self.assertContains(response, 'البريد الإلكتروني/اسم المستخدم أو كلمة المرور غير صحيحة')
         self.assertNotIn('_auth_user_id', self.client.session)
 
     def test_inactive_account_gets_pending_approval_message(self):
