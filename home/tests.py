@@ -135,7 +135,9 @@ class ProductAdminFlowTests(TestCase):
 
     def test_add_product_saves_images_for_direct_and_variant_sizes(self):
         direct_size = Size.objects.create(name='Direct image size')
+        second_direct_size = Size.objects.create(name='Second direct image size')
         variant_size_name = Size.objects.create(name='Variant image size')
+        second_variant_size = Size.objects.create(name='Second variant image size')
 
         response = self.client.post(
             reverse('admin_app:admin_product_add'),
@@ -143,28 +145,46 @@ class ProductAdminFlowTests(TestCase):
                 'name': 'Product with size images',
                 'image': _image_file('main-size-image.png'),
                 'pcs_carton': '24',
-                'product_size_ids[]': [str(direct_size.pk)],
-                'product_size_pcs[]': ['48'],
+                'product_size_ids[]': [str(direct_size.pk), str(second_direct_size.pk)],
+                'product_size_pcs[]': ['48', '60'],
                 f'product_size_{direct_size.pk}_images[]': _image_file('direct-size.png'),
+                f'product_size_{second_direct_size.pk}_images[]': _image_file('second-direct-size.png', 'blue'),
                 'variant_form_key[]': ['0'],
                 'variant_name[]': ['Image variant'],
                 'variant_code[]': [''],
                 'variant_pcs_carton[]': ['30'],
                 'variant_available[]': ['0'],
                 'variant_length_label[]': [''],
-                'variant_0_size_ids[]': [str(variant_size_name.pk)],
-                'variant_0_size_pcs[]': ['72'],
+                'variant_0_size_ids[]': [str(variant_size_name.pk), str(second_variant_size.pk)],
+                'variant_0_size_pcs[]': ['72', '84'],
                 f'variant_0_size_{variant_size_name.pk}_images[]': _image_file('variant-size.png'),
+                f'variant_0_size_{second_variant_size.pk}_images[]': _image_file('second-variant-size.png', 'green'),
             },
         )
 
         self.assertEqual(response.status_code, 302)
         product = Product.objects.get(name='Product with size images')
-        self.assertEqual(product.size_prices.get().pcs_carton, 48)
-        self.assertEqual(product.size_prices.get().images.count(), 1)
-        variant_size = product.variants.get().size_prices.get()
-        self.assertEqual(variant_size.pcs_carton, 72)
-        self.assertEqual(variant_size.images.count(), 1)
+        first_direct = product.size_prices.get(size=direct_size)
+        second_direct = product.size_prices.get(size=second_direct_size)
+        self.assertEqual(first_direct.pcs_carton, 48)
+        self.assertEqual(second_direct.pcs_carton, 60)
+        self.assertEqual(first_direct.images.count(), 1)
+        self.assertEqual(second_direct.images.count(), 1)
+        variant = product.variants.get()
+        first_variant_size = variant.size_prices.get(size=variant_size_name)
+        second_variant = variant.size_prices.get(size=second_variant_size)
+        self.assertEqual(first_variant_size.pcs_carton, 72)
+        self.assertEqual(second_variant.pcs_carton, 84)
+        self.assertEqual(first_variant_size.images.count(), 1)
+        self.assertEqual(second_variant.images.count(), 1)
+        self.assertNotEqual(
+            first_direct.images.get().image.name,
+            second_direct.images.get().image.name,
+        )
+        self.assertNotEqual(
+            first_variant_size.images.get().image.name,
+            second_variant.images.get().image.name,
+        )
 
     def test_editing_variant_size_quantity_preserves_its_images(self):
         product = Product.objects.create(name='Persistent size gallery', image=_image_file())
@@ -200,6 +220,64 @@ class ProductAdminFlowTests(TestCase):
         variant_size.refresh_from_db()
         self.assertEqual(variant_size.pcs_carton, 60)
         self.assertTrue(VariantSizeImage.objects.filter(pk=size_image.pk).exists())
+
+    def test_edit_adds_different_images_to_each_existing_size(self):
+        product = Product.objects.create(name='Editable size galleries', image=_image_file())
+        direct_one = ProductSize.objects.create(
+            product=product,
+            size=Size.objects.create(name='Editable direct one'),
+            pcs_carton=24,
+        )
+        direct_two = ProductSize.objects.create(
+            product=product,
+            size=Size.objects.create(name='Editable direct two'),
+            pcs_carton=36,
+        )
+        variant = ProductVariant.objects.create(product=product, name='Editable variant')
+        variant_one = VariantSize.objects.create(
+            variant=variant,
+            size=Size.objects.create(name='Editable variant one'),
+            pcs_carton=48,
+        )
+        variant_two = VariantSize.objects.create(
+            variant=variant,
+            size=Size.objects.create(name='Editable variant two'),
+            pcs_carton=60,
+        )
+
+        response = self.client.post(
+            reverse('admin_app:admin_product_edit', args=[product.pk]),
+            {
+                'name': product.name,
+                'pcs_carton': '24',
+                'order': '0',
+                'product_size_id[]': [str(direct_one.pk), str(direct_two.pk)],
+                'product_size_pcs[]': ['24', '36'],
+                f'product_size_{direct_one.size_id}_new_images[]': _image_file('edit-direct-one.png', 'red'),
+                f'product_size_{direct_two.size_id}_new_images[]': _image_file('edit-direct-two.png', 'blue'),
+                'variants_form_initialized': '1',
+                'variant_form_key[]': ['0'],
+                'variant_id[]': [str(variant.pk)],
+                'variant_name[]': [variant.name],
+                'variant_code[]': [''],
+                'variant_pcs_carton[]': ['24'],
+                'variant_available[]': ['0'],
+                'variant_length_label[]': [''],
+                'variant_0_size_ids[]': [str(variant_one.size_id), str(variant_two.size_id)],
+                f'variant_0_size_pcs_{variant_one.size_id}': '48',
+                f'variant_0_size_pcs_{variant_two.size_id}': '60',
+                f'variant_0_size_{variant_one.size_id}_new_images[]': _image_file('edit-variant-one.png', 'green'),
+                f'variant_0_size_{variant_two.size_id}_new_images[]': _image_file('edit-variant-two.png', 'yellow'),
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(direct_one.images.count(), 1)
+        self.assertEqual(direct_two.images.count(), 1)
+        self.assertEqual(variant_one.images.count(), 1)
+        self.assertEqual(variant_two.images.count(), 1)
+        self.assertNotEqual(direct_one.images.get().image.name, direct_two.images.get().image.name)
+        self.assertNotEqual(variant_one.images.get().image.name, variant_two.images.get().image.name)
 
     def test_repeated_arabic_product_names_get_unique_slugs(self):
         first = Product.objects.create(name='منتج مكرر', image=_image_file('one.png'))
