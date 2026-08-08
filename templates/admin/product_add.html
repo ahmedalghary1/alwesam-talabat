@@ -202,7 +202,28 @@
     }
 
     .size-row .size-images-input {
-        flex: 1 1 240px;
+        width: 100%;
+        margin-top: 0.35rem;
+    }
+
+    .size-upload-control {
+        flex: 1 1 280px;
+        padding: 0.75rem;
+        border: 2px dashed var(--border-color);
+        border-radius: 8px;
+        background: var(--bg-secondary);
+    }
+
+    .size-upload-control label {
+        display: block;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    .size-upload-control small {
+        display: block;
+        margin-top: 0.3rem;
+        color: var(--text-secondary);
     }
 
     .size-images-preview {
@@ -453,11 +474,15 @@
                 {% endfor %}
             </select>
             <input type="number" name="product_size_pcs[]" placeholder="الكمية في الكرتونة" min="1" value="24" required>
-            <input type="file" class="size-images-input" accept="image/*" multiple aria-label="صور المقاس">
+            <div class="size-upload-control">
+                <label><i class="fas fa-images"></i> صور خاصة بهذا المقاس (اختياري)</label>
+                <input type="file" class="size-images-input" accept="image/*" multiple aria-label="صور خاصة بهذا المقاس">
+                <small>يمكن اختيار أكثر من صورة لهذا المقاس.</small>
+                <div class="size-images-preview"></div>
+            </div>
             <button type="button" class="btn-remove" onclick="removeRow('${rowId}')">
                 <i class="fas fa-trash"></i>
             </button>
-            <div class="size-images-preview"></div>
         `;
         container.appendChild(row);
         directSizeCounter++;
@@ -558,11 +583,15 @@
                 {% endfor %}
             </select>
             <input type="number" name="variant_${variantIndex}_size_pcs[]" placeholder="الكمية في الكرتونة" min="1" value="24" required>
-            <input type="file" class="size-images-input" accept="image/*" multiple aria-label="صور المقاس">
+            <div class="size-upload-control">
+                <label><i class="fas fa-images"></i> صور خاصة بهذا المقاس (اختياري)</label>
+                <input type="file" class="size-images-input" accept="image/*" multiple aria-label="صور خاصة بهذا المقاس">
+                <small>يمكن اختيار أكثر من صورة لهذا المقاس.</small>
+                <div class="size-images-preview"></div>
+            </div>
             <button type="button" class="btn-remove" onclick="removeRow('${sizeRowId}')">
                 <i class="fas fa-trash"></i>
             </button>
-            <div class="size-images-preview"></div>
         `;
         container.appendChild(row);
     }

@@ -5,10 +5,12 @@ from io import BytesIO
 from unittest.mock import patch
 
 from PIL import Image
+from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import RequestFactory, SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
+from django.utils.datastructures import MultiValueDict
 from openpyxl import load_workbook
 
 from orders.models import Order
@@ -17,6 +19,7 @@ from products.models import (
     ProductSizeImage, VariantAttribute, VariantAttributeValue, VariantImage,
     VariantSize, VariantSizeImage,
 )
+from products.admin import ProductSizeInline, VariantSizeInline
 from support.models import CustomerMessage, MessageReply
 
 from .admin_views import _excel_safe_text, _valid_model_ids, _variant_sizes_from_post
@@ -278,6 +281,83 @@ class ProductAdminFlowTests(TestCase):
         self.assertEqual(variant_two.images.count(), 1)
         self.assertNotEqual(direct_one.images.get().image.name, direct_two.images.get().image.name)
         self.assertNotEqual(variant_one.images.get().image.name, variant_two.images.get().image.name)
+
+    def test_custom_and_django_admin_show_size_image_upload_controls(self):
+        product = Product.objects.create(name='Visible size uploads', image=_image_file())
+        size = Size.objects.create(name='Visible direct size')
+        ProductSize.objects.create(product=product, size=size, pcs_carton=24)
+        variant = ProductVariant.objects.create(product=product, name='Visible variant')
+        VariantSize.objects.create(
+            variant=variant,
+            size=Size.objects.create(name='Visible variant size'),
+            pcs_carton=36,
+        )
+        self.staff.is_superuser = True
+        self.staff.save(update_fields=['is_superuser'])
+
+        responses = [
+            self.client.get(reverse('admin_app:admin_product_add')),
+            self.client.get(reverse('admin_app:admin_product_edit', args=[product.pk])),
+            self.client.get(reverse('admin:products_product_change', args=[product.pk])),
+            self.client.get(reverse('admin:products_productvariant_change', args=[variant.pk])),
+        ]
+
+        self.assertTrue(all(response.status_code == 200 for response in responses))
+        for response in responses:
+            self.assertContains(response, 'صور خاصة بهذا المقاس')
+
+    def test_django_admin_inlines_save_multiple_images_per_size(self):
+        product = Product.objects.create(name='Django admin size uploads', image=_image_file())
+        product_size = ProductSize.objects.create(
+            product=product,
+            size=Size.objects.create(name='Django direct size'),
+            pcs_carton=24,
+        )
+        variant = ProductVariant.objects.create(product=product, name='Django variant')
+        variant_size = VariantSize.objects.create(
+            variant=variant,
+            size=Size.objects.create(name='Django variant size'),
+            pcs_carton=36,
+        )
+        self.staff.is_superuser = True
+        self.staff.save(update_fields=['is_superuser'])
+        request = RequestFactory().post('/')
+        request.user = self.staff
+
+        cases = [
+            (ProductSizeInline, product, product_size, 'direct'),
+            (VariantSizeInline, variant, variant_size, 'variant'),
+        ]
+        for inline_class, parent, size_relation, file_prefix in cases:
+            inline = inline_class(type(parent), admin.site)
+            formset_class = inline.get_formset(request, parent)
+            prefix = 'size_prices'
+            data = {
+                f'{prefix}-TOTAL_FORMS': '1',
+                f'{prefix}-INITIAL_FORMS': '1',
+                f'{prefix}-MIN_NUM_FORMS': '0',
+                f'{prefix}-MAX_NUM_FORMS': '1000',
+                f'{prefix}-0-id': str(size_relation.pk),
+                f'{prefix}-0-size': str(size_relation.size_id),
+                f'{prefix}-0-pcs_carton': str(size_relation.pcs_carton),
+            }
+            files = MultiValueDict({
+                f'{prefix}-0-size_images': [
+                    _image_file(f'{file_prefix}-one.png', 'red'),
+                    _image_file(f'{file_prefix}-two.png', 'blue'),
+                ]
+            })
+            formset = formset_class(
+                data=data,
+                files=files,
+                instance=parent,
+                prefix=prefix,
+            )
+            self.assertTrue(formset.is_valid(), formset.errors)
+            model_admin = admin.site._registry[type(parent)]
+            model_admin.save_formset(request, None, formset, change=True)
+
+            self.assertEqual(size_relation.images.count(), 2)
 
     def test_repeated_arabic_product_names_get_unique_slugs(self):
         first = Product.objects.create(name='منتج مكرر', image=_image_file('one.png'))

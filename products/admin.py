@@ -1,5 +1,7 @@
+from django import forms
 from django.contrib import admin
-from django.utils.html import format_html
+from django.db.models import Max
+from django.utils.html import format_html, format_html_join
 from django.urls import reverse
 from django.utils.http import urlencode
 from adminsortable2.admin import SortableAdminMixin
@@ -8,11 +10,91 @@ from .models import (
     Category, Product, ProductImages, Size,
     VariantAttribute, VariantAttributeValue,
     ProductVariant, VariantImage, VariantSize,
-    ProductSize  # أضفنا ProductSize
+    ProductSize, ProductSizeImage, VariantSizeImage,
 )
 
 
 # ========== Inlines ==========
+
+
+class MultipleFileInput(forms.ClearableFileInput):
+    allow_multiple_selected = True
+
+
+class MultipleFileField(forms.FileField):
+    widget = MultipleFileInput
+
+    def clean(self, data, initial=None):
+        clean_one = super().clean
+        if isinstance(data, (list, tuple)):
+            return [clean_one(file, initial) for file in data]
+        return [clean_one(data, initial)] if data else []
+
+
+class ProductSizeAdminForm(forms.ModelForm):
+    size_images = MultipleFileField(
+        required=False,
+        label='إضافة صور خاصة بهذا المقاس',
+        help_text='يمكن اختيار أكثر من صورة.',
+    )
+
+    class Meta:
+        model = ProductSize
+        fields = '__all__'
+
+
+class VariantSizeAdminForm(forms.ModelForm):
+    size_images = MultipleFileField(
+        required=False,
+        label='إضافة صور خاصة بهذا المقاس',
+        help_text='يمكن اختيار أكثر من صورة.',
+    )
+
+    class Meta:
+        model = VariantSize
+        fields = '__all__'
+
+
+def _size_images_preview(obj):
+    if not obj or not obj.pk:
+        return 'احفظ المقاس أولاً لإضافة الصور.'
+    images = list(obj.images.all())
+    if not images:
+        return 'لا توجد صور خاصة بهذا المقاس.'
+    return format_html_join(
+        '',
+        '<img src="{}" alt="" style="width:64px;height:64px;object-fit:contain;margin:3px;border:1px solid #ddd;border-radius:4px;background:#fff" />',
+        ((image.image.url,) for image in images if image.image),
+    )
+
+
+def _save_size_inline_images(formset):
+    image_model = None
+    relation_field = None
+    if formset.model is ProductSize:
+        image_model = ProductSizeImage
+        relation_field = 'product_size'
+    elif formset.model is VariantSize:
+        image_model = VariantSizeImage
+        relation_field = 'variant_size'
+    if image_model is None:
+        return
+
+    for form in formset.forms:
+        if not getattr(form, 'cleaned_data', None) or form.cleaned_data.get('DELETE'):
+            continue
+        instance = form.instance
+        uploaded_images = form.cleaned_data.get('size_images') or []
+        if not instance.pk or not uploaded_images:
+            continue
+        max_order = instance.images.aggregate(Max('order'))['order__max']
+        next_order = 0 if max_order is None else max_order + 1
+        for index, image in enumerate(uploaded_images):
+            image_model.objects.create(
+                **{relation_field: instance},
+                image=image,
+                order=next_order + index,
+            )
 
 class ProductImagesInline(admin.TabularInline):
     """صور إضافية للمنتج"""
@@ -47,19 +129,59 @@ class VariantImageInline(admin.TabularInline):
 class VariantSizeInline(admin.TabularInline):
     """إدارة مقاسات النمط مع الكمية"""
     model = VariantSize
+    form = VariantSizeAdminForm
     extra = 1
-    fields = ['size', 'pcs_carton']
+    fields = ['size', 'pcs_carton', 'current_images', 'size_images']
+    readonly_fields = ['current_images']
     autocomplete_fields = ['size']
+    show_change_link = True
+
+    def current_images(self, obj):
+        return _size_images_preview(obj)
+    current_images.short_description = 'الصور الحالية للمقاس'
 
 
 class ProductSizeInline(admin.TabularInline):
     """إدارة مقاسات المنتج المباشر مع الكمية"""
     model = ProductSize
+    form = ProductSizeAdminForm
     extra = 1
-    fields = ['size', 'pcs_carton']
+    fields = ['size', 'pcs_carton', 'current_images', 'size_images']
+    readonly_fields = ['current_images']
     autocomplete_fields = ['size']
+    show_change_link = True
     verbose_name = "مقاس مباشر مع الكمية"
     verbose_name_plural = "المقاسات المباشرة والكميات"
+
+    def current_images(self, obj):
+        return _size_images_preview(obj)
+    current_images.short_description = 'الصور الحالية للمقاس'
+
+
+class ProductSizeImageInline(admin.TabularInline):
+    model = ProductSizeImage
+    extra = 1
+    fields = ['image', 'order', 'image_preview']
+    readonly_fields = ['image_preview']
+
+    def image_preview(self, obj):
+        if obj and obj.image:
+            return format_html('<img src="{}" width="72" height="72" style="object-fit:contain" />', obj.image.url)
+        return '-'
+    image_preview.short_description = 'معاينة'
+
+
+class VariantSizeImageInline(admin.TabularInline):
+    model = VariantSizeImage
+    extra = 1
+    fields = ['image', 'order', 'image_preview']
+    readonly_fields = ['image_preview']
+
+    def image_preview(self, obj):
+        if obj and obj.image:
+            return format_html('<img src="{}" width="72" height="72" style="object-fit:contain" />', obj.image.url)
+        return '-'
+    image_preview.short_description = 'معاينة'
 
 
 class ProductVariantInline(admin.StackedInline):
@@ -82,12 +204,22 @@ class ProductVariantInline(admin.StackedInline):
         """عرض المقاسات مع الكمية الخاصة بكل منها (للقراءة فقط)"""
         if not obj.pk:
             return "احفظ النمط أولاً لإضافة المقاسات"
-        size_info = []
-        # استخدام related_name='size_prices' كما هو معرف في VariantSize
-        for vs in obj.size_prices.select_related('size').all():
-            size_info.append(f"{vs.size.name}: {vs.pcs_carton} قطعة")
-        return format_html('<br>'.join(size_info) if size_info else "-")
-    sizes_display.short_description = "المقاسات (مع الكمية)"
+        size_prices = list(obj.size_prices.select_related('size').all())
+        if not size_prices:
+            return '-'
+        return format_html_join(
+            '<br>',
+            '<a href="{}">{}: {} قطعة - إدارة صور المقاس</a>',
+            (
+                (
+                    reverse('admin:products_variantsize_change', args=[size_price.pk]),
+                    size_price.size.name,
+                    size_price.pcs_carton,
+                )
+                for size_price in size_prices
+            ),
+        )
+    sizes_display.short_description = "المقاسات والكميات وصورها"
 
 
 class VariantAttributeValueInline(admin.TabularInline):
@@ -187,6 +319,32 @@ class VariantAttributeValueAdmin(admin.ModelAdmin):
     variants_count.short_description = "عدد الأنماط"
 
 
+@admin.register(ProductSize)
+class ProductSizeAdmin(admin.ModelAdmin):
+    list_display = ['product', 'size', 'pcs_carton', 'images_count']
+    list_filter = ['size', 'product__category']
+    search_fields = ['product__name', 'size__name']
+    autocomplete_fields = ['product', 'size']
+    inlines = [ProductSizeImageInline]
+
+    def images_count(self, obj):
+        return obj.images.count()
+    images_count.short_description = 'عدد الصور'
+
+
+@admin.register(VariantSize)
+class VariantSizeAdmin(admin.ModelAdmin):
+    list_display = ['variant', 'size', 'pcs_carton', 'images_count']
+    list_filter = ['size', 'variant__product__category']
+    search_fields = ['variant__name', 'variant__product__name', 'size__name']
+    autocomplete_fields = ['variant', 'size']
+    inlines = [VariantSizeImageInline]
+
+    def images_count(self, obj):
+        return obj.images.count()
+    images_count.short_description = 'عدد الصور'
+
+
 @admin.register(ProductVariant)
 class ProductVariantAdmin(SortableAdminMixin, admin.ModelAdmin):
     """أنماط المنتجات - صفحة التفاصيل الكاملة"""
@@ -220,6 +378,10 @@ class ProductVariantAdmin(SortableAdminMixin, admin.ModelAdmin):
 
     class Media:
         css = {'all': ('admin/css/product_admin_fix.css',)}
+
+    def save_formset(self, request, form, formset, change):
+        super().save_formset(request, form, formset, change)
+        _save_size_inline_images(formset)
 
     def product_link(self, obj):
         url = reverse('admin:products_product_change', args=[obj.product.id])
@@ -290,6 +452,10 @@ class ProductAdmin(SortableAdminMixin, admin.ModelAdmin):
 
     class Media:
         css = {'all': ('admin/css/product_admin_fix.css',)}
+
+    def save_formset(self, request, form, formset, change):
+        super().save_formset(request, form, formset, change)
+        _save_size_inline_images(formset)
 
     def category_link(self, obj):
         if obj.category:

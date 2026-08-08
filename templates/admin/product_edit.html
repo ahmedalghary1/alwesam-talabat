@@ -102,17 +102,21 @@
                 <div class="size-image-editor" style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; margin-bottom: 0.5rem; background: var(--card-bg); padding: 0.5rem; border-radius: 8px;">
                     <input type="hidden" name="product_size_id[]" value="{{ ps.id }}">
                     <div style="flex: 2;"><strong>{{ ps.size__name }}</strong></div>
-                    <input type="file" name="product_size_{{ ps.size_id }}_new_images[]" class="size-images-input" accept="image/*" multiple aria-label="صور المقاس">
-                    <div class="size-images-preview">
-                        {% for image in ps.images %}
-                        <div class="variant-existing-image" data-image-id="{{ image.id }}">
-                            <img src="{{ image.url }}" alt="{{ ps.size__name }}" class="existing-image-thumb">
-                            <button type="button" onclick="deleteSizeImage(this)" data-delete-url="{{ image.delete_url }}" aria-label="حذف الصورة" title="حذف الصورة" style="position:absolute;top:-6px;right:-6px;background:#ef4444;color:white;border:0;border-radius:50%;width:22px;height:22px;cursor:pointer"><i class="fas fa-times"></i></button>
-                        </div>
-                        {% endfor %}
-                    </div>
                     <div style="flex: 1;">
                         <input type="number" name="product_size_pcs[]" class="form-input" style="padding: 0.5rem;" value="{{ ps.pcs_carton }}" min="1" placeholder="الكمية">
+                    </div>
+                    <div class="size-upload-control">
+                        <label><i class="fas fa-images"></i> صور خاصة بهذا المقاس (اختياري)</label>
+                        <input type="file" name="product_size_{{ ps.size_id }}_new_images[]" class="size-images-input" accept="image/*" multiple aria-label="صور خاصة بهذا المقاس">
+                        <small>يمكن اختيار أكثر من صورة. الصور الحالية ظاهرة بالأسفل.</small>
+                        <div class="size-images-preview">
+                            {% for image in ps.images %}
+                            <div class="variant-existing-image" data-image-id="{{ image.id }}">
+                                <img src="{{ image.url }}" alt="{{ ps.size__name }}" class="existing-image-thumb">
+                                <button type="button" onclick="deleteSizeImage(this)" data-delete-url="{{ image.delete_url }}" aria-label="حذف الصورة" title="حذف الصورة" style="position:absolute;top:-6px;right:-6px;background:#ef4444;color:white;border:0;border-radius:50%;width:22px;height:22px;cursor:pointer"><i class="fas fa-times"></i></button>
+                            </div>
+                            {% endfor %}
+                        </div>
                     </div>
                     <button type="button" onclick="this.parentElement.remove()" title="حذف المقاس" style="background:#ef4444;color:white;border:0;border-radius:6px;padding:.55rem;cursor:pointer"><i class="fas fa-trash"></i></button>
                 </div>
@@ -124,8 +128,6 @@
             <div>
                 <label style="display: block; font-size: 0.875rem; margin-bottom: 0.5rem; color: var(--text-secondary); font-weight: 600;">إضافة مقاس جديد</label>
                 <div class="size-image-editor" style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: center;">
-                    <input type="file" class="size-images-input" accept="image/*" multiple aria-label="صور المقاس">
-                    <div class="size-images-preview"></div>
                     <select name="new_product_size_id[]" class="form-select" style="flex: 2;" onchange="syncSizeImageField(this, 'product_size_', '_new_images[]')">
                         <option value="">اختر مقاس...</option>
                         {% for size in sizes %}
@@ -133,6 +135,12 @@
                         {% endfor %}
                     </select>
                     <input type="number" name="new_product_size_pcs[]" class="form-input" style="flex: 1; padding: 0.5rem;" placeholder="الكمية" min="1">
+                    <div class="size-upload-control">
+                        <label><i class="fas fa-images"></i> صور خاصة بهذا المقاس (اختياري)</label>
+                        <input type="file" class="size-images-input" accept="image/*" multiple aria-label="صور خاصة بهذا المقاس">
+                        <small>يمكن اختيار أكثر من صورة لهذا المقاس.</small>
+                        <div class="size-images-preview"></div>
+                    </div>
                 </div>
                 <small style="color: var(--text-secondary);">أضف المزيد عبر تكرار الحقل (يمكنك إضافة عدة مقاسات)</small>
             </div>
@@ -287,7 +295,28 @@
     }
 
     .size-image-editor .size-images-input {
-        flex: 1 1 240px;
+        width: 100%;
+        margin-top: 0.35rem;
+    }
+
+    .size-upload-control {
+        flex: 1 1 280px;
+        padding: 0.75rem;
+        border: 2px dashed var(--border-color);
+        border-radius: 8px;
+        background: var(--bg-secondary);
+    }
+
+    .size-upload-control label {
+        display: block;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    .size-upload-control small {
+        display: block;
+        margin-top: 0.3rem;
+        color: var(--text-secondary);
     }
 
     .size-images-preview {
@@ -367,13 +396,17 @@
         row.style.alignItems = 'center';
         row.style.marginTop = '0.5rem';
         row.innerHTML = `
-            <input type="file" class="size-images-input" accept="image/*" multiple aria-label="صور المقاس">
-            <div class="size-images-preview"></div>
             <select name="new_product_size_id[]" class="form-select" style="flex: 2;" onchange="syncSizeImageField(this, 'product_size_', '_new_images[]')">
                 <option value="">اختر مقاس...</option>
                 ${window.allSizes.map(s => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('')}
             </select>
             <input type="number" name="new_product_size_pcs[]" class="form-input" style="flex: 1;" placeholder="الكمية" min="1">
+            <div class="size-upload-control">
+                <label><i class="fas fa-images"></i> صور خاصة بهذا المقاس (اختياري)</label>
+                <input type="file" class="size-images-input" accept="image/*" multiple aria-label="صور خاصة بهذا المقاس">
+                <small>يمكن اختيار أكثر من صورة لهذا المقاس.</small>
+                <div class="size-images-preview"></div>
+            </div>
             <button type="button" onclick="this.parentElement.remove()" style="background: #ef4444; color: white; border: none; border-radius: 6px; padding: 0.5rem;"><i class="fas fa-trash"></i></button>
         `;
         container.appendChild(row);
@@ -413,10 +446,14 @@
             sizesHtml += `
                 <div class="size-image-editor" style="display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;margin-bottom:.75rem;padding:.5rem;border:1px solid var(--border-color);border-radius:6px;">
                     <input type="checkbox" name="variant_${formKey}_size_ids[]" value="${size.id}" ${existing ? 'checked' : ''} onchange="toggleVariantSizeFields(this)">
-                    <input type="file" name="variant_${formKey}_size_${size.id}_new_images[]" class="size-images-input" accept="image/*" multiple ${existing ? '' : 'disabled'} aria-label="صور المقاس">
-                    <div class="size-images-preview">${existingSizeImages}</div>
                     <span style="min-width: 80px;">${escapeHtml(size.name)}</span>
                     <input type="number" name="variant_${formKey}_size_pcs_${size.id}" class="form-input" style="width: 100px;" placeholder="الكمية" min="1" value="${existing ? existing.pcs_carton : ''}" ${existing ? '' : 'disabled'}>
+                    <div class="size-upload-control">
+                        <label><i class="fas fa-images"></i> صور خاصة بهذا المقاس (اختياري)</label>
+                        <input type="file" name="variant_${formKey}_size_${size.id}_new_images[]" class="size-images-input" accept="image/*" multiple ${existing ? '' : 'disabled'} aria-label="صور خاصة بهذا المقاس">
+                        <small>فعّل المقاس ثم اختر صورة أو أكثر.</small>
+                        <div class="size-images-preview">${existingSizeImages}</div>
+                    </div>
                 </div>
             `;
         });
