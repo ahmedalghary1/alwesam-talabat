@@ -11,7 +11,7 @@
 {% block extra_css %}
 <link rel="preload" as="image" href="{% static 'images/slide1.webp' %}?v=20260808" type="image/webp"
     fetchpriority="high">
-<link rel="stylesheet" href="{% static 'css/home.css' %}?v=20260808-2">
+<link rel="stylesheet" href="{% static 'css/home.css' %}?v=20260808-3">
 
 
 {% endblock %}
@@ -219,11 +219,6 @@
     function updateSliderAspectRatio(activeSlide) {
         const slider = document.querySelector('.slider-container');
         if (!slider) return;
-
-        if (window.matchMedia('(max-width: 768px)').matches) {
-            slider.style.removeProperty('aspect-ratio');
-            return;
-        }
 
         const image = activeSlide?.querySelector('img');
         if (!image) return;
