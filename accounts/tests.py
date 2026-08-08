@@ -79,6 +79,28 @@ class OptionalEmailTests(TestCase):
         self.assertIsNone(user.email)
         self.assertFalse(user.is_active)
 
+    def test_api_registration_endpoint_accepts_missing_email(self):
+        response = self.client.post(
+            reverse('api:auth-register'),
+            {
+                'username': 'api-endpoint-no-email',
+                'phone': '01000000106',
+                'address': 'Cairo',
+                'password': 'StrongPass123!',
+                'password_confirm': 'StrongPass123!',
+            },
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 201, response.content)
+        user = self.user_model.objects.get(username='api-endpoint-no-email')
+        self.assertIsNone(user.email)
+        self.assertFalse(user.is_active)
+
+    def test_username_is_the_required_primary_identifier(self):
+        self.assertEqual(self.user_model.USERNAME_FIELD, 'username')
+        self.assertNotIn('email', self.user_model.REQUIRED_FIELDS)
+
 
 @override_settings(RATELIMIT_ENABLE=False)
 class AccountPageTests(TestCase):

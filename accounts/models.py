@@ -8,7 +8,7 @@ class CustomUser(AbstractUser):
     """
     Custom User model for wholesale e-commerce system.
     
-    Uses email as the primary authentication field instead of username.
+    Uses username as the required primary identifier while email remains optional.
     All new users are created with is_active=False and require admin approval
     before they can log in. This allows for business verification of wholesale customers.
     """
@@ -23,9 +23,9 @@ class CustomUser(AbstractUser):
     phone = models.CharField(max_length=20, unique=True, verbose_name="رقم الهاتف")
     address = models.TextField(verbose_name="العنوان")
     
-    # Email is used for login instead of username
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username', 'phone', 'address']
+    # The authentication backend still accepts either username or email.
+    USERNAME_FIELD = 'username'
+    REQUIRED_FIELDS = ['phone', 'address']
     
     class Meta:
         verbose_name = "مستخدم"
