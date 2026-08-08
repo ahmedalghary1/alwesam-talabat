@@ -9,7 +9,10 @@ from django.urls import reverse
 
 from api.v1.serializers.products import ProductDetailSerializer
 
-from .models import Product, ProductSize, ProductVariant, Size, VariantSize
+from .models import (
+    Product, ProductSize, ProductSizeImage, ProductVariant, Size,
+    VariantSize, VariantSizeImage,
+)
 
 
 def _image_file():
@@ -66,6 +69,40 @@ class ProductDetailSizeQuantityTests(TestCase):
         self.assertEqual(quantity_response.status_code, 200)
         self.assertEqual(quantity_response.json()['pcs_carton'], 72)
         self.assertIn('no-store', quantity_response['Cache-Control'])
+
+    def test_each_size_exposes_its_own_images_without_losing_quantity(self):
+        product = Product.objects.create(name='Sized gallery', pcs_carton=24, image=_image_file())
+        direct_size = Size.objects.create(name='Direct size')
+        product_size = ProductSize.objects.create(
+            product=product, size=direct_size, pcs_carton=48
+        )
+        direct_image = ProductSizeImage.objects.create(
+            product_size=product_size, image=_image_file()
+        )
+        variant = ProductVariant.objects.create(product=product, name='Variant', pcs_carton=30)
+        variant_size_name = Size.objects.create(name='Variant size')
+        variant_size = VariantSize.objects.create(
+            variant=variant, size=variant_size_name, pcs_carton=72
+        )
+        variant_image = VariantSizeImage.objects.create(
+            variant_size=variant_size, image=_image_file()
+        )
+
+        response = self.client.get(reverse('products:product_detail', args=[product.slug]))
+
+        direct_data = response.context['product_page_data']['directSizePrices'][0]
+        variant_data = response.context['product_page_data']['variants'][0]['sizePrices'][0]
+        self.assertEqual(direct_data['pcsCarton'], 48)
+        self.assertEqual(direct_data['images'][0]['url'], direct_image.image.url)
+        self.assertEqual(variant_data['pcsCarton'], 72)
+        self.assertEqual(variant_data['images'][0]['url'], variant_image.image.url)
+        self.assertContains(response, 'sizePrice?.images?.length')
+
+        api_data = ProductDetailSerializer(product).data
+        self.assertEqual(api_data['size_options'][0]['pcs_carton'], 48)
+        self.assertTrue(api_data['size_options'][0]['images'][0]['image'])
+        self.assertEqual(api_data['variants'][0]['size_options'][0]['pcs_carton'], 72)
+        self.assertTrue(api_data['variants'][0]['size_options'][0]['images'][0]['image'])
 
     def test_direct_size_quantity_endpoint_reads_current_database_value(self):
         product = Product.objects.create(name='منتج مباشر', pcs_carton=24, image=_image_file())

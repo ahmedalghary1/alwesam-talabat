@@ -18,6 +18,16 @@ urlpatterns = [
         admin_views.admin_variant_image_delete,
         name='admin_variant_image_delete',
     ),
+    path(
+        'products/<int:product_id>/product-size-images/<int:image_id>/delete/',
+        admin_views.admin_product_size_image_delete,
+        name='admin_product_size_image_delete',
+    ),
+    path(
+        'products/<int:product_id>/variant-size-images/<int:image_id>/delete/',
+        admin_views.admin_variant_size_image_delete,
+        name='admin_variant_size_image_delete',
+    ),
     path('products/<int:product_id>/delete/', admin_views.admin_product_delete, name='admin_product_delete'),
     path('categories/', admin_views.admin_categories, name='admin_categories'),
     path('categories/add/', admin_views.admin_category_add, name='admin_category_add'),

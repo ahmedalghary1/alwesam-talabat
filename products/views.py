@@ -96,7 +96,10 @@ def product_detail(request, slug):
         variants_qs = ProductVariant.objects.filter(is_available=True).order_by('order').prefetch_related(
             Prefetch('sizes', queryset=Size.objects.all().order_by('order')),
             Prefetch('attributes', queryset=VariantAttributeValue.objects.select_related('attribute')),
-            Prefetch('size_prices', queryset=VariantSize.objects.select_related('size')),
+            Prefetch(
+                'size_prices',
+                queryset=VariantSize.objects.select_related('size').prefetch_related('images'),
+            ),
             'images',
         )
         product = get_object_or_404(
@@ -105,7 +108,7 @@ def product_detail(request, slug):
                 Prefetch('variants', queryset=variants_qs),
                 Prefetch(
                     'size_prices',
-                    queryset=ProductSize.objects.select_related('size').order_by('size__order'),
+                    queryset=ProductSize.objects.select_related('size').prefetch_related('images').order_by('size__order'),
                 ),
             ),
             slug=slug
@@ -144,6 +147,10 @@ def product_detail(request, slug):
                         'sizeId': size_price.size_id,
                         'sizeName': size_price.size.name,
                         'pcsCarton': size_price.pcs_carton,
+                        'images': [
+                            {'url': image.image.url, 'alt': f'{variant.name} - {size_price.size.name}'}
+                            for image in size_price.images.all() if image.image
+                        ],
                     }
                     for size_price in variant.size_prices.all()
                 ],
@@ -176,6 +183,10 @@ def product_detail(request, slug):
                     'sizeId': size_price.size_id,
                     'sizeName': size_price.size.name,
                     'pcsCarton': size_price.pcs_carton,
+                    'images': [
+                        {'url': image.image.url, 'alt': f'{product.name} - {size_price.size.name}'}
+                        for image in size_price.images.all() if image.image
+                    ],
                 }
                 for size_price in direct_size_prices
             ],

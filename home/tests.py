@@ -14,7 +14,8 @@ from openpyxl import load_workbook
 from orders.models import Order
 from products.models import (
     Category, Product, ProductImages, ProductSize, ProductVariant, Size,
-    VariantAttribute, VariantAttributeValue, VariantImage, VariantSize,
+    ProductSizeImage, VariantAttribute, VariantAttributeValue, VariantImage,
+    VariantSize, VariantSizeImage,
 )
 from support.models import CustomerMessage, MessageReply
 
@@ -131,6 +132,74 @@ class ProductAdminFlowTests(TestCase):
         self.assertTrue(VariantSize.objects.filter(
             variant=variant, size=second_size, pcs_carton=60,
         ).exists())
+
+    def test_add_product_saves_images_for_direct_and_variant_sizes(self):
+        direct_size = Size.objects.create(name='Direct image size')
+        variant_size_name = Size.objects.create(name='Variant image size')
+
+        response = self.client.post(
+            reverse('admin_app:admin_product_add'),
+            {
+                'name': 'Product with size images',
+                'image': _image_file('main-size-image.png'),
+                'pcs_carton': '24',
+                'product_size_ids[]': [str(direct_size.pk)],
+                'product_size_pcs[]': ['48'],
+                f'product_size_{direct_size.pk}_images[]': _image_file('direct-size.png'),
+                'variant_form_key[]': ['0'],
+                'variant_name[]': ['Image variant'],
+                'variant_code[]': [''],
+                'variant_pcs_carton[]': ['30'],
+                'variant_available[]': ['0'],
+                'variant_length_label[]': [''],
+                'variant_0_size_ids[]': [str(variant_size_name.pk)],
+                'variant_0_size_pcs[]': ['72'],
+                f'variant_0_size_{variant_size_name.pk}_images[]': _image_file('variant-size.png'),
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        product = Product.objects.get(name='Product with size images')
+        self.assertEqual(product.size_prices.get().pcs_carton, 48)
+        self.assertEqual(product.size_prices.get().images.count(), 1)
+        variant_size = product.variants.get().size_prices.get()
+        self.assertEqual(variant_size.pcs_carton, 72)
+        self.assertEqual(variant_size.images.count(), 1)
+
+    def test_editing_variant_size_quantity_preserves_its_images(self):
+        product = Product.objects.create(name='Persistent size gallery', image=_image_file())
+        variant = ProductVariant.objects.create(product=product, name='Persistent variant')
+        size = Size.objects.create(name='Persistent size')
+        variant_size = VariantSize.objects.create(
+            variant=variant, size=size, pcs_carton=24
+        )
+        size_image = VariantSizeImage.objects.create(
+            variant_size=variant_size, image=_image_file('persistent-size.png')
+        )
+
+        response = self.client.post(
+            reverse('admin_app:admin_product_edit', args=[product.pk]),
+            {
+                'name': product.name,
+                'pcs_carton': '24',
+                'order': '0',
+                'variants_form_initialized': '1',
+                'variant_form_key[]': ['0'],
+                'variant_id[]': [str(variant.pk)],
+                'variant_name[]': [variant.name],
+                'variant_code[]': [''],
+                'variant_pcs_carton[]': ['24'],
+                'variant_available[]': ['0'],
+                'variant_length_label[]': [''],
+                'variant_0_size_ids[]': [str(size.pk)],
+                f'variant_0_size_pcs_{size.pk}': '60',
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        variant_size.refresh_from_db()
+        self.assertEqual(variant_size.pcs_carton, 60)
+        self.assertTrue(VariantSizeImage.objects.filter(pk=size_image.pk).exists())
 
     def test_repeated_arabic_product_names_get_unique_slugs(self):
         first = Product.objects.create(name='منتج مكرر', image=_image_file('one.png'))
@@ -470,8 +539,28 @@ class AdminPanelReliabilityTests(TestCase):
         variant_image = VariantImage.objects.create(
             variant=variant, image=_image_file('direct-variant.png')
         )
+        direct_size = ProductSize.objects.create(
+            product=product,
+            size=Size.objects.create(name='Direct image deletion size'),
+            pcs_carton=24,
+        )
+        direct_size_image = ProductSizeImage.objects.create(
+            product_size=direct_size,
+            image=_image_file('direct-size-delete.png'),
+        )
+        variant_size = VariantSize.objects.create(
+            variant=variant,
+            size=Size.objects.create(name='Variant image deletion size'),
+            pcs_carton=24,
+        )
+        variant_size_image = VariantSizeImage.objects.create(
+            variant_size=variant_size,
+            image=_image_file('variant-size-delete.png'),
+        )
         product_image_path = product_image.image.path
         variant_image_path = variant_image.image.path
+        direct_size_image_path = direct_size_image.image.path
+        variant_size_image_path = variant_size_image.image.path
         product_delete_url = reverse(
             'admin_app:admin_product_image_delete',
             args=[product.pk, product_image.pk],
@@ -480,26 +569,46 @@ class AdminPanelReliabilityTests(TestCase):
             'admin_app:admin_variant_image_delete',
             args=[product.pk, variant_image.pk],
         )
+        direct_size_delete_url = reverse(
+            'admin_app:admin_product_size_image_delete',
+            args=[product.pk, direct_size_image.pk],
+        )
+        variant_size_delete_url = reverse(
+            'admin_app:admin_variant_size_image_delete',
+            args=[product.pk, variant_size_image.pk],
+        )
 
         page_response = self.client.get(
             reverse('admin_app:admin_product_edit', args=[product.pk])
         )
         self.assertContains(page_response, product_delete_url)
         self.assertContains(page_response, variant_delete_url)
+        self.assertContains(page_response, direct_size_delete_url)
+        self.assertContains(page_response, variant_size_delete_url)
         self.assertContains(page_response, 'deleteImageImmediately')
 
         with self.captureOnCommitCallbacks(execute=True):
             product_response = self.client.post(product_delete_url)
             variant_response = self.client.post(variant_delete_url)
+            direct_size_response = self.client.post(direct_size_delete_url)
+            variant_size_response = self.client.post(variant_size_delete_url)
 
         self.assertEqual(product_response.status_code, 200)
         self.assertTrue(product_response.json()['deleted'])
         self.assertEqual(variant_response.status_code, 200)
         self.assertTrue(variant_response.json()['deleted'])
+        self.assertEqual(direct_size_response.status_code, 200)
+        self.assertTrue(direct_size_response.json()['deleted'])
+        self.assertEqual(variant_size_response.status_code, 200)
+        self.assertTrue(variant_size_response.json()['deleted'])
         self.assertFalse(ProductImages.objects.filter(pk=product_image.pk).exists())
         self.assertFalse(VariantImage.objects.filter(pk=variant_image.pk).exists())
+        self.assertFalse(ProductSizeImage.objects.filter(pk=direct_size_image.pk).exists())
+        self.assertFalse(VariantSizeImage.objects.filter(pk=variant_size_image.pk).exists())
         self.assertFalse(os.path.exists(product_image_path))
         self.assertFalse(os.path.exists(variant_image_path))
+        self.assertFalse(os.path.exists(direct_size_image_path))
+        self.assertFalse(os.path.exists(variant_size_image_path))
 
     def test_direct_image_delete_cannot_delete_another_products_image(self):
         product = Product.objects.create(name='المنتج المطلوب', image=_image_file())

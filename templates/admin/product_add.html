@@ -164,6 +164,7 @@
 
     .size-row {
         display: flex;
+        flex-wrap: wrap;
         gap: 1rem;
         align-items: center;
         margin-bottom: 0.75rem;
@@ -198,6 +199,27 @@
         padding: 0.5rem 0.75rem;
         border-radius: 6px;
         cursor: pointer;
+    }
+
+    .size-row .size-images-input {
+        flex: 1 1 240px;
+    }
+
+    .size-images-preview {
+        flex: 1 0 100%;
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .size-images-preview img {
+        width: 88px;
+        height: 88px;
+        object-fit: contain;
+        padding: 0.25rem;
+        background: #fff;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
     }
 
     .variant-row {
@@ -424,16 +446,18 @@
         row.className = 'size-row';
         row.id = rowId;
         row.innerHTML = `
-            <select name="product_size_ids[]" required>
+            <select name="product_size_ids[]" required onchange="syncSizeImageField(this, 'product_size_', '_images[]')">
                 <option value="">اختر المقاس</option>
                 {% for size in sizes %}
                 <option value="{{ size.id }}">{{ size.name }}</option>
                 {% endfor %}
             </select>
             <input type="number" name="product_size_pcs[]" placeholder="الكمية في الكرتونة" min="1" value="24" required>
+            <input type="file" class="size-images-input" accept="image/*" multiple aria-label="صور المقاس">
             <button type="button" class="btn-remove" onclick="removeRow('${rowId}')">
                 <i class="fas fa-trash"></i>
             </button>
+            <div class="size-images-preview"></div>
         `;
         container.appendChild(row);
         directSizeCounter++;
@@ -527,16 +551,18 @@
         row.className = 'size-row';
         row.id = sizeRowId;
         row.innerHTML = `
-            <select name="variant_${variantIndex}_size_ids[]" required>
+            <select name="variant_${variantIndex}_size_ids[]" required onchange="syncSizeImageField(this, 'variant_${variantIndex}_size_', '_images[]')">
                 <option value="">اختر المقاس</option>
                 {% for size in sizes %}
                 <option value="{{ size.id }}">{{ size.name }}</option>
                 {% endfor %}
             </select>
             <input type="number" name="variant_${variantIndex}_size_pcs[]" placeholder="الكمية في الكرتونة" min="1" value="24" required>
+            <input type="file" class="size-images-input" accept="image/*" multiple aria-label="صور المقاس">
             <button type="button" class="btn-remove" onclick="removeRow('${sizeRowId}')">
                 <i class="fas fa-trash"></i>
             </button>
+            <div class="size-images-preview"></div>
         `;
         container.appendChild(row);
     }
@@ -545,6 +571,12 @@
     function removeRow(rowId) {
         const row = document.getElementById(rowId);
         if (row) row.remove();
+    }
+
+    function syncSizeImageField(select, prefix, suffix) {
+        const input = select.closest('.size-row')?.querySelector('.size-images-input');
+        if (!input) return;
+        input.name = select.value ? `${prefix}${select.value}${suffix}` : '';
     }
 
     // Image preview for product additional images
@@ -567,6 +599,20 @@
 
     // Delegate preview for variant images
     document.addEventListener('change', function (e) {
+        if (e.target && e.target.classList.contains('size-images-input')) {
+            const previewContainer = e.target.closest('.size-row')?.querySelector('.size-images-preview');
+            if (!previewContainer) return;
+            previewContainer.innerHTML = '';
+            Array.from(e.target.files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = event => {
+                    const img = document.createElement('img');
+                    img.src = event.target.result;
+                    previewContainer.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
         if (e.target && e.target.classList.contains('variant-images-input')) {
             const variantIndex = e.target.dataset.variantIndex;
             const previewContainer = document.getElementById(`variant-images-preview-${variantIndex}`);

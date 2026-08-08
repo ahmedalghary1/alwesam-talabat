@@ -14,7 +14,8 @@ from django.views.decorators.http import require_POST
 from products.models import (
     Product, Category, ProductImages, ProductVariant,
     VariantAttributeValue, VariantAttribute, Size,
-    ProductSize, VariantSize, VariantImage
+    ProductSize, VariantSize, VariantImage, ProductSizeImage,
+    VariantSizeImage,
 )
 from orders.models import Order, OrderItem
 
@@ -61,6 +62,22 @@ def _variant_sizes_from_post(request, form_key):
         result.append((size_id, _positive_int(quantity, 24)))
         seen.add(size_id)
     return result
+
+
+def _add_size_images(request, size_relation, image_model, field_name):
+    """Append uploaded images to a direct or variant size gallery."""
+    images = request.FILES.getlist(field_name)
+    if not images:
+        return
+    max_order = size_relation.images.aggregate(Max('order'))['order__max']
+    next_order = 0 if max_order is None else max_order + 1
+    relation_field = 'variant_size' if image_model is VariantSizeImage else 'product_size'
+    for index, image in enumerate(images):
+        image_model.objects.create(
+            **{relation_field: size_relation},
+            image=image,
+            order=next_order + index,
+        )
 
 
 def _attribute_groups_data():
@@ -192,10 +209,16 @@ def admin_product_add(request):
                 product_size_pcs = request.POST.getlist('product_size_pcs[]')
                 for size_id, pcs in zip(product_size_ids, product_size_pcs):
                     if size_id and pcs:
-                        ProductSize.objects.update_or_create(
+                        product_size, _ = ProductSize.objects.update_or_create(
                             product=product,
                             size_id=_positive_int(size_id),
                             defaults={'pcs_carton': _positive_int(pcs)}
+                        )
+                        _add_size_images(
+                            request,
+                            product_size,
+                            ProductSizeImage,
+                            f'product_size_{product_size.size_id}_images[]',
                         )
 
             # ========== Variants ==========
@@ -239,7 +262,15 @@ def admin_product_add(request):
 
                     # ========== Variant sizes with quantities (VariantSize) ==========
                     for size_id, pcs in _variant_sizes_from_post(request, form_key):
-                        VariantSize.objects.create(variant=variant, size_id=size_id, pcs_carton=pcs)
+                        variant_size = VariantSize.objects.create(
+                            variant=variant, size_id=size_id, pcs_carton=pcs
+                        )
+                        _add_size_images(
+                            request,
+                            variant_size,
+                            VariantSizeImage,
+                            f'variant_{form_key}_size_{size_id}_images[]',
+                        )
 
                     # ========== Variant images ==========
                     variant_images_key = f'variant_{form_key}_images[]'
@@ -282,7 +313,9 @@ def admin_product_edit(request, product_id):
     # Prepare variants with their size data (through VariantSize)
     variants = product.variants.prefetch_related(
         'attributes__attribute',
-        'images'
+        'images',
+        'size_prices__size',
+        'size_prices__images',
     ).all().order_by('order')
 
     for variant in variants:
@@ -315,9 +348,25 @@ def admin_product_edit(request, product_id):
             'color_id': variant.selected_color_id,
             'attribute_ids': variant.selected_attribute_ids,
             'length_label': variant.length_label,
-            'size_data': list(variant.size_prices.select_related('size').values(
-                'size_id', 'pcs_carton'
-            )),
+            'size_data': [
+                {
+                    'id': size_price.id,
+                    'size_id': size_price.size_id,
+                    'pcs_carton': size_price.pcs_carton,
+                    'images': [
+                        {
+                            'id': image.id,
+                            'url': image.image.url,
+                            'delete_url': reverse(
+                                'admin_app:admin_variant_size_image_delete',
+                                args=[product.id, image.id],
+                            ),
+                        }
+                        for image in size_price.images.all() if image.image
+                    ],
+                }
+                for size_price in variant.size_prices.all()
+            ],
             'images': [
                 {
                     'id': img.id,
@@ -333,9 +382,26 @@ def admin_product_edit(request, product_id):
         variants_data.append(variant_dict)
 
     # Direct product sizes with quantities
-    product_size_data = list(product.size_prices.select_related('size').values(
-        'id', 'size_id', 'size__name', 'pcs_carton'
-    ))
+    product_size_data = [
+        {
+            'id': product_size.id,
+            'size_id': product_size.size_id,
+            'size__name': product_size.size.name,
+            'pcs_carton': product_size.pcs_carton,
+            'images': [
+                {
+                    'id': image.id,
+                    'url': image.image.url,
+                    'delete_url': reverse(
+                        'admin_app:admin_product_size_image_delete',
+                        args=[product.id, image.id],
+                    ),
+                }
+                for image in product_size.images.all() if image.image
+            ],
+        }
+        for product_size in product.size_prices.select_related('size').prefetch_related('images')
+    ]
 
     product_images = product.additional_images.all().order_by('order')
 
@@ -398,7 +464,18 @@ def admin_product_edit(request, product_id):
             # Update existing
             for ps_id, pcs in zip(existing_ps_ids, existing_ps_pcs):
                 if ps_id and pcs:
-                    ProductSize.objects.filter(id=ps_id, product=product).update(pcs_carton=_positive_int(pcs))
+                    product_size = ProductSize.objects.filter(
+                        id=ps_id, product=product
+                    ).first()
+                    if product_size:
+                        product_size.pcs_carton = _positive_int(pcs)
+                        product_size.save(update_fields=['pcs_carton'])
+                        _add_size_images(
+                            request,
+                            product_size,
+                            ProductSizeImage,
+                            f'product_size_{product_size.size_id}_new_images[]',
+                        )
 
             # Delete removed existing rows before creating new rows. Otherwise the
             # newly created rows are absent from existing_ps_ids and get deleted.
@@ -408,10 +485,16 @@ def admin_product_edit(request, product_id):
             # Add new
             for size_id, pcs in zip(new_ps_size_ids, new_ps_pcs):
                 if size_id and pcs:
-                    ProductSize.objects.update_or_create(
+                    product_size, _ = ProductSize.objects.update_or_create(
                         product=product,
                         size_id=_positive_int(size_id),
                         defaults={'pcs_carton': _positive_int(pcs)}
+                    )
+                    _add_size_images(
+                        request,
+                        product_size,
+                        ProductSizeImage,
+                        f'product_size_{product_size.size_id}_new_images[]',
                     )
 
             # ========== Variants ==========
@@ -478,10 +561,21 @@ def admin_product_edit(request, product_id):
                     )
 
                     # ========== Variant sizes (VariantSize) ==========
-                    # Delete all existing sizes for this variant and recreate
-                    variant.size_prices.all().delete()
+                    kept_size_ids = []
                     for size_id, pcs in _variant_sizes_from_post(request, form_key):
-                        VariantSize.objects.create(variant=variant, size_id=size_id, pcs_carton=pcs)
+                        variant_size, _ = VariantSize.objects.update_or_create(
+                            variant=variant,
+                            size_id=size_id,
+                            defaults={'pcs_carton': pcs},
+                        )
+                        kept_size_ids.append(size_id)
+                        _add_size_images(
+                            request,
+                            variant_size,
+                            VariantSizeImage,
+                            f'variant_{form_key}_size_{size_id}_new_images[]',
+                        )
+                    variant.size_prices.exclude(size_id__in=kept_size_ids).delete()
 
             # ========== Delete variants that were removed ==========
             if should_sync_variants:
@@ -559,6 +653,30 @@ def admin_variant_image_delete(request, product_id, image_id):
         VariantImage,
         id=image_id,
         variant__product_id=product_id,
+    )
+    image.delete()
+    return JsonResponse({'deleted': True, 'image_id': image_id})
+
+
+@staff_member_required
+@require_POST
+def admin_product_size_image_delete(request, product_id, image_id):
+    image = get_object_or_404(
+        ProductSizeImage,
+        id=image_id,
+        product_size__product_id=product_id,
+    )
+    image.delete()
+    return JsonResponse({'deleted': True, 'image_id': image_id})
+
+
+@staff_member_required
+@require_POST
+def admin_variant_size_image_delete(request, product_id, image_id):
+    image = get_object_or_404(
+        VariantSizeImage,
+        id=image_id,
+        variant_size__variant__product_id=product_id,
     )
     image.delete()
     return JsonResponse({'deleted': True, 'image_id': image_id})

@@ -99,9 +99,18 @@
             <div style="margin-bottom: 1rem;">
                 <label style="display: block; font-size: 0.875rem; margin-bottom: 0.5rem; color: var(--text-secondary); font-weight: 600;">المقاسات الحالية</label>
                 {% for ps in product_size_data %}
-                <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 0.5rem; background: var(--card-bg); padding: 0.5rem; border-radius: 8px;">
+                <div class="size-image-editor" style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; margin-bottom: 0.5rem; background: var(--card-bg); padding: 0.5rem; border-radius: 8px;">
                     <input type="hidden" name="product_size_id[]" value="{{ ps.id }}">
                     <div style="flex: 2;"><strong>{{ ps.size__name }}</strong></div>
+                    <input type="file" name="product_size_{{ ps.size_id }}_new_images[]" class="size-images-input" accept="image/*" multiple aria-label="صور المقاس">
+                    <div class="size-images-preview">
+                        {% for image in ps.images %}
+                        <div class="variant-existing-image" data-image-id="{{ image.id }}">
+                            <img src="{{ image.url }}" alt="{{ ps.size__name }}" class="existing-image-thumb">
+                            <button type="button" onclick="deleteSizeImage(this)" data-delete-url="{{ image.delete_url }}" aria-label="حذف الصورة" title="حذف الصورة" style="position:absolute;top:-6px;right:-6px;background:#ef4444;color:white;border:0;border-radius:50%;width:22px;height:22px;cursor:pointer"><i class="fas fa-times"></i></button>
+                        </div>
+                        {% endfor %}
+                    </div>
                     <div style="flex: 1;">
                         <input type="number" name="product_size_pcs[]" class="form-input" style="padding: 0.5rem;" value="{{ ps.pcs_carton }}" min="1" placeholder="الكمية">
                     </div>
@@ -114,8 +123,10 @@
             <!-- إضافة مقاسات جديدة -->
             <div>
                 <label style="display: block; font-size: 0.875rem; margin-bottom: 0.5rem; color: var(--text-secondary); font-weight: 600;">إضافة مقاس جديد</label>
-                <div style="display: flex; gap: 1rem; align-items: center;">
-                    <select name="new_product_size_id[]" class="form-select" style="flex: 2;">
+                <div class="size-image-editor" style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: center;">
+                    <input type="file" class="size-images-input" accept="image/*" multiple aria-label="صور المقاس">
+                    <div class="size-images-preview"></div>
+                    <select name="new_product_size_id[]" class="form-select" style="flex: 2;" onchange="syncSizeImageField(this, 'product_size_', '_new_images[]')">
                         <option value="">اختر مقاس...</option>
                         {% for size in sizes %}
                         <option value="{{ size.id }}">{{ size.name }}</option>
@@ -275,6 +286,27 @@
         height: clamp(110px, 15vw, 140px);
     }
 
+    .size-image-editor .size-images-input {
+        flex: 1 1 240px;
+    }
+
+    .size-images-preview {
+        flex: 1 0 100%;
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .size-images-preview > img {
+        width: 88px;
+        height: 88px;
+        object-fit: contain;
+        padding: 0.25rem;
+        background: #fff;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+    }
+
     @media (max-width: 640px) {
         .current-product-image {
             width: 100%;
@@ -328,12 +360,16 @@
     function addNewProductSizeRow() {
         const container = document.getElementById('new-product-sizes-container');
         const row = document.createElement('div');
+        row.className = 'size-image-editor';
         row.style.display = 'flex';
+        row.style.flexWrap = 'wrap';
         row.style.gap = '1rem';
         row.style.alignItems = 'center';
         row.style.marginTop = '0.5rem';
         row.innerHTML = `
-            <select name="new_product_size_id[]" class="form-select" style="flex: 2;">
+            <input type="file" class="size-images-input" accept="image/*" multiple aria-label="صور المقاس">
+            <div class="size-images-preview"></div>
+            <select name="new_product_size_id[]" class="form-select" style="flex: 2;" onchange="syncSizeImageField(this, 'product_size_', '_new_images[]')">
                 <option value="">اختر مقاس...</option>
                 ${window.allSizes.map(s => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('')}
             </select>
@@ -368,9 +404,17 @@
         let sizesHtml = '';
         window.allSizes.forEach(size => {
             const existing = sizeData.find(s => s.size_id == size.id);
+            const existingSizeImages = (existing?.images || []).map(img => `
+                <div class="variant-existing-image" data-image-id="${img.id}">
+                    <img src="${img.url}" alt="${escapeHtml(size.name)}" class="existing-image-thumb">
+                    <button type="button" onclick="deleteSizeImage(this)" data-delete-url="${escapeHtml(img.delete_url)}" aria-label="حذف الصورة" title="حذف الصورة" style="position:absolute;top:-6px;right:-6px;background:#ef4444;color:white;border:0;border-radius:50%;width:22px;height:22px;cursor:pointer"><i class="fas fa-times"></i></button>
+                </div>
+            `).join('');
             sizesHtml += `
-                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
-                    <input type="checkbox" name="variant_${formKey}_size_ids[]" value="${size.id}" ${existing ? 'checked' : ''} onchange="this.parentElement.querySelector('input[type=number]').disabled = !this.checked">
+                <div class="size-image-editor" style="display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;margin-bottom:.75rem;padding:.5rem;border:1px solid var(--border-color);border-radius:6px;">
+                    <input type="checkbox" name="variant_${formKey}_size_ids[]" value="${size.id}" ${existing ? 'checked' : ''} onchange="toggleVariantSizeFields(this)">
+                    <input type="file" name="variant_${formKey}_size_${size.id}_new_images[]" class="size-images-input" accept="image/*" multiple ${existing ? '' : 'disabled'} aria-label="صور المقاس">
+                    <div class="size-images-preview">${existingSizeImages}</div>
                     <span style="min-width: 80px;">${escapeHtml(size.name)}</span>
                     <input type="number" name="variant_${formKey}_size_pcs_${size.id}" class="form-input" style="width: 100px;" placeholder="الكمية" min="1" value="${existing ? existing.pcs_carton : ''}" ${existing ? '' : 'disabled'}>
                 </div>
@@ -467,6 +511,18 @@
         if (row) row.remove();
     }
 
+    function syncSizeImageField(select, prefix, suffix) {
+        const input = select.closest('.size-image-editor')?.querySelector('.size-images-input');
+        if (!input) return;
+        input.name = select.value ? `${prefix}${select.value}${suffix}` : '';
+    }
+
+    function toggleVariantSizeFields(checkbox) {
+        checkbox.closest('.size-image-editor')?.querySelectorAll('input[type="number"], input[type="file"]').forEach(input => {
+            input.disabled = !checkbox.checked;
+        });
+    }
+
     async function deleteImageImmediately(button) {
         if (!confirm('هل أنت متأكد من حذف هذه الصورة؟')) return;
 
@@ -506,8 +562,26 @@
         deleteImageImmediately(button);
     }
 
+    function deleteSizeImage(button) {
+        deleteImageImmediately(button);
+    }
+
     // معاينة الصور
     document.addEventListener('change', function (e) {
+        if (e.target.classList.contains('size-images-input')) {
+            const preview = e.target.closest('.size-image-editor')?.querySelector('.size-images-preview');
+            if (!preview) return;
+            Array.from(preview.children).filter(child => child.tagName === 'IMG').forEach(child => child.remove());
+            Array.from(e.target.files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = ev => {
+                    const img = document.createElement('img');
+                    img.src = ev.target.result;
+                    preview.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
         if (e.target.classList.contains('variant-images-input')) {
             const preview = e.target.closest('.variant-group').querySelector('.variant-images-preview');
             preview.innerHTML = '';

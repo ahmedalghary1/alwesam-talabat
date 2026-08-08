@@ -201,6 +201,50 @@ class ProductSize(models.Model):
         return f"{self.product.name} - {self.size.name}: {self.pcs_carton} قطعة"
 
 
+class VariantSizeImage(ImageCompressionMixin, models.Model):
+    """Gallery image that belongs to one specific variant/size combination."""
+    variant_size = models.ForeignKey(
+        VariantSize,
+        on_delete=models.CASCADE,
+        related_name='images',
+    )
+    image = models.ImageField(upload_to='products/variant-sizes/')
+    order = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        update_fields = kwargs.get('update_fields')
+        if update_fields and 'image' not in update_fields:
+            super().save(*args, **kwargs)
+        else:
+            self.save_with_compression(image_field_name='image', *args, **kwargs)
+
+    class Meta:
+        ordering = ['order', 'created_at']
+
+
+class ProductSizeImage(ImageCompressionMixin, models.Model):
+    """Gallery image that belongs to one direct product/size combination."""
+    product_size = models.ForeignKey(
+        ProductSize,
+        on_delete=models.CASCADE,
+        related_name='images',
+    )
+    image = models.ImageField(upload_to='products/product-sizes/')
+    order = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        update_fields = kwargs.get('update_fields')
+        if update_fields and 'image' not in update_fields:
+            super().save(*args, **kwargs)
+        else:
+            self.save_with_compression(image_field_name='image', *args, **kwargs)
+
+    class Meta:
+        ordering = ['order', 'created_at']
+
+
 class VariantImage(ImageCompressionMixin, models.Model):
     """
     Multiple images for product variants.

@@ -557,7 +557,11 @@
             if (hiddenVariant) hiddenVariant.value = selectedVariantId || '';
 
             updateDisplay();
-            updateVariantGallery(variant);
+            if (sizePrice?.images?.length) {
+                updateGallery(sizePrice.images);
+            } else {
+                updateVariantGallery(variant);
+            }
             return true;
         }
 
