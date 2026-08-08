@@ -9,9 +9,9 @@
 {% block nav_home %}active{% endblock %}
 
 {% block extra_css %}
-<link rel="preload" as="image" href="{% static 'images/slide1.webp' %}?v=20260808" type="image/webp"
+<link rel="preload" as="image" href="{% static 'images/slide1.webp' %}?v=20260803" type="image/webp"
     fetchpriority="high">
-<link rel="stylesheet" href="{% static 'css/home.css' %}?v=20260808-5">
+<link rel="stylesheet" href="{% static 'css/home.css' %}">
 
 
 {% endblock %}
@@ -20,26 +20,29 @@
 <!-- Hero Slider مع المحتوى -->
 <section class="hero-slider">
 
-    <div class="slider-container" role="region" aria-roledescription="carousel" aria-label="عروض الوسام" tabindex="0">
-        <div class="slider-slides" aria-live="off">
+    <div class="slider-container">
+        <div class="slider-slides">
             <!-- Slide 1 -->
-            <div class="slide slide-1 active" aria-hidden="false">
-                <img src="{% static 'images/slide1.webp' %}?v=20260808"
+            <div class="slide slide-1">
+                <img src="{% static 'images/slide1.webp' %}?v=20260803"
                     width="4100" height="1772" fetchpriority="high" decoding="async"
                     alt="الوسام - موزع أدوات كهربائية بالجملة في مصر - مستلزمات كهرباء للتجار">
             </div>
             <!-- Slide 2 -->
-            <div class="slide slide-2" aria-hidden="true">
-                <img src="{% static 'images/slide2.webp' %}?v=20260808"
-                    width="2752" height="1536" loading="lazy" decoding="async"
+            <div class="slide slide-2">
+                <img src="{% static 'images/slide2.webp' %}?v=20260803"
+                    width="4100" height="1772" loading="lazy" decoding="async"
                     alt="مستودع الوسام للأدوات الكهربائية بالجملة - معدات كهربائية أصلية">
             </div>
             <!-- Slide 3 -->
-            <div class="slide slide-3" aria-hidden="true">
-                <img src="{% static 'images/slide3.webp' %}?v=20260808"
+            <div class="slide slide-3">
+                <img src="{% static 'images/slide3.webp' %}?v=20260803"
                     width="4100" height="1772" loading="lazy" decoding="async"
                     alt="صالة عرض الوسام - منتجات كهربائية بالجملة لتجار القاهرة والجيزة">
             </div>
+        </div>
+        <!-- Dots -->
+        <div class="slider-dots">
         </div>
     </div>
 
@@ -143,6 +146,27 @@
     let currentSlideIndex = 0;
     let autoSlideInterval;
 
+    // Function to update dots
+    function updateDots() {
+        const dotsContainer = document.querySelector('.slider-dots');
+        const slides = document.querySelectorAll('.slide');
+
+        // Clear existing dots
+        dotsContainer.innerHTML = '';
+
+        // Create dots for all slides
+        slides.forEach((slide, index) => {
+            const dot = document.createElement('span');
+            dot.className = index === 0 ? 'dot active' : 'dot';
+            dot.setAttribute('data-slide', index);
+            dot.addEventListener('mouseenter', function () {
+                showSlide(parseInt(this.getAttribute('data-slide')));
+                resetAutoSlide();
+            });
+            dotsContainer.appendChild(dot);
+        });
+    }
+
     function showSlide(index) {
         const slides = document.querySelectorAll('.slide');
         const totalSlides = slides.length;
@@ -162,10 +186,10 @@
         const slidesContainer = document.querySelector('.slider-slides');
         slidesContainer.style.transform = `translateX(-${currentSlideIndex * 100}%)`;
 
-        slides.forEach((slide, i) => {
-            const isActive = i === currentSlideIndex;
-            slide.classList.toggle('active', isActive);
-            slide.setAttribute('aria-hidden', isActive ? 'false' : 'true');
+        // Update dots
+        const dots = document.querySelectorAll('.dot');
+        dots.forEach((dot, i) => {
+            dot.classList.toggle('active', i === currentSlideIndex);
         });
     }
 
@@ -181,54 +205,31 @@
 
     function autoSlide() {
         showSlide(currentSlideIndex + 1);
+        // ✅ إعادة تشغيل interval بعد كل انتقال لضمان استمراره
+        clearInterval(autoSlideInterval);
+        autoSlideInterval = setInterval(autoSlide, 3000);
     }
 
     function resetAutoSlide() {
         if (autoSlideInterval) {
             clearInterval(autoSlideInterval);
         }
-        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || document.hidden) {
-            return;
-        }
-        autoSlideInterval = setInterval(autoSlide, 5000);
+        autoSlideInterval = setInterval(autoSlide, 3000);  // 3 ثواني
     }
 
     // Initialize on page load
-    function initHomeSlider() {
+    function initSlider() {
+        updateDots();
         showSlide(0);
-        resetAutoSlide();
-
-        const slider = document.querySelector('.slider-container');
-        slider?.addEventListener('mouseenter', () => clearInterval(autoSlideInterval));
-        slider?.addEventListener('mouseleave', resetAutoSlide);
-        slider?.addEventListener('focusin', () => clearInterval(autoSlideInterval));
-        slider?.addEventListener('focusout', resetAutoSlide);
-        slider?.addEventListener('keydown', event => {
-            if (event.key === 'ArrowLeft') {
-                event.preventDefault();
-                moveSlide(-1);
-            }
-            if (event.key === 'ArrowRight') {
-                event.preventDefault();
-                moveSlide(1);
-            }
-        });
+        autoSlideInterval = setInterval(autoSlide, 3000);  // 3 ثواني
     }
 
     // Initialize when DOM is ready
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initHomeSlider);
+        document.addEventListener('DOMContentLoaded', initSlider);
     } else {
-        initHomeSlider();
+        initSlider();
     }
-
-    document.addEventListener('visibilitychange', () => {
-        if (document.hidden) {
-            clearInterval(autoSlideInterval);
-        } else {
-            resetAutoSlide();
-        }
-    });
 
     // Re-initialize on window resize to handle responsive changes
     let resizeTimer;
