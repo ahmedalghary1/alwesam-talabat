@@ -1225,6 +1225,14 @@ body.theme-dark .category-image {
     padding-top: 1rem !important;
 }
 
+@media (min-width: 769px) {
+    .slider-container {
+        width: auto;
+        height: min(50vh, 886px) !important;
+        max-width: 100%;
+    }
+}
+
 @media (max-width: 768px) {
     .hero-slider {
         gap: 0;
