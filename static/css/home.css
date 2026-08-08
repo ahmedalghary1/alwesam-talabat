@@ -1228,7 +1228,7 @@ body.theme-dark .category-image {
 @media (min-width: 769px) {
     .slider-container {
         width: auto;
-        height: min(56vh, 886px) !important;
+        height: min(65vh, 886px) !important;
         max-width: 100%;
     }
 }
