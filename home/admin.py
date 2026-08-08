@@ -2,10 +2,12 @@ from django.contrib import admin
 from django.utils.html import format_html
 
 from .models import HomeSlide
+from .forms import HomeSlideForm
 
 
 @admin.register(HomeSlide)
 class HomeSlideAdmin(admin.ModelAdmin):
+    form = HomeSlideForm
     list_display = ['preview', 'title', 'order', 'is_active', 'updated_at']
     list_editable = ['order', 'is_active']
     list_filter = ['is_active']

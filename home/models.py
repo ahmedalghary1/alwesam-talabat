@@ -34,7 +34,12 @@ class HomeSlide(ImageCompressionMixin, models.Model):
         if update_fields and 'image' not in update_fields:
             super().save(*args, **kwargs)
         else:
-            self.save_with_compression(image_field_name='image', *args, **kwargs)
+            self.save_with_compression(
+                image_field_name='image',
+                compression_options={'max_width': 2048, 'max_height': 886},
+                *args,
+                **kwargs,
+            )
 
     def delete(self, *args, **kwargs):
         storage = self.image.storage

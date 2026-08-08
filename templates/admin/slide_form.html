@@ -81,7 +81,7 @@
     .current-slide-preview {
         width: 100%;
         margin-bottom: 0.75rem;
-        aspect-ratio: 2 / 1;
+        aspect-ratio: 2048 / 886;
         border: 1px solid var(--border-color);
         border-radius: 8px;
         background: #f2f2f2;
@@ -173,7 +173,7 @@
         <img class="current-slide-preview" id="slide-image-preview" alt="معاينة الصورة" hidden>
         {% endif %}
         {{ form.image }}
-        <small class="form-help">الصيغ المدعومة: JPG وPNG وWebP، بحد أقصى 12 ميجابايت.</small>
+        <small class="form-help">المقاس الموصى به: 2048×886، أو نفس النسبة. الصيغ المدعومة: JPG وPNG وWebP، بحد أقصى 12 ميجابايت.</small>
         {% for error in form.image.errors %}<p class="form-error">{{ error }}</p>{% endfor %}
     </div>
 

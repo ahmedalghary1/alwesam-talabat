@@ -131,7 +131,13 @@ def should_compress_image(image_field):
 
 class ImageCompressionMixin:
     """Mixin to handle automatic image compression on save"""
-    def save_with_compression(self, image_field_name='image', *args, **kwargs):
+    def save_with_compression(
+        self,
+        image_field_name='image',
+        compression_options=None,
+        *args,
+        **kwargs,
+    ):
         image_field = getattr(self, image_field_name, None)
         update_fields = kwargs.get('update_fields')
         image_is_being_saved = not update_fields or image_field_name in update_fields
@@ -145,7 +151,10 @@ class ImageCompressionMixin:
         # Compress before the database/storage save.  The previous implementation
         # saved twice, leaving the initially uploaded source file orphaned.
         if image_is_being_saved and image_field and should_compress_image(image_field):
-            compressed_image = compress_image_to_webp(image_field)
+            compressed_image = compress_image_to_webp(
+                image_field,
+                **(compression_options or {}),
+            )
             if compressed_image:
                 setattr(self, image_field_name, compressed_image)
         super().save(*args, **kwargs)

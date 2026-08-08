@@ -60,6 +60,12 @@ def _image_file(name='test.png', color='red'):
     return SimpleUploadedFile(name, output.getvalue(), content_type='image/png')
 
 
+def _slide_image_file(name='slide.png', color='red', size=(1024, 443)):
+    output = BytesIO()
+    Image.new('RGB', size, color).save(output, format='PNG')
+    return SimpleUploadedFile(name, output.getvalue(), content_type='image/png')
+
+
 class HomeSlideManagementTests(TestCase):
     def setUp(self):
         self.media_root = tempfile.mkdtemp()
@@ -119,7 +125,7 @@ class HomeSlideManagementTests(TestCase):
 
         create_response = self.client.post(reverse('admin_app:admin_slide_add'), {
             'title': 'عرض جديد',
-            'image': _image_file('new-slide.png'),
+            'image': _slide_image_file('new-slide.png'),
             'alt_text': 'وصف العرض الجديد',
             'order': '7',
             'is_active': 'on',
@@ -156,6 +162,30 @@ class HomeSlideManagementTests(TestCase):
         )
         self.assertRedirects(delete_response, reverse('admin_app:admin_slides'))
         self.assertFalse(HomeSlide.objects.filter(pk=slide.pk).exists())
+
+    def test_custom_admin_rejects_an_incompatible_slide_ratio(self):
+        self.client.force_login(self.staff)
+
+        response = self.client.post(reverse('admin_app:admin_slide_add'), {
+            'title': 'صورة غير مناسبة',
+            'image': _image_file('square-slide.png'),
+            'order': '0',
+            'is_active': 'on',
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'استخدم مقاس 2048×886 أو نفس النسبة')
+        self.assertFalse(HomeSlide.objects.filter(title='صورة غير مناسبة').exists())
+
+    def test_exact_slide_dimensions_are_preserved_during_webp_conversion(self):
+        slide = HomeSlide.objects.create(
+            title='سلايد بالحجم الكامل',
+            image=_slide_image_file('full-size.png', size=(2048, 886)),
+        )
+
+        slide.refresh_from_db()
+        self.assertEqual((slide.image_width, slide.image_height), (2048, 886))
+        self.assertTrue(slide.image.name.endswith('.webp'))
 
     def test_slide_management_requires_staff_access(self):
         response = self.client.get(reverse('admin_app:admin_slides'))
