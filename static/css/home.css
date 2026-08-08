@@ -1181,3 +1181,142 @@ body.theme-dark .category-image {
         margin-top: 1rem !important;
     }
 }
+
+/* Final responsive sizing for the current mixed-aspect-ratio banners. */
+.hero-slider {
+    min-height: 0;
+    height: auto;
+    justify-content: flex-start;
+}
+
+.slider-container {
+    flex: 0 0 auto;
+    width: 100%;
+    height: auto !important;
+    min-height: 0;
+    aspect-ratio: 4100 / 1772;
+    background: #f2f2f2;
+    outline: none;
+}
+
+.slider-container:focus-visible {
+    box-shadow: inset 0 0 0 3px #FFC400;
+}
+
+.slider-slides,
+.slide {
+    height: 100% !important;
+    min-height: 0;
+}
+
+.slide img {
+    width: 100%;
+    height: 100% !important;
+    max-height: none !important;
+    object-fit: contain !important;
+    object-position: center;
+}
+
+.slider-nav {
+    display: flex;
+    width: 44px;
+    height: 44px;
+    border-width: 1px;
+    background: rgba(20, 20, 20, 0.58);
+}
+
+.slider-nav:focus-visible,
+.dot:focus-visible {
+    outline: 3px solid #FFC400;
+    outline-offset: 3px;
+}
+
+.slider-dots {
+    position: absolute;
+    z-index: 4;
+    left: 50%;
+    bottom: 14px;
+    transform: translateX(-50%);
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: rgba(20, 20, 20, 0.58);
+}
+
+.dot {
+    flex: 0 0 auto;
+    width: 10px;
+    height: 10px;
+}
+
+.hero-brand {
+    letter-spacing: 0;
+}
+
+@media (max-width: 768px) {
+    .hero-slider {
+        gap: 0;
+    }
+
+    .slider-container {
+        aspect-ratio: 16 / 9;
+        background: #f2f2f2;
+    }
+
+    .hero-slider .hero-content {
+        margin-top: 0 !important;
+        padding: 1.25rem 1rem;
+        overflow: visible;
+    }
+
+    .slider-nav {
+        width: 38px;
+        height: 38px;
+    }
+
+    .slider-nav.prev {
+        left: 8px;
+    }
+
+    .slider-nav.next {
+        right: 8px;
+    }
+
+    .slider-dots {
+        bottom: 8px;
+        gap: 8px;
+        padding: 6px 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .slider-nav {
+        width: 34px;
+        height: 34px;
+        font-size: 0.875rem;
+    }
+
+    .slider-dots {
+        bottom: 6px;
+    }
+
+    .dot {
+        width: 8px;
+        height: 8px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .slider-slides,
+    .dot,
+    .slider-nav {
+        transition: none;
+    }
+
+    .dot.active::before {
+        animation: none;
+    }
+}
