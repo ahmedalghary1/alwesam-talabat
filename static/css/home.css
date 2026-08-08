@@ -1248,6 +1248,13 @@ body.theme-dark .category-image {
     letter-spacing: 0;
 }
 
+@media (min-width: 769px) {
+    .slider-container {
+        height: auto !important;
+        aspect-ratio: 32 / 9;
+    }
+}
+
 @media (max-width: 768px) {
     .hero-slider {
         gap: 0;
