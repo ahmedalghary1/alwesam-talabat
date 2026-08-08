@@ -161,8 +161,17 @@
             <p class="auth-subtitle">مرحباً بعودتك إلى الوسام</p>
         </div>
 
-        <form method="post">
+        <form method="post" novalidate>
             {% csrf_token %}
+            {% if request.GET.next %}
+            <input type="hidden" name="next" value="{{ request.GET.next }}">
+            {% endif %}
+
+            {% if form.non_field_errors %}
+            <div class="alert alert-error" role="alert">
+                {{ form.non_field_errors.0 }}
+            </div>
+            {% endif %}
 
             <div class="form-group">
                 <label class="form-label">
@@ -170,7 +179,12 @@
                     البريد الإلكتروني أو رقم الهاتف
                 </label>
                 <input type="text" name="email" class="form-input" placeholder="example@email.com أو +20123456789"
-                    required autofocus>
+                    value="{{ form.email.value|default:'' }}" autocomplete="username" required autofocus>
+                {% if form.email.errors %}
+                <div class="error-text" role="alert" style="color: #ef4444; font-size: 0.85rem; margin-top: 0.25rem;">
+                    {{ form.email.errors.0 }}
+                </div>
+                {% endif %}
             </div>
 
             <div class="form-group">
@@ -180,11 +194,16 @@
                 </label>
                 <div class="password-wrapper">
                     <input type="password" name="password" id="password" class="form-input" placeholder="••••••••"
-                        required>
+                        autocomplete="current-password" required>
                     <button type="button" class="password-toggle" onclick="togglePassword('password')">
                         <i class="fas fa-eye" id="password-icon"></i>
                     </button>
                 </div>
+                {% if form.password.errors %}
+                <div class="error-text" role="alert" style="color: #ef4444; font-size: 0.85rem; margin-top: 0.25rem;">
+                    {{ form.password.errors.0 }}
+                </div>
+                {% endif %}
             </div>
 
             <button type="submit" class="btn-submit">

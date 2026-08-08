@@ -1,5 +1,5 @@
 from django import forms
-from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth import password_validation
 from .models import CustomUser
 
 
@@ -20,19 +20,19 @@ class SignupForm(forms.ModelForm):
     image = forms.ImageField(label='صورة الملف الشخصي', required=False, widget=forms.FileInput(attrs={'class': 'form-input'}))
 
     def clean_username(self):
-        username = self.cleaned_data.get('username')
-        if CustomUser.objects.filter(username=username).exists():
+        username = self.cleaned_data.get('username', '').strip()
+        if CustomUser.objects.filter(username__iexact=username).exists():
             raise forms.ValidationError("اسم المستخدم هذا مستخدم بالفعل")
         return username
 
     def clean_email(self):
-        email = self.cleaned_data.get('email')
-        if CustomUser.objects.filter(email=email).exists():
+        email = self.cleaned_data.get('email', '').strip().lower()
+        if CustomUser.objects.filter(email__iexact=email).exists():
             raise forms.ValidationError("البريد الإلكتروني هذا مستخدم بالفعل")
         return email
 
     def clean_phone(self):
-        phone = self.cleaned_data.get('phone')
+        phone = self.cleaned_data.get('phone', '').strip()
         if CustomUser.objects.filter(phone=phone).exists():
             raise forms.ValidationError("رقم الهاتف هذا مستخدم بالفعل")
         return phone
@@ -42,6 +42,8 @@ class SignupForm(forms.ModelForm):
         password2 = self.cleaned_data.get('password2')
         if password1 and password2 and password1 != password2:
             raise forms.ValidationError('كلمتا المرور غير متطابقتين')
+        if password2:
+            password_validation.validate_password(password2, self.instance)
         return password2
 
     def save(self, commit=True):
@@ -60,13 +62,24 @@ class SignupForm(forms.ModelForm):
 
 
 class LoginForm(forms.Form):
-    email = forms.EmailField(
-        label='البريد الإلكتروني',
-        widget=forms.EmailInput(attrs={'class': 'form-input', 'placeholder': 'أدخل بريدك الإلكتروني'})
+    email = forms.CharField(
+        label='البريد الإلكتروني أو رقم الهاتف',
+        strip=True,
+        widget=forms.TextInput(attrs={
+            'class': 'form-input',
+            'placeholder': 'example@email.com أو +20123456789',
+            'autocomplete': 'username',
+            'autofocus': True,
+        })
     )
     password = forms.CharField(
         label='كلمة المرور',
-        widget=forms.PasswordInput(attrs={'class': 'form-input', 'placeholder': 'أدخل كلمة المرور'})
+        strip=False,
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-input',
+            'placeholder': 'أدخل كلمة المرور',
+            'autocomplete': 'current-password',
+        })
     )
 
 

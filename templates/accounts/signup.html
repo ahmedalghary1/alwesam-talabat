@@ -186,8 +186,14 @@
             </p>
         </div>
 
-        <form method="post" enctype="multipart/form-data">
+        <form method="post" enctype="multipart/form-data" novalidate>
             {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="alert alert-error" role="alert">
+                {{ form.non_field_errors.0 }}
+            </div>
+            {% endif %}
 
             <div class="form-row" style="grid-template-columns: 1fr; margin-bottom: 1rem;">
                 <div class="form-group" style="text-align: center;">
@@ -202,6 +208,11 @@
                         <input type="file" name="image" class="form-input" style="display: none;" accept="image/*"
                             onchange="previewImage(this)">
                     </label>
+                    {% if form.image.errors %}
+                    <div class="error-text" role="alert" style="color: #ef4444; font-size: 0.85rem; margin-top: 0.25rem;">
+                        {{ form.image.errors.0 }}
+                    </div>
+                    {% endif %}
                 </div>
             </div>
 
@@ -254,7 +265,12 @@
                     <i class="fas fa-map-marker-alt" style="color: #FFC400;"></i>
                     العنوان
                 </label>
-                <textarea name="address" class="form-input" placeholder="أدخل عنوانك الكامل" required></textarea>
+                <textarea name="address" class="form-input" placeholder="أدخل عنوانك الكامل" required>{{ form.address.value|default:'' }}</textarea>
+                {% if form.address.errors %}
+                <div class="error-text" role="alert" style="color: #ef4444; font-size: 0.85rem; margin-top: 0.25rem;">
+                    {{ form.address.errors.0 }}
+                </div>
+                {% endif %}
             </div>
 
             <div class="form-row">
@@ -289,6 +305,11 @@
                             <i class="fas fa-eye" id="password2-icon"></i>
                         </button>
                     </div>
+                    {% if form.password2.errors %}
+                    <div class="error-text" role="alert" style="color: #ef4444; font-size: 0.85rem; margin-top: 0.25rem;">
+                        {{ form.password2.errors.0 }}
+                    </div>
+                    {% endif %}
                 </div>
             </div>
 

@@ -25,12 +25,14 @@ class EmailPhoneBackend(ModelBackend):
         """
         if username is None or password is None:
             return None
+
+        username = username.strip()
         
         user = None
         
         # Try to find user by email first
         try:
-            user = CustomUser.objects.get(email=username)
+            user = CustomUser.objects.get(email__iexact=username)
             logger.info(f'User found by email: {username}')
         except CustomUser.DoesNotExist:
             # Try to find user by phone number
@@ -45,6 +47,9 @@ class EmailPhoneBackend(ModelBackend):
                 # duplicate phone numbers until migration 0005 is applied.
                 logger.error('Duplicate phone number prevents authentication: %s', username)
                 return None
+        except CustomUser.MultipleObjectsReturned:
+            logger.error('Duplicate email prevents authentication: %s', username)
+            return None
         
         # Verify password
         if user and user.check_password(password):

@@ -2,15 +2,12 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.contrib.auth.models import User
-from django.utils import translation
+from django.db import transaction
 from django.http import JsonResponse
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 from django_ratelimit.decorators import ratelimit
 from .forms import SignupForm, LoginForm, ProfileUpdateForm, ProfileImageForm
-from .models import CustomUser
-from cart.models import Cart, CartItem
-from products.models import Product
 from core.constants import LOGIN_RATE_LIMIT
 import json
 import logging
@@ -26,18 +23,20 @@ def signup_view(request):
     before they can login. This implements a business verification workflow.
     """
     if request.method == 'POST':
-        form = SignupForm(request.POST)
+        form = SignupForm(request.POST, request.FILES)
         if form.is_valid():
-            user = form.save(commit=False)
-            # Set user as inactive - requires admin approval
-            user.is_active = False
-            user.save()
-            
-            # Save profile image
-            form.save_profile_image(user)
+            with transaction.atomic():
+                user = form.save(commit=False)
+                # Set user as inactive - requires admin approval
+                user.is_active = False
+                user.save()
+                form.save_profile_image(user)
             
             logger.info(f'New user registered (inactive): {user.email}')
-            
+            messages.success(
+                request,
+                'تم إنشاء حسابك بنجاح وإرساله إلى المسؤول للمراجعة.'
+            )
             # Redirect to pending approval page (no auto-login)
             return redirect('accounts:pending_approval')
     else:
@@ -54,34 +53,42 @@ def login_view(request):
     Uses custom authentication backend that accepts both email and phone.
     Rate limited to prevent brute force attacks.
     """
+    form = LoginForm(request.POST or None)
+
     if request.method == 'POST':
-        username_or_phone = request.POST.get('email')  # Field name is 'email' but accepts both
-        password = request.POST.get('password')
-        
-        # Authenticate using email or phone (custom backend handles both)
-        user = authenticate(request, username=username_or_phone, password=password)
-        
-        if user is not None:
-            # Check if user account is active
-            if not user.is_active:
-                logger.warning(f'Login attempt for inactive user: {user.email}')
-                messages.warning(request, 'حسابك في انتظار موافقة المسؤول. سيتم إشعارك عند تفعيل حسابك.')
-                return render(request, 'accounts/login.html', {'form': LoginForm()})
-            
-            login(request, user)
-            logger.info(f'User {user.email} logged in successfully')
-            
-            # Sync cart from localStorage to database
-            sync_cart_on_login(request)
-            
-            messages.success(request, f'مرحباً {user.username}!')
-            next_url = request.GET.get('next', 'home:home')
-            return redirect(next_url)
-        else:
+        if form.is_valid():
+            username_or_phone = form.cleaned_data['email']
+            password = form.cleaned_data['password']
+
+            # Authenticate using email or phone (custom backend handles both)
+            user = authenticate(request, username=username_or_phone, password=password)
+
+            if user is not None:
+                # Check if user account is active
+                if not user.is_active:
+                    logger.warning(f'Login attempt for inactive user: {user.email}')
+                    messages.warning(request, 'حسابك في انتظار موافقة المسؤول. سيتم إشعارك عند تفعيل حسابك.')
+                    return render(request, 'accounts/login.html', {'form': form})
+
+                login(request, user)
+                logger.info(f'User {user.email} logged in successfully')
+
+                # Sync cart from localStorage to database
+                sync_cart_on_login(request)
+
+                messages.success(request, f'مرحباً {user.username}!')
+                next_url = request.POST.get('next') or request.GET.get('next')
+                if next_url and url_has_allowed_host_and_scheme(
+                    url=next_url,
+                    allowed_hosts={request.get_host()},
+                    require_https=request.is_secure(),
+                ):
+                    return redirect(next_url)
+                return redirect('home:home')
+
             logger.warning(f'Failed login attempt for: {username_or_phone}')
             messages.error(request, 'البريد الإلكتروني/رقم الهاتف أو كلمة المرور غير صحيحة')
-    
-    form = LoginForm()
+
     return render(request, 'accounts/login.html', {'form': form})
 
 
