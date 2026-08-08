@@ -11,7 +11,7 @@
 {% block extra_css %}
 <link rel="preload" as="image" href="{% static 'images/slide1.webp' %}?v=20260808" type="image/webp"
     fetchpriority="high">
-<link rel="stylesheet" href="{% static 'css/home.css' %}">
+<link rel="stylesheet" href="{% static 'css/home.css' %}?v=20260808-2">
 
 
 {% endblock %}
@@ -41,12 +41,6 @@
                     alt="صالة عرض الوسام - منتجات كهربائية بالجملة لتجار القاهرة والجيزة">
             </div>
         </div>
-        <button type="button" class="slider-nav prev" aria-label="العرض السابق">
-            <i class="fas fa-chevron-left" aria-hidden="true"></i>
-        </button>
-        <button type="button" class="slider-nav next" aria-label="العرض التالي">
-            <i class="fas fa-chevron-right" aria-hidden="true"></i>
-        </button>
         <!-- Dots -->
         <div class="slider-dots" role="tablist" aria-label="اختيار العرض">
         </div>
@@ -192,6 +186,8 @@
             currentSlideIndex = index;
         }
 
+        updateSliderAspectRatio(slides[currentSlideIndex]);
+
         // Move slides (direction: ltr في CSS، لذا نستخدم translateX سالب)
         const slidesContainer = document.querySelector('.slider-slides');
         slidesContainer.style.transform = `translateX(-${currentSlideIndex * 100}%)`;
@@ -220,6 +216,25 @@
         resetAutoSlide();
     }
 
+    function updateSliderAspectRatio(activeSlide) {
+        const slider = document.querySelector('.slider-container');
+        if (!slider) return;
+
+        if (window.matchMedia('(max-width: 768px)').matches) {
+            slider.style.removeProperty('aspect-ratio');
+            return;
+        }
+
+        const image = activeSlide?.querySelector('img');
+        if (!image) return;
+
+        const width = image.naturalWidth || Number(image.getAttribute('width'));
+        const height = image.naturalHeight || Number(image.getAttribute('height'));
+        if (width && height) {
+            slider.style.aspectRatio = `${width} / ${height}`;
+        }
+    }
+
     function autoSlide() {
         showSlide(currentSlideIndex + 1);
     }
@@ -241,12 +256,6 @@
         resetAutoSlide();
 
         const slider = document.querySelector('.slider-container');
-        const previousButton = document.querySelector('.slider-nav.prev');
-        const nextButton = document.querySelector('.slider-nav.next');
-
-        previousButton?.addEventListener('click', () => moveSlide(-1));
-        nextButton?.addEventListener('click', () => moveSlide(1));
-
         slider?.addEventListener('mouseenter', () => clearInterval(autoSlideInterval));
         slider?.addEventListener('mouseleave', resetAutoSlide);
         slider?.addEventListener('focusin', () => clearInterval(autoSlideInterval));
