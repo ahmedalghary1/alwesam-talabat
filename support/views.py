@@ -1,5 +1,6 @@
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
+from django.views.decorators.cache import never_cache
 from django.contrib.auth.decorators import login_required
 from django.db.models import Prefetch
 from .models import CustomerMessage, MessageReply
@@ -50,6 +51,7 @@ def send_message(request):
 
 
 @login_required
+@never_cache
 @require_http_methods(["GET"])
 def get_user_messages(request):
     """
@@ -62,8 +64,11 @@ def get_user_messages(request):
         messages = CustomerMessage.objects.filter(
             user=request.user
         ).prefetch_related(
-            Prefetch('replies', queryset=MessageReply.objects.all())
-        ).order_by('created_at')
+            Prefetch(
+                'replies',
+                queryset=MessageReply.objects.select_related('admin_user').order_by('created_at', 'id')
+            )
+        ).order_by('created_at', 'id')
         
         messages_data = []
         for msg in messages:

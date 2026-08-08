@@ -1,169 +1,216 @@
 // ==================== CUSTOMER SUPPORT CHAT SYSTEM ====================
 
-// Initialize support chat system
+const SUPPORT_REFRESH_INTERVAL_MS = 1500;
+let supportRefreshTimer = null;
+let supportRefreshInFlight = false;
+
 function initSupportChat() {
     const chatWindow = document.getElementById('supportChatWindow');
     const floatingBtn = document.getElementById('supportFloatingBtn');
-    const chatBody = document.getElementById('supportChatBody');
     const messageInput = document.getElementById('supportMessageInput');
     const sendBtn = document.getElementById('supportSendBtn');
     const closeBtn = document.getElementById('supportCloseBtn');
 
     if (!chatWindow || !floatingBtn) return;
 
-    // Load messages when window is first opened
-    let messagesLoaded = false;
-
-    // Toggle chat window open/close
-    floatingBtn.addEventListener('click', function () {
-        toggleSupportChat();
-    });
+    floatingBtn.addEventListener('click', toggleSupportChat);
 
     if (closeBtn) {
-        closeBtn.addEventListener('click', function () {
-            toggleSupportChat();
-        });
+        closeBtn.addEventListener('click', toggleSupportChat);
     }
 
-    // Send message button handler
     if (sendBtn) {
-        sendBtn.addEventListener('click', function () {
-            sendSupportMessage();
-        });
+        sendBtn.addEventListener('click', sendSupportMessage);
     }
 
-    // Send on Enter key (Shift+Enter for new line)
     if (messageInput) {
-        messageInput.addEventListener('keypress', function (e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
+        messageInput.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
                 sendSupportMessage();
             }
         });
     }
 }
 
-// Toggle support chat window
 function toggleSupportChat() {
     const chatWindow = document.getElementById('supportChatWindow');
-    const isActive = chatWindow.classList.contains('active');
+    if (!chatWindow) return;
 
-    if (isActive) {
+    if (chatWindow.classList.contains('active')) {
         chatWindow.classList.remove('active');
-    } else {
-        chatWindow.classList.add('active');
-        // Load messages on first open
-        if (!window.supportMessagesLoaded) {
-            loadUserMessages();
-            window.supportMessagesLoaded = true;
-        }
+        stopSupportRefresh();
+        return;
     }
+
+    chatWindow.classList.add('active');
+    loadUserMessages();
+    startSupportRefresh();
 }
 
-// Send new support message
 function sendSupportMessage() {
     const messageInput = document.getElementById('supportMessageInput');
-    const messageText = messageInput.value.trim();
+    const sendBtn = document.getElementById('supportSendBtn');
+    if (!messageInput) return;
 
+    const messageText = messageInput.value.trim();
     if (!messageText) return;
 
-    // Display message immediately in interface
-    displayMessage({
+    const pendingMessage = displayMessage({
         text: messageText,
         created_at: new Date().toLocaleString('ar-EG'),
-        is_user: true
+        is_user: true,
+        pending: true
     });
 
-    // Clear input field
     messageInput.value = '';
+    if (sendBtn) sendBtn.disabled = true;
 
-    // Send message to server
     fetch('/support/send/', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRFToken': getCsrfToken()
+            'X-CSRFToken': getCsrfToken(),
+            'X-Requested-With': 'XMLHttpRequest'
         },
-        body: JSON.stringify({
-            message: messageText
-        })
+        body: JSON.stringify({ message: messageText })
     })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                console.log('تم إرسال الرسالة بنجاح');
-            } else {
-                console.error('خطأ:', data.error);
-                showErrorMessage('حدث خطأ في إرسال الرسالة');
+        .then(async response => {
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                throw new Error(data.error || 'حدث خطأ في إرسال الرسالة');
             }
+            return data;
+        })
+        .then(data => {
+            const savedMessage = findRenderedMessage('message', data.message.id);
+
+            // A refresh can render the stored message before the send request resolves.
+            if (savedMessage && savedMessage !== pendingMessage) {
+                pendingMessage.remove();
+            } else {
+                pendingMessage.dataset.supportMessageId = String(data.message.id);
+                pendingMessage.classList.remove('pending');
+                const time = pendingMessage.querySelector('.support-message-time');
+                if (time) time.textContent = data.message.created_at;
+            }
+
+            refreshSupportMessages();
         })
         .catch(error => {
-            console.error('خطأ:', error);
-            showErrorMessage('حدث خطأ في الاتصال بالخادم');
+            console.error('Support message error:', error);
+            pendingMessage.classList.add('failed');
+            showErrorMessage(error.message || 'حدث خطأ في الاتصال بالخادم');
+        })
+        .finally(() => {
+            if (sendBtn) sendBtn.disabled = false;
+            messageInput.focus();
         });
 }
 
-// Load user messages from server
 function loadUserMessages() {
-    const chatBody = document.getElementById('supportChatBody');
-
-    // Show welcome message first
     showDefaultWelcomeMessage();
+    return refreshSupportMessages();
+}
 
-    // Fetch messages from server
-    fetch('/support/messages/', {
+// Synchronize messages while the floating chat is open, without a page reload.
+function refreshSupportMessages() {
+    if (supportRefreshInFlight) return Promise.resolve();
+    supportRefreshInFlight = true;
+
+    return fetch('/support/messages/', {
         method: 'GET',
+        cache: 'no-store',
         headers: {
-            'X-CSRFToken': getCsrfToken()
+            'X-CSRFToken': getCsrfToken(),
+            'X-Requested-With': 'XMLHttpRequest'
         }
     })
-        .then(response => response.json())
+        .then(async response => {
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                throw new Error(data.error || 'تعذر تحميل المحادثة');
+            }
+            return data;
+        })
         .then(data => {
-            if (data.success && data.messages) {
-                // Display messages and replies
-                data.messages.forEach(msg => {
-                    displayMessage({
-                        text: msg.text,
-                        created_at: msg.created_at,
-                        is_user: true
-                    });
-
-                    // Display replies
-                    if (msg.replies && msg.replies.length > 0) {
-                        msg.replies.forEach(reply => {
-                            displayMessage({
-                                text: reply.text,
-                                created_at: reply.created_at,
-                                is_user: false,
-                                admin_name: reply.admin
-                            });
-                        });
-                    }
+            data.messages.forEach(message => {
+                displayMessage({
+                    id: message.id,
+                    text: message.text,
+                    created_at: message.created_at,
+                    is_user: true
                 });
 
-                autoScrollToBottom();
-            }
+                (message.replies || []).forEach(reply => {
+                    displayMessage({
+                        id: reply.id,
+                        text: reply.text,
+                        created_at: reply.created_at,
+                        is_user: false,
+                        admin_name: reply.admin
+                    });
+                });
+            });
         })
         .catch(error => {
-            console.error('خطأ في تحميل الرسائل:', error);
+            console.error('Support refresh error:', error);
+        })
+        .finally(() => {
+            supportRefreshInFlight = false;
         });
 }
 
-// Display message in chat window
+function startSupportRefresh() {
+    stopSupportRefresh();
+    supportRefreshTimer = window.setInterval(() => {
+        const chatWindow = document.getElementById('supportChatWindow');
+        if (chatWindow && chatWindow.classList.contains('active') && !document.hidden) {
+            refreshSupportMessages();
+        }
+    }, SUPPORT_REFRESH_INTERVAL_MS);
+}
+
+function stopSupportRefresh() {
+    if (supportRefreshTimer !== null) {
+        window.clearInterval(supportRefreshTimer);
+        supportRefreshTimer = null;
+    }
+}
+
+function findRenderedMessage(type, id) {
+    if (id === undefined || id === null) return null;
+
+    const attribute = type === 'reply' ? 'supportReplyId' : 'supportMessageId';
+    return Array.from(document.querySelectorAll('#supportChatBody .support-message')).find(
+        element => element.dataset[attribute] === String(id)
+    ) || null;
+}
+
 function displayMessage(messageData) {
     const chatBody = document.getElementById('supportChatBody');
+    if (!chatBody) return null;
+
+    const messageType = messageData.is_user ? 'message' : 'reply';
+    const existingMessage = findRenderedMessage(messageType, messageData.id);
+    if (existingMessage) return existingMessage;
+
     const messageDiv = document.createElement('div');
     messageDiv.className = messageData.is_user ? 'support-message user' : 'support-message admin';
+    if (messageData.pending) messageDiv.classList.add('pending');
+
+    if (messageData.id !== undefined && messageData.id !== null) {
+        const attribute = messageData.is_user ? 'supportMessageId' : 'supportReplyId';
+        messageDiv.dataset[attribute] = String(messageData.id);
+    }
 
     let content = '';
-
     if (!messageData.is_user) {
-        // Add admin label with icon
         const adminName = messageData.admin_name || 'خدمة العملاء';
         content += `
             <div class="support-admin-label">
                 <i class="fas fa-headset"></i>
-                خدمة العملاء
+                ${escapeHtml(adminName)}
             </div>
         `;
     }
@@ -171,89 +218,80 @@ function displayMessage(messageData) {
     content += `
         <div class="support-message-content">
             ${escapeHtml(messageData.text)}
-            <span class="support-message-time">${messageData.created_at}</span>
+            <span class="support-message-time">${escapeHtml(messageData.created_at)}</span>
         </div>
     `;
 
     messageDiv.innerHTML = content;
     chatBody.appendChild(messageDiv);
     autoScrollToBottom();
+    return messageDiv;
 }
 
-// Show default welcome message
 function showDefaultWelcomeMessage() {
     const chatBody = document.getElementById('supportChatBody');
-
-    // Check if welcome message already exists
-    if (chatBody.querySelector('.support-message.welcome')) {
-        return;
-    }
+    if (!chatBody || chatBody.querySelector('.support-message.welcome')) return;
 
     const welcomeDiv = document.createElement('div');
     welcomeDiv.className = 'support-message welcome';
     welcomeDiv.innerHTML = `
         <div class="support-message-content">
-            <strong>مرحباً بك في خدمة العملاء! 👋</strong>
+            <strong>مرحباً بك في خدمة العملاء!</strong>
             نحن هنا لمساعدتك. اكتب رسالتك وسنرد عليك في أقرب وقت ممكن.
         </div>
     `;
-
     chatBody.appendChild(welcomeDiv);
 }
 
-// Show error message
 function showErrorMessage(errorText) {
     const chatBody = document.getElementById('supportChatBody');
+    if (!chatBody) return;
+
     const errorDiv = document.createElement('div');
     errorDiv.className = 'support-message admin';
     errorDiv.innerHTML = `
         <div class="support-message-content" style="border-color: #ef4444; background: rgba(239, 68, 68, 0.1); color: #ef4444;">
-            <i class="fas fa-exclamation-circle"></i> ${errorText}
+            <i class="fas fa-exclamation-circle"></i> ${escapeHtml(errorText)}
         </div>
     `;
     chatBody.appendChild(errorDiv);
     autoScrollToBottom();
 }
 
-// Auto-scroll to bottom of chat window
 function autoScrollToBottom() {
     const chatBody = document.getElementById('supportChatBody');
-    if (chatBody) {
-        chatBody.scrollTop = chatBody.scrollHeight;
-    }
+    if (chatBody) chatBody.scrollTop = chatBody.scrollHeight;
 }
 
-// Get CSRF token for API requests
 function getCsrfToken() {
     const csrfInput = document.querySelector('input[name="csrfmiddlewaretoken"]');
-    if (csrfInput) {
-        return csrfInput.value;
-    }
+    if (csrfInput) return csrfInput.value;
 
-    // Try to get from cookies as fallback
     const name = 'csrftoken';
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
+    if (!document.cookie) return null;
+
+    const cookie = document.cookie.split(';').map(item => item.trim()).find(
+        item => item.substring(0, name.length + 1) === `${name}=`
+    );
+    return cookie ? decodeURIComponent(cookie.substring(name.length + 1)) : null;
 }
 
-// Escape HTML to prevent XSS
 function escapeHtml(text) {
     const div = document.createElement('div');
-    div.textContent = text;
+    div.textContent = text === undefined || text === null ? '' : String(text);
     return div.innerHTML;
 }
 
-// Initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', function () {
-    initSupportChat();
+document.addEventListener('DOMContentLoaded', initSupportChat);
+
+document.addEventListener('visibilitychange', function () {
+    const chatWindow = document.getElementById('supportChatWindow');
+    if (!chatWindow || !chatWindow.classList.contains('active')) return;
+
+    if (document.hidden) {
+        stopSupportRefresh();
+    } else {
+        refreshSupportMessages();
+        startSupportRefresh();
+    }
 });
