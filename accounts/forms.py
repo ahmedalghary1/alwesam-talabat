@@ -69,11 +69,11 @@ class SignupForm(forms.ModelForm):
 
 class LoginForm(forms.Form):
     email = forms.CharField(
-        label='البريد الإلكتروني أو اسم المستخدم',
+        label='رقم الهاتف أو البريد الإلكتروني أو اسم المستخدم',
         strip=True,
         widget=forms.TextInput(attrs={
             'class': 'form-input',
-            'placeholder': 'example@email.com أو اسم المستخدم',
+            'placeholder': 'رقم الهاتف أو البريد الإلكتروني',
             'autocomplete': 'username',
             'autofocus': True,
         })

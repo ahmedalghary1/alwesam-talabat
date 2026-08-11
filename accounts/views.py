@@ -48,9 +48,9 @@ def signup_view(request):
 @ratelimit(key='ip', rate=LOGIN_RATE_LIMIT, method='POST', block=True)
 def login_view(request):
     """
-    Authenticate user with email or username.
+    Authenticate user with phone number, email, or username.
     
-    Uses custom authentication backend that accepts both email and username.
+    Uses a custom authentication backend that accepts all three identifiers.
     Rate limited to prevent brute force attacks.
     """
     form = LoginForm(request.POST or None)
@@ -60,7 +60,7 @@ def login_view(request):
             identifier = form.cleaned_data['email']
             password = form.cleaned_data['password']
 
-            # Authenticate using email or username (custom backend handles both)
+            # The backend accepts phone, email, or username through this identifier.
             user = authenticate(request, username=identifier, password=password)
 
             if user is not None:
@@ -86,8 +86,8 @@ def login_view(request):
                     return redirect(next_url)
                 return redirect('home:home')
 
-            logger.warning(f'Failed login attempt for: {identifier}')
-            messages.error(request, 'البريد الإلكتروني/اسم المستخدم أو كلمة المرور غير صحيحة')
+            logger.warning('Failed login attempt for supplied identifier')
+            messages.error(request, 'رقم الهاتف/البريد الإلكتروني أو كلمة المرور غير صحيحة')
 
     return render(request, 'accounts/login.html', {'form': form})
 

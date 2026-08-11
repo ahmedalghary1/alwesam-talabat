@@ -204,14 +204,88 @@ class AccountPageTests(TestCase):
         self.assertRedirects(response, reverse('home:home'))
         self.assertEqual(int(self.client.session['_auth_user_id']), self.active_user.pk)
 
-    def test_login_does_not_accept_phone_number(self):
+    def test_login_accepts_phone_number(self):
         response = self.client.post(reverse('accounts:login'), {
             'email': '01000000002',
             'password': 'StrongPass123!',
         })
 
+        self.assertRedirects(response, reverse('home:home'))
+        self.assertEqual(int(self.client.session['_auth_user_id']), self.active_user.pk)
+
+    def test_login_accepts_egyptian_international_phone_format(self):
+        response = self.client.post(reverse('accounts:login'), {
+            'email': '+20 100 000 0002',
+            'password': 'StrongPass123!',
+        })
+
+        self.assertRedirects(response, reverse('home:home'))
+        self.assertEqual(int(self.client.session['_auth_user_id']), self.active_user.pk)
+
+    def test_login_accepts_arabic_phone_digits(self):
+        response = self.client.post(reverse('accounts:login'), {
+            'email': '٠١٠٠٠٠٠٠٠٠٢',
+            'password': 'StrongPass123!',
+        })
+
+        self.assertRedirects(response, reverse('home:home'))
+        self.assertEqual(int(self.client.session['_auth_user_id']), self.active_user.pk)
+
+    def test_api_login_accepts_phone_number(self):
+        response = self.client.post(
+            reverse('api:auth-login'),
+            {
+                'username': '01000000002',
+                'password': 'StrongPass123!',
+            },
+            content_type='application/json',
+        )
+
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'البريد الإلكتروني/اسم المستخدم أو كلمة المرور غير صحيحة')
+        self.assertIn('access', response.json())
+        self.assertEqual(response.json()['user']['id'], self.active_user.pk)
+
+    def test_login_matches_legacy_formatted_phone_without_changing_it(self):
+        legacy_user = self.user_model.objects.create_user(
+            username='legacy-phone-user',
+            email='legacy-phone@example.com',
+            phone='+20 111 234 5678',
+            address='Cairo',
+            password='StrongPass123!',
+            is_active=True,
+        )
+
+        response = self.client.post(reverse('accounts:login'), {
+            'email': '01112345678',
+            'password': 'StrongPass123!',
+        })
+        legacy_user.refresh_from_db()
+
+        self.assertRedirects(response, reverse('home:home'))
+        self.assertEqual(int(self.client.session['_auth_user_id']), legacy_user.pk)
+        self.assertEqual(legacy_user.phone, '+20 111 234 5678')
+
+    def test_phone_login_rejects_wrong_password(self):
+        response = self.client.post(reverse('accounts:login'), {
+            'email': self.active_user.phone,
+            'password': 'wrong-password',
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'رقم الهاتف/البريد الإلكتروني أو كلمة المرور غير صحيحة')
+        self.assertNotIn('_auth_user_id', self.client.session)
+
+    def test_inactive_account_gets_pending_message_when_using_phone(self):
+        self.active_user.is_active = False
+        self.active_user.save(update_fields=['is_active'])
+
+        response = self.client.post(reverse('accounts:login'), {
+            'email': self.active_user.phone,
+            'password': 'StrongPass123!',
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'حسابك في انتظار موافقة المسؤول')
         self.assertNotIn('_auth_user_id', self.client.session)
 
     def test_failed_login_keeps_identifier_visible(self):
@@ -222,7 +296,7 @@ class AccountPageTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'active@example.com')
-        self.assertContains(response, 'البريد الإلكتروني/اسم المستخدم أو كلمة المرور غير صحيحة')
+        self.assertContains(response, 'رقم الهاتف/البريد الإلكتروني أو كلمة المرور غير صحيحة')
         self.assertNotIn('_auth_user_id', self.client.session)
 
     def test_inactive_account_gets_pending_approval_message(self):

@@ -176,9 +176,9 @@
             <div class="form-group">
                 <label class="form-label">
                     <i class="fas fa-envelope" style="color: #FFC400;"></i>
-                    البريد الإلكتروني أو اسم المستخدم
+                    رقم الهاتف أو البريد الإلكتروني
                 </label>
-                <input type="text" name="email" class="form-input" placeholder="example@email.com أو اسم المستخدم"
+                <input type="text" name="email" class="form-input" placeholder="01012345678 أو example@email.com"
                     value="{{ form.email.value|default:'' }}" autocomplete="username" required autofocus>
                 {% if form.email.errors %}
                 <div class="error-text" role="alert" style="color: #ef4444; font-size: 0.85rem; margin-top: 0.25rem;">

@@ -36,7 +36,7 @@ class AuthViewSet(viewsets.ViewSet):
     
     @action(detail=False, methods=['post'])
     def login(self, request):
-        """Login with email or username."""
+        """Login with phone number, email, or username."""
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         
