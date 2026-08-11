@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}{{ product.name }} بالجملة | أسعار مميزة للتجار - الوسام{% endblock %}
-{% block meta_description %}اشتري {{ product.name }} بالجملة بأفضل الأسعار في مصر. {{ product.pcs_carton }} قطعة/كرتون.
+{% block meta_description %}اشتري {{ product.name }} بالجملة بأفضل الأسعار في مصر. {% if is_length_only_product %}يباع بالطول{% if length_values %}: {{ length_values }}{% endif %}.{% else %}{{ product.pcs_carton }} قطعة/كرتون.{% endif %}
 جودة عالية، توصيل سريع. اطلب الآن من الوسام!{% endblock %}
 
 {% block extra_css %}
@@ -66,12 +66,13 @@
             <h1 class="page-title">{{ product.name }}</h1>
 
             <div class="specs-panel">
-                <div class="spec-row">
+                <div class="spec-row{% if is_length_only_product %} length-sale-row{% endif %}" id="sale-method-row">
                     <span>
-                        <i class="fas fa-box"></i> <span id="carton-quantity-label">القطع في الكرتون</span>
+                        <i class="fas {% if is_length_only_product %}fa-ruler-horizontal{% else %}fa-box{% endif %}" id="sale-method-icon"></i>
+                        <span id="carton-quantity-label">{% if is_length_only_product %}طريقة البيع{% else %}القطع في الكرتون{% endif %}</span>
                         <small id="selected-size-label" style="display:none;"></small>
                     </span>
-                    <strong id="pcs-carton-display">{{ product.pcs_carton }}</strong>
+                    <strong id="pcs-carton-display">{% if is_length_only_product %}بالطول{% else %}{{ product.pcs_carton }}{% endif %}</strong>
                 </div>
 
 
@@ -124,14 +125,14 @@
                         onkeydown="handleSizeOptionKeydown(event, this)"
                         role="button" tabindex="0">
                         <span>{{ size_price.size.name }}</span>
-                        <small class="size-carton-quantity">{% if size_price.pcs_carton %}{{ size_price.pcs_carton }} قطعة/كرتون{% else %}يباع بالطول مباشرة{% endif %}</small>
+                        <small class="size-carton-quantity">{{ size_price.sale_text }}</small>
                     </div>
                     {% endfor %}
                 </div>
             </div>
             {% endif %}
             <!-- Unit Type Selector -->
-            <div class="variant-section" id="unit-selection-section">
+            <div class="variant-section" id="unit-selection-section"{% if is_length_only_product %} style="display:none;"{% endif %}>
                 <h4><i class="fas fa-balance-scale"></i> وحدة الطلب</h4>
                 <div class="variant-options">
                     <button type="button" class="variant-btn" data-unit="carton" onclick="selectUnit('carton')">
@@ -178,7 +179,13 @@
                 {% endif %}
                 <div class="related-card-content">
                     <h4>{{ rp.name }}</h4>
-                    <span class="pcs-badge"><i class="fas fa-box"></i> {{ rp.pcs_carton }} قطعة/كرتون</span>
+                    {% with sale=rp.get_card_sale_info %}
+                    {% if sale.is_length_only %}
+                    <span class="pcs-badge length-badge"><i class="fas fa-ruler-horizontal"></i> {{ sale.label }}: <strong>{{ sale.values }}</strong></span>
+                    {% else %}
+                    <span class="pcs-badge"><i class="fas fa-box"></i> {{ sale.pcs_carton }} قطعة/كرتون</span>
+                    {% endif %}
+                    {% endwith %}
                 </div>
             </a>
             {% endfor %}
@@ -222,8 +229,8 @@
   },
   "additionalProperty": {
     "@type": "PropertyValue",
-    "name": "القطع في الكرتونة",
-    "value": "{{ product.pcs_carton }}"
+    "name": "{% if is_length_only_product %}طريقة البيع{% else %}القطع في الكرتونة{% endif %}",
+    "value": "{% if is_length_only_product %}بالطول{% if length_values %} ({{ length_values }}){% endif %}{% else %}{{ product.pcs_carton }}{% endif %}"
   }
 }
 </script>
@@ -484,9 +491,7 @@
                         sizeDiv.tabIndex = 0;
                         sizeDiv.innerHTML = `<span></span><small class="size-carton-quantity"></small>`;
                         sizeDiv.querySelector('span').textContent = sizePrice.sizeName;
-                        sizeDiv.querySelector('small').textContent = sizePrice.supportsCarton
-                            ? `${sizePrice.pcsCarton} قطعة/كرتون`
-                            : 'يباع بالطول مباشرة';
+                        sizeDiv.querySelector('small').textContent = sizePrice.saleText;
 
                         if (!variant.isAvailable) {
                             sizeDiv.classList.add('disabled');
@@ -594,17 +599,29 @@
             const unitSection = document.getElementById('unit-selection-section');
             const quantityLabel = document.getElementById('carton-quantity-label');
             const pcsDisplay = document.getElementById('pcs-carton-display');
+            const saleMethodRow = document.getElementById('sale-method-row');
+            const saleMethodIcon = document.getElementById('sale-method-icon');
 
             if (selectedIsLengthOnly) {
                 selectedUnit = 'piece';
                 if (unitSection) unitSection.style.display = 'none';
                 if (quantityLabel) quantityLabel.textContent = 'طريقة البيع';
                 if (pcsDisplay) pcsDisplay.textContent = 'بالطول';
+                if (saleMethodRow) saleMethodRow.classList.add('length-sale-row');
+                if (saleMethodIcon) {
+                    saleMethodIcon.classList.remove('fa-box');
+                    saleMethodIcon.classList.add('fa-ruler-horizontal');
+                }
                 document.querySelectorAll('[data-unit]').forEach(btn => btn.classList.remove('active'));
             } else {
                 if (unitSection) unitSection.style.display = '';
                 if (quantityLabel) quantityLabel.textContent = 'القطع في الكرتون';
                 if (pcsDisplay) pcsDisplay.textContent = String(pcsPerCarton);
+                if (saleMethodRow) saleMethodRow.classList.remove('length-sale-row');
+                if (saleMethodIcon) {
+                    saleMethodIcon.classList.remove('fa-ruler-horizontal');
+                    saleMethodIcon.classList.add('fa-box');
+                }
                 if (wasLengthOnly) selectedUnit = null;
             }
         }
@@ -669,8 +686,8 @@
         let selectedSizeId = null;
         let selectedSizeName = null;
         let selectedLengthLabel = PRODUCT_PAGE_DATA.product.lengthLabel || 'المقاس';
-        let selectedUnit = null;
-        let selectedIsLengthOnly = false;
+        let selectedUnit = PRODUCT_PAGE_DATA.product.isLengthOnly ? 'piece' : null;
+        let selectedIsLengthOnly = Boolean(PRODUCT_PAGE_DATA.product.isLengthOnly);
         
         const productHasSizes = PRODUCT_PAGE_DATA.product.hasSizes;
         // Product info

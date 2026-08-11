@@ -109,6 +109,53 @@ class Product(ImageCompressionMixin, models.Model):
         """Return the customer-facing name for direct size/length options."""
         return self.length_label.strip() or 'المقاس'
 
+    def get_card_sale_info(self):
+        """Return concise, safe sale information for product listing cards."""
+        cached = getattr(self, '_card_sale_info_cache', None)
+        if cached is not None:
+            return cached
+
+        length_names = []
+        label = self.get_length_label()
+
+        for option in self.size_prices.all():
+            if option.pcs_carton is None and option.size.name not in length_names:
+                length_names.append(option.size.name)
+
+        if not length_names:
+            for variant in self.variants.all():
+                if not variant.is_available:
+                    continue
+                variant_names = [
+                    option.size.name
+                    for option in variant.size_prices.all()
+                    if option.pcs_carton is None
+                ]
+                if variant_names:
+                    label = variant.get_length_label()
+                    for name in variant_names:
+                        if name not in length_names:
+                            length_names.append(name)
+
+        if length_names:
+            visible_names = length_names[:3]
+            values = '، '.join(visible_names)
+            if len(length_names) > len(visible_names):
+                values += f' +{len(length_names) - len(visible_names)}'
+            info = {
+                'is_length_only': True,
+                'label': label,
+                'values': values,
+            }
+        else:
+            info = {
+                'is_length_only': False,
+                'pcs_carton': self.pcs_carton,
+            }
+
+        self._card_sale_info_cache = info
+        return info
+
 
 class ProductImages(ImageCompressionMixin, models.Model):
     """
@@ -186,6 +233,13 @@ class VariantSize(models.Model):
         quantity = f'{self.pcs_carton} قطعة/كرتونة' if self.pcs_carton else 'بيع بالطول'
         return f"{self.variant} - {self.size.name}: {quantity}"
 
+    @property
+    def sale_text(self):
+        """Customer-facing sale text that never exposes a null carton value."""
+        if self.pcs_carton is None:
+            return 'يباع بالطول مباشرة'
+        return f'{self.pcs_carton} قطعة/كرتون'
+
 
 class ProductSize(models.Model):
     """
@@ -218,6 +272,13 @@ class ProductSize(models.Model):
     def __str__(self):
         quantity = f'{self.pcs_carton} قطعة/كرتونة' if self.pcs_carton else 'بيع بالطول'
         return f"{self.product.name} - {self.size.name}: {quantity}"
+
+    @property
+    def sale_text(self):
+        """Customer-facing sale text that never exposes a null carton value."""
+        if self.pcs_carton is None:
+            return 'يباع بالطول مباشرة'
+        return f'{self.pcs_carton} قطعة/كرتون'
 
 
 class VariantSizeImage(ImageCompressionMixin, models.Model):

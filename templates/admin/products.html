@@ -238,7 +238,13 @@
         <div class="product-content">
             <h3 class="product-name">{{ product.name }}</h3>
             <p class="product-meta">
-                {{ product.pcs_carton }} قطعة/كرتون
+                {% with sale=product.get_card_sale_info %}
+                {% if sale.is_length_only %}
+                <i class="fas fa-ruler-horizontal"></i> {{ sale.label }}: <strong>{{ sale.values }}</strong>
+                {% else %}
+                {{ sale.pcs_carton }} قطعة/كرتون
+                {% endif %}
+                {% endwith %}
                 {% if product.category %}
                 • {{ product.category.name }}
                 {% endif %}

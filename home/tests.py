@@ -617,6 +617,45 @@ class ProductAdminFlowTests(TestCase):
             product=product, size=size, pcs_carton=48,
         ).exists())
 
+    def test_edit_can_add_multiple_direct_sizes_in_one_submission(self):
+        product = Product.objects.create(name='منتج متعدد المقاسات', image=_image_file())
+        first_size = Size.objects.create(name='30 متر')
+        second_size = Size.objects.create(name='50 متر')
+
+        response = self.client.post(
+            reverse('admin_app:admin_product_edit', args=[product.pk]),
+            {
+                'name': product.name,
+                'pcs_carton': '1',
+                'order': '0',
+                'is_available': 'on',
+                'new_product_size_id[]': [str(first_size.pk), str(second_size.pk)],
+                'new_product_size_pcs[]': ['', ''],
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(product.size_prices.count(), 2)
+        self.assertTrue(all(
+            option.pcs_carton is None for option in product.size_prices.all()
+        ))
+
+    def test_edit_page_binds_add_size_button_without_inline_onclick(self):
+        product = Product.objects.create(name='منتج زر المقاس', image=_image_file())
+        Size.objects.create(name='20 متر')
+
+        response = self.client.get(
+            reverse('admin_app:admin_product_edit', args=[product.pk])
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'id="add-new-product-size-btn"')
+        self.assertContains(
+            response,
+            "addNewProductSizeButton.addEventListener('click', addNewProductSizeRow)",
+        )
+        self.assertNotContains(response, 'onclick="addNewProductSizeRow()"')
+
     def test_edit_page_renders_product_data(self):
         product = Product.objects.create(name='منتج "آمن"', image=_image_file())
         ProductVariant.objects.create(product=product, name='<نمط>')

@@ -240,7 +240,9 @@
                         <div>
                             <div class="item-name">{{ item.product.name }}</div>
                             <div class="item-meta">
-                                {% if item.unit_type == 'carton' %}
+                                {% if item.is_length_only %}
+                                {{ item.quantity }} وحدة × {{ item.length_label|default:"الطول" }} {{ item.size_name }}
+                                {% elif item.unit_type == 'carton' %}
                                 {{ item.get_quantity_in_cartons|floatformat:0 }} كرتون × {{ item.get_pcs_carton }} قطعة
                                 = {{ item.quantity }} قطعة
                                 {% else %}
@@ -257,7 +259,7 @@
                     </div>
 
                     <div class="summary-row total">
-                        <span>إجمالي القطع:</span>
+                        <span>إجمالي القطع/الوحدات:</span>
                         <span style="color: #FFC400;">{{ total_quantity|default:0 }}</span>
                     </div>
 

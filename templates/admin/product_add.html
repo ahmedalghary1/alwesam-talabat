@@ -407,7 +407,7 @@
                 <h3><i class="fas fa-ruler"></i> أطوال/مقاسات المنتج (كمية الكرتونة اختيارية)</h3>
                 <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
                     <a href="{% url 'admin_app:admin_lengths' %}" class="btn-add" style="text-decoration:none;background:transparent;border:1px solid #FFC400;">إدارة القيم</a>
-                    <button type="button" class="btn-add" onclick="addDirectSizeRow()">
+                    <button type="button" class="btn-add" id="add-direct-size-btn">
                         <i class="fas fa-plus"></i> إضافة طول/مقاس
                     </button>
                 </div>
@@ -491,7 +491,7 @@
                 <small>يمكن اختيار أكثر من صورة لهذا المقاس.</small>
                 <div class="size-images-preview"></div>
             </div>
-            <button type="button" class="btn-remove" onclick="removeRow('${rowId}')">
+            <button type="button" class="btn-remove" data-remove-size-row>
                 <i class="fas fa-trash"></i>
             </button>
         `;
@@ -554,7 +554,7 @@
             <div class="sizes-container" id="sizes-container-${variantId}">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
                     <label style="font-weight:600;">أطوال/مقاسات هذا النمط (كمية الكرتونة اختيارية)</label>
-                    <button type="button" class="btn-add-size" onclick="addVariantSizeRow(${variantId})">
+                    <button type="button" class="btn-add-size" data-add-variant-size="${variantId}">
                         <i class="fas fa-plus"></i> إضافة مقاس
                     </button>
                 </div>
@@ -601,7 +601,7 @@
                 <small>يمكن اختيار أكثر من صورة لهذا المقاس.</small>
                 <div class="size-images-preview"></div>
             </div>
-            <button type="button" class="btn-remove" onclick="removeRow('${sizeRowId}')">
+            <button type="button" class="btn-remove" data-remove-size-row>
                 <i class="fas fa-trash"></i>
             </button>
         `;
@@ -613,6 +613,24 @@
         const row = document.getElementById(rowId);
         if (row) row.remove();
     }
+
+    const addDirectSizeButton = document.getElementById('add-direct-size-btn');
+    if (addDirectSizeButton) {
+        addDirectSizeButton.addEventListener('click', addDirectSizeRow);
+    }
+
+    document.addEventListener('click', event => {
+        const addVariantSizeButton = event.target.closest('[data-add-variant-size]');
+        if (addVariantSizeButton) {
+            addVariantSizeRow(Number(addVariantSizeButton.dataset.addVariantSize));
+            return;
+        }
+
+        const removeSizeButton = event.target.closest('[data-remove-size-row]');
+        if (removeSizeButton) {
+            removeSizeButton.closest('.size-row')?.remove();
+        }
+    });
 
     function syncSizeImageField(select, prefix, suffix) {
         const input = select.closest('.size-row')?.querySelector('.size-images-input');

@@ -170,6 +170,32 @@
         color: var(--text-primary);
     }
 
+    .product-meta.length-sale-meta {
+        padding: 0.8rem 1rem;
+        border: 1px solid rgba(255, 196, 0, 0.35);
+        border-radius: 12px;
+        background: linear-gradient(135deg, rgba(255, 196, 0, 0.14), rgba(255, 196, 0, 0.04));
+    }
+
+    .length-sale-meta .meta-item {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+
+    .length-sale-label {
+        font-weight: 700;
+        color: var(--text-secondary);
+    }
+
+    .length-sale-meta .meta-value {
+        color: #b88600;
+        font-size: 1.05rem;
+    }
+
+    body.theme-dark .length-sale-meta .meta-value {
+        color: #ffd54a;
+    }
+
     .stock-badge {
         display: inline-flex;
         align-items: center;
@@ -301,13 +327,21 @@
                     {% endif %}
                 </div>
                 <h3 class="product-name">{{ product.name }}</h3>
-                <div class="product-meta">
+                {% with sale=product.get_card_sale_info %}
+                <div class="product-meta{% if sale.is_length_only %} length-sale-meta{% endif %}">
                     <div class="meta-item">
+                        {% if sale.is_length_only %}
+                        <i class="fas fa-ruler-horizontal"></i>
+                        <span class="length-sale-label">{{ sale.label }}:</span>
+                        <span class="meta-value">{{ sale.values }}</span>
+                        {% else %}
                         <i class="fas fa-box"></i>
-                        <span class="meta-value">{{ product.pcs_carton }}</span>
+                        <span class="meta-value">{{ sale.pcs_carton }}</span>
                         <span>قطعة/كرتون</span>
+                        {% endif %}
                     </div>
                 </div>
+                {% endwith %}
             </div>
         </a>
         {% empty %}

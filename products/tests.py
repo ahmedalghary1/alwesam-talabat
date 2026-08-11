@@ -10,7 +10,7 @@ from django.urls import reverse
 from api.v1.serializers.products import ProductDetailSerializer
 
 from .models import (
-    Product, ProductSize, ProductSizeImage, ProductVariant, Size,
+    Category, Product, ProductSize, ProductSizeImage, ProductVariant, Size,
     VariantSize, VariantSizeImage,
 )
 
@@ -65,10 +65,66 @@ class ProductDetailSizeQuantityTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIsNone(option['pcsCarton'])
         self.assertFalse(option['supportsCarton'])
+        self.assertEqual(option['saleText'], 'يباع بالطول مباشرة')
+        self.assertTrue(response.context['is_length_only_product'])
         self.assertContains(response, 'يباع بالطول مباشرة')
+        self.assertContains(response, 'id="sale-method-row"')
+        self.assertContains(response, 'id="pcs-carton-display">بالطول</strong>')
+        self.assertNotContains(response, 'None قطعة/كرتون')
         self.assertIsNone(api_data['pcs_carton'])
         self.assertTrue(api_data['is_length_only'])
         self.assertFalse(endpoint_data['supports_carton'])
+        self.assertEqual(endpoint_data['sale_text'], 'يباع بالطول مباشرة')
+
+    def test_variant_length_only_option_never_renders_none_carton_text(self):
+        product = Product.objects.create(
+            name='خرطوم ملون', length_label='الطول', image=_image_file()
+        )
+        variant = ProductVariant.objects.create(product=product, name='أسود')
+        length = Size.objects.create(name='30 متر')
+        VariantSize.objects.create(variant=variant, size=length, pcs_carton=None)
+
+        response = self.client.get(reverse('products:product_detail', args=[product.slug]))
+        option = response.context['product_page_data']['variants'][0]['sizePrices'][0]
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(option['saleText'], 'يباع بالطول مباشرة')
+        self.assertTrue(response.context['is_length_only_product'])
+        self.assertContains(response, 'id="pcs-carton-display">بالطول</strong>')
+        self.assertNotContains(response, 'None قطعة/كرتون')
+
+    def test_category_card_shows_length_instead_of_none_carton_quantity(self):
+        category = Category.objects.create(name='خراطيم', image=_image_file())
+        product = Product.objects.create(
+            name='خرطوم 30 متر',
+            category=category,
+            length_label='الطول',
+            image=_image_file(),
+        )
+        length = Size.objects.create(name='30 متر')
+        ProductSize.objects.create(product=product, size=length, pcs_carton=None)
+
+        response = self.client.get(reverse('products:category_products', args=[category.slug]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'الطول:')
+        self.assertContains(response, '30 متر')
+        self.assertContains(response, 'length-sale-meta')
+        self.assertNotContains(response, 'None قطعة/كرتون')
+
+    def test_card_sale_info_uses_length_only_variant_options(self):
+        product = Product.objects.create(
+            name='خرطوم بنمط', length_label='الطول', image=_image_file()
+        )
+        variant = ProductVariant.objects.create(product=product, name='أسود')
+        length = Size.objects.create(name='50 متر')
+        VariantSize.objects.create(variant=variant, size=length, pcs_carton=None)
+
+        info = product.get_card_sale_info()
+
+        self.assertTrue(info['is_length_only'])
+        self.assertEqual(info['label'], 'الطول')
+        self.assertEqual(info['values'], '50 متر')
 
     def test_direct_length_label_is_exposed_on_page_and_api(self):
         product = Product.objects.create(

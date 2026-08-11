@@ -109,7 +109,13 @@
         <div class="card-content" style="padding:10px;">
              <h3 class="product-title">{{ product.name }}</h3>
              <div class="flex-between mt-auto">
-                 <span class="text-secondary" style="font-size: 0.9rem;">{{ product.pcs_carton }} Pcs/Carton</span>
+                 {% with sale=product.get_card_sale_info %}
+                 {% if sale.is_length_only %}
+                 <span class="text-secondary" style="font-size:0.9rem;"><i class="fas fa-ruler-horizontal"></i> {{ sale.label }}: <strong>{{ sale.values }}</strong></span>
+                 {% else %}
+                 <span class="text-secondary" style="font-size: 0.9rem;">{{ sale.pcs_carton }} قطعة/كرتون</span>
+                 {% endif %}
+                 {% endwith %}
                  <form action="{% url 'cart:add_to_cart' product.id %}" method="post" style="display:inline;">
                      {% csrf_token %}
                      <button type="submit" class="action-btn btn-add">

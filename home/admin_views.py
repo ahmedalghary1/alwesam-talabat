@@ -5,7 +5,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 from django.db import transaction
-from django.db.models import Q, Count, Max
+from django.db.models import Q, Count, Max, Prefetch
 from django.db.models.deletion import ProtectedError
 from django.http import HttpResponse, JsonResponse
 from django.urls import reverse
@@ -203,7 +203,21 @@ def admin_products(request):
     search_query = request.GET.get('search', '')
     category_filter = request.GET.get('category', '')
 
-    products = Product.objects.all()
+    products = Product.objects.prefetch_related(
+        Prefetch(
+            'size_prices',
+            queryset=ProductSize.objects.select_related('size').order_by('size__order'),
+        ),
+        Prefetch(
+            'variants',
+            queryset=ProductVariant.objects.filter(is_available=True).prefetch_related(
+                Prefetch(
+                    'size_prices',
+                    queryset=VariantSize.objects.select_related('size').order_by('size__order'),
+                )
+            ),
+        ),
+    )
 
     if search_query:
         products = products.filter(

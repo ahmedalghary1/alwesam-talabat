@@ -18,6 +18,23 @@ from django.views.decorators.http import require_GET
 logger = logging.getLogger(__name__)
 
 
+def _with_card_sale_data(queryset):
+    """Prefetch the option data used by product cards without N+1 queries."""
+    card_variants = ProductVariant.objects.filter(is_available=True).prefetch_related(
+        Prefetch(
+            'size_prices',
+            queryset=VariantSize.objects.select_related('size').order_by('size__order'),
+        )
+    )
+    return queryset.prefetch_related(
+        Prefetch(
+            'size_prices',
+            queryset=ProductSize.objects.select_related('size').order_by('size__order'),
+        ),
+        Prefetch('variants', queryset=card_variants),
+    )
+
+
 def search_products(request):
     """
     Search products by name, description, or category.
@@ -28,11 +45,11 @@ def search_products(request):
     if not query:
         return redirect('products:all_categories')
     
-    products = Product.objects.filter(
+    products = _with_card_sale_data(Product.objects.filter(
         Q(name__icontains=query) | 
         Q(description__icontains=query) |
         Q(category__name__icontains=query)
-    ).distinct().order_by('order')
+    ).distinct().order_by('order'))
     
     return render(request, 'products/search_results.html', {
         'products': products,
@@ -66,7 +83,9 @@ def category_products(request, slug):
     """Display products in a specific category"""
     try:
         category = get_object_or_404(Category, slug=slug)
-        products = Product.objects.filter(category=category).order_by('order')
+        products = _with_card_sale_data(
+            Product.objects.filter(category=category).order_by('order')
+        )
         
         return render(request, 'products/categories.html', {
             'category': category,
@@ -123,7 +142,10 @@ def product_detail(request, slug):
         direct_size_prices = list(product.size_prices.all())
         variants_data = []
         variant_images_data = {}
+        selection_options = []
         for variant in variants:
+            variant_size_prices = list(variant.size_prices.all())
+            selection_options.extend(variant_size_prices)
             color = variant.color
             variant_images = [
                 {'url': image.image.url, 'alt': variant.name}
@@ -148,17 +170,27 @@ def product_detail(request, slug):
                         'sizeName': size_price.size.name,
                         'pcsCarton': size_price.pcs_carton,
                         'supportsCarton': size_price.pcs_carton is not None,
+                        'saleText': size_price.sale_text,
                         'images': [
                             {'url': image.image.url, 'alt': f'{variant.name} - {size_price.size.name}'}
                             for image in size_price.images.all() if image.image
                         ],
                     }
-                    for size_price in variant.size_prices.all()
+                    for size_price in variant_size_prices
                 ],
                 'image': variant.image.url if variant.image else '',
                 'attributeType': 'color' if color else 'text',
                 'variantName': variant.name,
             })
+
+        if not variants_data:
+            selection_options = direct_size_prices
+        is_length_only_product = bool(selection_options) and all(
+            option.pcs_carton is None for option in selection_options
+        )
+        length_values = '، '.join(dict.fromkeys(
+            option.size.name for option in selection_options
+        ))
 
         product_images_data = []
         if product.image:
@@ -176,6 +208,7 @@ def product_detail(request, slug):
                 'pcsCarton': product.pcs_carton,
                 'hasSizes': bool(direct_size_prices),
                 'lengthLabel': product.get_length_label(),
+                'isLengthOnly': is_length_only_product,
                 'cartonQuantityUrl': reverse(
                     'products:product_carton_quantity', args=[product.slug]
                 ),
@@ -186,6 +219,7 @@ def product_detail(request, slug):
                     'sizeName': size_price.size.name,
                     'pcsCarton': size_price.pcs_carton,
                     'supportsCarton': size_price.pcs_carton is not None,
+                    'saleText': size_price.sale_text,
                     'images': [
                         {'url': image.image.url, 'alt': f'{product.name} - {size_price.size.name}'}
                         for image in size_price.images.all() if image.image
@@ -199,9 +233,12 @@ def product_detail(request, slug):
         }
 
         # المنتجات المرتبطة بنفس القسم
-        related_products = Product.objects.filter(
-            category=product.category
-        ).exclude(id=product.id).select_related('category').order_by('order')[:4]
+        related_products = _with_card_sale_data(
+            Product.objects.filter(category=product.category)
+            .exclude(id=product.id)
+            .select_related('category')
+            .order_by('order')
+        )[:4]
 
         return render(request, 'products/product_detail.html', {
             'product': product,
@@ -210,6 +247,8 @@ def product_detail(request, slug):
             'related_products': related_products,
             'direct_size_prices': direct_size_prices,
             'product_page_data': product_page_data,
+            'is_length_only_product': is_length_only_product,
+            'length_values': length_values,
         })
 
     except Http404:
@@ -265,6 +304,7 @@ def product_carton_quantity(request, slug):
         ),
         'pcs_carton': size_price.pcs_carton,
         'supports_carton': size_price.pcs_carton is not None,
+        'sale_text': size_price.sale_text,
     })
     response['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
     return response
