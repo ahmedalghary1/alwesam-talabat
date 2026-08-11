@@ -127,6 +127,8 @@ def add_to_cart(request, product_id):
     variant = selection.variant
     size_name = selection.size.name if selection.size else ""
     pcs_carton = selection.pcs_carton
+    if selection.is_length_only:
+        unit_type = "piece"
 
     # حساب الكمية بالقطع بناءً على الوحدة
     if unit_type == "carton":
@@ -148,6 +150,7 @@ def add_to_cart(request, product_id):
             "size": selection.size,
             "pcs_carton_snapshot": pcs_carton,
             "length_label": selection.length_label,
+            "is_length_only": selection.is_length_only,
         },
     )
 
@@ -176,6 +179,7 @@ def add_to_cart(request, product_id):
             cart_item.size_name = size_name
         cart_item.size = selection.size
         cart_item.length_label = selection.length_label
+        cart_item.is_length_only = selection.is_length_only
         cart_item.save()
 
     message = f"تم إضافة {product.name} إلى السلة"
@@ -294,6 +298,8 @@ def sync_cart_from_local(request):
                     size_id=item.get("size_id"),
                     size_name=item.get("size_name", ""),
                 )
+                if selection.is_length_only:
+                    unit_type = "piece"
 
                 # New local carts keep the quantity selected by the user. For
                 # legacy carts, recover it from the piece total and old carton
@@ -330,6 +336,7 @@ def sync_cart_from_local(request):
                         "size": selection.size,
                         "pcs_carton_snapshot": selection.pcs_carton,
                         "length_label": selection.length_label,
+                        "is_length_only": selection.is_length_only,
                     },
                 )
 
@@ -349,7 +356,10 @@ def sync_cart_from_local(request):
                     )
                     cart_item.size = selection.size
                     cart_item.length_label = selection.length_label
-                    cart_item.save(update_fields=["quantity", "size", "length_label"])
+                    cart_item.is_length_only = selection.is_length_only
+                    cart_item.save(update_fields=[
+                        "quantity", "size", "length_label", "is_length_only"
+                    ])
 
                 synced_count += 1
             except (Product.DoesNotExist, InvalidProductSelection, TypeError, ValueError) as exc:

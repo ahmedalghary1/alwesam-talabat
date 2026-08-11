@@ -147,6 +147,7 @@ def product_detail(request, slug):
                         'sizeId': size_price.size_id,
                         'sizeName': size_price.size.name,
                         'pcsCarton': size_price.pcs_carton,
+                        'supportsCarton': size_price.pcs_carton is not None,
                         'images': [
                             {'url': image.image.url, 'alt': f'{variant.name} - {size_price.size.name}'}
                             for image in size_price.images.all() if image.image
@@ -184,6 +185,7 @@ def product_detail(request, slug):
                     'sizeId': size_price.size_id,
                     'sizeName': size_price.size.name,
                     'pcsCarton': size_price.pcs_carton,
+                    'supportsCarton': size_price.pcs_carton is not None,
                     'images': [
                         {'url': image.image.url, 'alt': f'{product.name} - {size_price.size.name}'}
                         for image in size_price.images.all() if image.image
@@ -262,6 +264,7 @@ def product_carton_quantity(request, slug):
             else product.get_length_label()
         ),
         'pcs_carton': size_price.pcs_carton,
+        'supports_carton': size_price.pcs_carton is not None,
     })
     response['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
     return response

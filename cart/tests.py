@@ -85,6 +85,27 @@ class CartSizeQuantityTests(TestCase):
         self.assertEqual(item.get_quantity_in_cartons(), 2)
         self.assertEqual(item.length_label, 'المقاس')
 
+    def test_length_only_option_ignores_carton_unit_and_keeps_selected_units(self):
+        product = Product.objects.create(
+            name='خرطوم', length_label='الطول', image=_image_file()
+        )
+        length = Size.objects.create(name='20 متر')
+        ProductSize.objects.create(product=product, size=length, pcs_carton=None)
+
+        response = self.client.post(reverse('cart:add_to_cart', args=[product.pk]), {
+            'quantity': 2,
+            'unit_type': 'carton',
+            'size_id': length.pk,
+        })
+
+        self.assertEqual(response.status_code, 302)
+        item = CartItem.objects.get(product=product, size=length)
+        self.assertEqual(item.unit_type, 'piece')
+        self.assertEqual(item.quantity, 2)
+        self.assertEqual(item.get_pcs_carton(), 1)
+        self.assertTrue(item.is_length_only)
+        self.assertEqual(item.length_label, 'الطول')
+
     def test_size_is_required_when_variant_has_sizes(self):
         product = Product.objects.create(name='منتج يحتاج مقاس', image=_image_file())
         size = Size.objects.create(name='كبير')

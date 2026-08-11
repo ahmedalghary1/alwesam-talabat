@@ -97,7 +97,7 @@
         <!-- المقاسات المباشرة للمنتج (ProductSize) -->
         <div class="form-group" style="border: 2px dashed var(--border-color); padding: 1.5rem; border-radius: 12px; background: var(--bg-secondary); margin-top: 1.5rem;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                <label class="form-label" style="margin-bottom: 0;"><i class="fas fa-ruler"></i> أطوال/مقاسات المنتج المباشرة (مع الكمية)</label>
+                <label class="form-label" style="margin-bottom: 0;"><i class="fas fa-ruler"></i> أطوال/مقاسات المنتج (كمية الكرتونة اختيارية)</label>
                 <a href="{% url 'admin_app:admin_lengths' %}" style="color:#b88600;font-weight:700;">إدارة قيم الأطوال والمقاسات</a>
             </div>
 
@@ -110,7 +110,8 @@
                     <input type="hidden" name="product_size_id[]" value="{{ ps.id }}">
                     <div style="flex: 2;"><strong>{{ ps.size__name }}</strong></div>
                     <div style="flex: 1;">
-                        <input type="number" name="product_size_pcs[]" class="form-input" style="padding: 0.5rem;" value="{{ ps.pcs_carton }}" min="1" placeholder="الكمية">
+                        <input type="number" name="product_size_pcs[]" class="form-input" style="padding: 0.5rem;" value="{{ ps.pcs_carton|default_if_none:'' }}" min="1" placeholder="قطع/كرتونة (اختياري)">
+                        <small style="color:var(--text-secondary);">فارغ = بيع بالطول</small>
                     </div>
                     <div class="size-upload-control">
                         <label><i class="fas fa-images"></i> صور خاصة بهذا المقاس (اختياري)</label>
@@ -141,7 +142,7 @@
                         <option value="{{ size.id }}">{{ size.name }}</option>
                         {% endfor %}
                     </select>
-                    <input type="number" name="new_product_size_pcs[]" class="form-input" style="flex: 1; padding: 0.5rem;" placeholder="الكمية" min="1">
+                    <input type="number" name="new_product_size_pcs[]" class="form-input" style="flex: 1; padding: 0.5rem;" placeholder="قطع/كرتونة (اختياري)" min="1">
                     <div class="size-upload-control">
                         <label><i class="fas fa-images"></i> صور خاصة بهذا المقاس (اختياري)</label>
                         <input type="file" class="size-images-input" accept="image/*" multiple aria-label="صور خاصة بهذا المقاس">
@@ -407,7 +408,7 @@
                 <option value="">اختر طولًا/مقاسًا...</option>
                 ${window.allSizes.map(s => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('')}
             </select>
-            <input type="number" name="new_product_size_pcs[]" class="form-input" style="flex: 1;" placeholder="الكمية" min="1">
+            <input type="number" name="new_product_size_pcs[]" class="form-input" style="flex: 1;" placeholder="قطع/كرتونة (اختياري)" min="1">
             <div class="size-upload-control">
                 <label><i class="fas fa-images"></i> صور خاصة بهذا المقاس (اختياري)</label>
                 <input type="file" class="size-images-input" accept="image/*" multiple aria-label="صور خاصة بهذا المقاس">
@@ -454,7 +455,7 @@
                 <div class="size-image-editor" style="display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;margin-bottom:.75rem;padding:.5rem;border:1px solid var(--border-color);border-radius:6px;">
                     <input type="checkbox" name="variant_${formKey}_size_ids[]" value="${size.id}" ${existing ? 'checked' : ''} onchange="toggleVariantSizeFields(this)">
                     <span style="min-width: 80px;">${escapeHtml(size.name)}</span>
-                    <input type="number" name="variant_${formKey}_size_pcs_${size.id}" class="form-input" style="width: 100px;" placeholder="الكمية" min="1" value="${existing ? existing.pcs_carton : ''}" ${existing ? '' : 'disabled'}>
+                    <input type="number" name="variant_${formKey}_size_pcs_${size.id}" class="form-input" style="width: 150px;" placeholder="قطع/كرتونة (اختياري)" min="1" value="${existing ? (existing.pcs_carton ?? '') : ''}" ${existing ? '' : 'disabled'}>
                     <div class="size-upload-control">
                         <label><i class="fas fa-images"></i> صور خاصة بهذا المقاس (اختياري)</label>
                         <input type="file" name="variant_${formKey}_size_${size.id}_new_images[]" class="size-images-input" accept="image/*" multiple ${existing ? '' : 'disabled'} aria-label="صور خاصة بهذا المقاس">

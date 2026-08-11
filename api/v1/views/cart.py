@@ -59,6 +59,8 @@ class CartViewSet(viewsets.ViewSet):
 
         variant = selection.variant
         size_name = selection.size.name if selection.size else ''
+        if selection.is_length_only:
+            unit_type = 'piece'
         
         # Convert to pieces if unit is carton
         if unit_type == 'carton':
@@ -76,6 +78,7 @@ class CartViewSet(viewsets.ViewSet):
                 'size': selection.size,
                 'pcs_carton_snapshot': selection.pcs_carton,
                 'length_label': selection.length_label,
+                'is_length_only': selection.is_length_only,
             }
         )
         
@@ -99,7 +102,10 @@ class CartViewSet(viewsets.ViewSet):
             cart_item.quantity += added_pieces
             cart_item.size = selection.size
             cart_item.length_label = selection.length_label
-            cart_item.save(update_fields=['quantity', 'size', 'length_label'])
+            cart_item.is_length_only = selection.is_length_only
+            cart_item.save(update_fields=[
+                'quantity', 'size', 'length_label', 'is_length_only'
+            ])
         
         return Response(
             CartItemSerializer(cart_item).data,

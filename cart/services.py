@@ -13,6 +13,7 @@ class ProductSelection:
     size: Size | None
     pcs_carton: int
     length_label: str
+    is_length_only: bool
 
 
 def _selection_id(value, label):
@@ -74,15 +75,17 @@ def resolve_product_selection(
         raise InvalidProductSelection('يرجى اختيار المقاس أولاً')
 
     if size_price is not None:
+        is_length_only = size_price.pcs_carton is None
         return ProductSelection(
             variant=variant,
             size=size_price.size,
-            pcs_carton=size_price.pcs_carton,
+            pcs_carton=size_price.pcs_carton or 1,
             length_label=(
                 variant.get_length_label()
                 if variant
                 else product.get_length_label()
             ),
+            is_length_only=is_length_only,
         )
 
     return ProductSelection(
@@ -94,4 +97,5 @@ def resolve_product_selection(
             if variant
             else product.get_length_label()
         ),
+        is_length_only=False,
     )

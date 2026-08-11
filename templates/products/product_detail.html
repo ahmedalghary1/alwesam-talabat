@@ -68,7 +68,7 @@
             <div class="specs-panel">
                 <div class="spec-row">
                     <span>
-                        <i class="fas fa-box"></i> القطع في الكرتون
+                        <i class="fas fa-box"></i> <span id="carton-quantity-label">القطع في الكرتون</span>
                         <small id="selected-size-label" style="display:none;"></small>
                     </span>
                     <strong id="pcs-carton-display">{{ product.pcs_carton }}</strong>
@@ -118,19 +118,20 @@
                         data-direct-size="true"
                         data-size-id="{{ size_price.size_id }}"
                         data-size-name="{{ size_price.size.name }}"
-                        data-pcs-carton="{{ size_price.pcs_carton }}"
-                        onclick="setDisplayedCartonQuantity(this.dataset.pcsCarton); selectSizeOption(this)"
+                        data-pcs-carton="{{ size_price.pcs_carton|default_if_none:'' }}"
+                        data-supports-carton="{% if size_price.pcs_carton %}true{% else %}false{% endif %}"
+                        onclick="selectSizeOption(this)"
                         onkeydown="handleSizeOptionKeydown(event, this)"
                         role="button" tabindex="0">
                         <span>{{ size_price.size.name }}</span>
-                        <small class="size-carton-quantity">{{ size_price.pcs_carton }} قطعة/كرتون</small>
+                        <small class="size-carton-quantity">{% if size_price.pcs_carton %}{{ size_price.pcs_carton }} قطعة/كرتون{% else %}يباع بالطول مباشرة{% endif %}</small>
                     </div>
                     {% endfor %}
                 </div>
             </div>
             {% endif %}
             <!-- Unit Type Selector -->
-            <div class="variant-section">
+            <div class="variant-section" id="unit-selection-section">
                 <h4><i class="fas fa-balance-scale"></i> وحدة الطلب</h4>
                 <div class="variant-options">
                     <button type="button" class="variant-btn" data-unit="carton" onclick="selectUnit('carton')">
@@ -477,12 +478,15 @@
                         sizeDiv.dataset.variantId = variant.id;
                         sizeDiv.dataset.sizeId = sizePrice.sizeId;
                         sizeDiv.dataset.sizeName = sizePrice.sizeName;
-                        sizeDiv.dataset.pcsCarton = sizePrice.pcsCarton;  // تخزين الكمية
+                        sizeDiv.dataset.pcsCarton = sizePrice.pcsCarton ?? '';
+                        sizeDiv.dataset.supportsCarton = sizePrice.supportsCarton ? 'true' : 'false';
                         sizeDiv.setAttribute('role', 'button');
                         sizeDiv.tabIndex = 0;
                         sizeDiv.innerHTML = `<span></span><small class="size-carton-quantity"></small>`;
                         sizeDiv.querySelector('span').textContent = sizePrice.sizeName;
-                        sizeDiv.querySelector('small').textContent = `${sizePrice.pcsCarton} قطعة/كرتون`;
+                        sizeDiv.querySelector('small').textContent = sizePrice.supportsCarton
+                            ? `${sizePrice.pcsCarton} قطعة/كرتون`
+                            : 'يباع بالطول مباشرة';
 
                         if (!variant.isAvailable) {
                             sizeDiv.classList.add('disabled');
@@ -490,7 +494,6 @@
                         }
 
                         sizeDiv.addEventListener('click', () => {
-                            setDisplayedCartonQuantity(sizePrice.pcsCarton);
                             selectSizeOption(sizeDiv);
                         });
                         sizeDiv.addEventListener('keydown', event => {
@@ -540,13 +543,17 @@
         }
 
         function commitProductSelection(variant, sizePrice) {
+            const supportsCarton = sizePrice ? sizePrice.supportsCarton !== false : true;
             const cartonQuantity = Number(
-                sizePrice?.pcsCarton ?? variant?.pcsCarton ?? PRODUCT_PAGE_DATA.product.pcsCarton
+                supportsCarton
+                    ? (sizePrice?.pcsCarton ?? variant?.pcsCarton ?? PRODUCT_PAGE_DATA.product.pcsCarton)
+                    : 1
             );
             if (!setDisplayedCartonQuantity(cartonQuantity)) {
                 console.error('Invalid carton quantity for selection', {variant, sizePrice});
                 return false;
             }
+            configureUnitSelection(supportsCarton);
 
             selectedVariantId = variant ? Number(variant.id) : null;
             selectedSizeId = sizePrice ? Number(sizePrice.sizeId) : null;
@@ -570,13 +577,36 @@
 
             pcsPerCarton = cartonQuantity;
             const pcsDisplay = document.getElementById('pcs-carton-display');
-            if (pcsDisplay) pcsDisplay.textContent = String(cartonQuantity);
+            if (pcsDisplay) {
+                pcsDisplay.textContent = selectedIsLengthOnly ? 'بالطول' : String(cartonQuantity);
+            }
 
             const totalPieces = document.getElementById('total-pieces-display');
             if (totalPieces && selectedUnit === 'carton') {
                 totalPieces.textContent = String(quantity * cartonQuantity);
             }
             return true;
+        }
+
+        function configureUnitSelection(supportsCarton) {
+            const wasLengthOnly = selectedIsLengthOnly;
+            selectedIsLengthOnly = !supportsCarton;
+            const unitSection = document.getElementById('unit-selection-section');
+            const quantityLabel = document.getElementById('carton-quantity-label');
+            const pcsDisplay = document.getElementById('pcs-carton-display');
+
+            if (selectedIsLengthOnly) {
+                selectedUnit = 'piece';
+                if (unitSection) unitSection.style.display = 'none';
+                if (quantityLabel) quantityLabel.textContent = 'طريقة البيع';
+                if (pcsDisplay) pcsDisplay.textContent = 'بالطول';
+                document.querySelectorAll('[data-unit]').forEach(btn => btn.classList.remove('active'));
+            } else {
+                if (unitSection) unitSection.style.display = '';
+                if (quantityLabel) quantityLabel.textContent = 'القطع في الكرتون';
+                if (pcsDisplay) pcsDisplay.textContent = String(pcsPerCarton);
+                if (wasLengthOnly) selectedUnit = null;
+            }
         }
 
         function selectSizeOption(element) {
@@ -640,6 +670,7 @@
         let selectedSizeName = null;
         let selectedLengthLabel = PRODUCT_PAGE_DATA.product.lengthLabel || 'المقاس';
         let selectedUnit = null;
+        let selectedIsLengthOnly = false;
         
         const productHasSizes = PRODUCT_PAGE_DATA.product.hasSizes;
         // Product info
@@ -674,6 +705,7 @@
 
         // === UNIT TYPE SELECTION ===
         function selectUnit(unit) {
+            if (selectedIsLengthOnly) return;
             // Toggle: if clicking the same unit, deselect it
             if (selectedUnit === unit) {
                 selectedUnit = null;
@@ -747,7 +779,7 @@
             const totalPieces = document.getElementById('total-pieces-display');
 
             if (qtyValue) qtyValue.textContent = quantity;
-            if (pcsDisplay) pcsDisplay.textContent = String(pcsPerCarton);
+            if (pcsDisplay) pcsDisplay.textContent = selectedIsLengthOnly ? 'بالطول' : String(pcsPerCarton);
             updateSelectedSizeLabel();
 
             if (totalPieces) {
@@ -821,7 +853,7 @@
             const isAuth = document.body.dataset.userAuthenticated === 'true';
 
             if (window.addToCart) {
-                await window.addToCart(PRODUCT_DATA.id, PRODUCT_DATA.name, quantity, pcsPerCarton, PRODUCT_DATA.image, isAuth, selectedVariantId, selectedUnit, selectedSizeName, selectedSizeId, selectedLengthLabel);
+                await window.addToCart(PRODUCT_DATA.id, PRODUCT_DATA.name, quantity, pcsPerCarton, PRODUCT_DATA.image, isAuth, selectedVariantId, selectedUnit, selectedSizeName, selectedSizeId, selectedLengthLabel, selectedIsLengthOnly);
                 return;
             }
 
@@ -903,6 +935,7 @@
                         size_name: selectedSizeName,
                         size_id: selectedSizeId,
                         length_label: selectedLengthLabel,
+                        is_length_only: selectedIsLengthOnly,
                         unit_quantity: quantity,
                         unit_type: selectedUnit,
                         added_at: new Date().toISOString()

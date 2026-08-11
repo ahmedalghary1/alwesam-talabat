@@ -64,6 +64,10 @@ class OrderItem(models.Model):
         default='',
         verbose_name="اسم خيار الطول/المقاس وقت الطلب",
     )
+    is_length_only = models.BooleanField(
+        default=False,
+        verbose_name="بيع بالطول مباشرة وقت الطلب",
+    )
     pcs_carton = models.PositiveIntegerField(default=24, verbose_name="عدد القطع في الكرتونة وقت الطلب")
 
     class Meta:
@@ -86,6 +90,8 @@ class OrderItem(models.Model):
         return " - ".join(parts)
 
     def __str__(self):
+        if self.is_length_only:
+            return f"{self.get_display_name()} x {self.quantity} وحدة طول"
         if self.unit_type == 'piece':
             return f"{self.get_display_name()} x {self.quantity} قطعة"
         else:

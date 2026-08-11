@@ -170,8 +170,11 @@ class VariantSize(models.Model):
         related_name='variant_prices'
     )
     pcs_carton = models.PositiveIntegerField(
-        default=24,
-        verbose_name="عدد القطع في الكرتونة"
+        null=True,
+        blank=True,
+        default=None,
+        verbose_name="عدد القطع في الكرتونة",
+        help_text="اختياري. اتركه فارغاً إذا كان الخيار يباع بالطول مباشرة.",
     )
 
     class Meta:
@@ -180,7 +183,8 @@ class VariantSize(models.Model):
         verbose_name_plural = "مقاسات النمط"
 
     def __str__(self):
-        return f"{self.variant} - {self.size.name}: {self.pcs_carton} قطعة"
+        quantity = f'{self.pcs_carton} قطعة/كرتونة' if self.pcs_carton else 'بيع بالطول'
+        return f"{self.variant} - {self.size.name}: {quantity}"
 
 
 class ProductSize(models.Model):
@@ -199,8 +203,11 @@ class ProductSize(models.Model):
         related_name='product_prices'
     )
     pcs_carton = models.PositiveIntegerField(
-        default=24,
-        verbose_name="عدد القطع في الكرتونة"
+        null=True,
+        blank=True,
+        default=None,
+        verbose_name="عدد القطع في الكرتونة",
+        help_text="اختياري. اتركه فارغاً إذا كان الخيار يباع بالطول مباشرة.",
     )
 
     class Meta:
@@ -209,7 +216,8 @@ class ProductSize(models.Model):
         verbose_name_plural = "مقاسات المنتج المباشرة"
 
     def __str__(self):
-        return f"{self.product.name} - {self.size.name}: {self.pcs_carton} قطعة"
+        quantity = f'{self.pcs_carton} قطعة/كرتونة' if self.pcs_carton else 'بيع بالطول'
+        return f"{self.product.name} - {self.size.name}: {quantity}"
 
 
 class VariantSizeImage(ImageCompressionMixin, models.Model):

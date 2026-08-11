@@ -23,7 +23,10 @@ from products.admin import ProductSizeInline, VariantSizeInline
 from support.models import CustomerMessage, MessageReply
 from .models import HomeSlide
 
-from .admin_views import _excel_safe_text, _valid_model_ids, _variant_sizes_from_post
+from .admin_views import (
+    _excel_safe_text, _optional_positive_int, _valid_model_ids,
+    _variant_sizes_from_post,
+)
 
 
 class ValidModelIdsTests(SimpleTestCase):
@@ -52,6 +55,17 @@ class ValidModelIdsTests(SimpleTestCase):
         self.assertEqual(_excel_safe_text('=2+2'), "'=2+2")
         self.assertEqual(_excel_safe_text('+201000000000'), "'+201000000000")
         self.assertEqual(_excel_safe_text('بيانات عربية'), 'بيانات عربية')
+
+    def test_carton_quantity_can_be_left_blank_for_length_only_sale(self):
+        self.assertIsNone(_optional_positive_int(''))
+        self.assertIsNone(_optional_positive_int(None))
+        self.assertEqual(_optional_positive_int('24'), 24)
+
+        request = RequestFactory().post('/', {
+            'variant_3_size_ids[]': ['7'],
+            'variant_3_size_pcs_7': '',
+        })
+        self.assertEqual(_variant_sizes_from_post(request, '3'), [(7, None)])
 
 
 def _image_file(name='test.png', color='red'):
@@ -330,6 +344,27 @@ class ProductAdminFlowTests(TestCase):
         self.assertTrue(VariantSize.objects.filter(
             variant=variant, size=second_size, pcs_carton=60,
         ).exists())
+
+    def test_add_product_accepts_blank_carton_quantity_for_length_only_option(self):
+        length = Size.objects.create(name='20 متر')
+
+        response = self.client.post(
+            reverse('admin_app:admin_product_add'),
+            {
+                'name': 'خرطوم بالطول',
+                'image': _image_file('hose.png'),
+                'pcs_carton': '1',
+                'length_label': 'الطول',
+                'is_available': 'on',
+                'product_size_ids[]': [str(length.pk)],
+                'product_size_pcs[]': [''],
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        product = Product.objects.get(name='خرطوم بالطول')
+        option = ProductSize.objects.get(product=product, size=length)
+        self.assertIsNone(option.pcs_carton)
 
     def test_add_product_saves_images_for_direct_and_variant_sizes(self):
         direct_size = Size.objects.create(name='Direct image size')

@@ -40,7 +40,7 @@ class ProductDetailSizeQuantityTests(TestCase):
         self.assertContains(response, 'data-pcs-carton="48"')
         self.assertContains(
             response,
-            'onclick="setDisplayedCartonQuantity(this.dataset.pcsCarton); selectSizeOption(this)"',
+            'onclick="selectSizeOption(this)"',
         )
         self.assertContains(response, 'id="selected-size-label"')
         self.assertEqual(
@@ -48,6 +48,27 @@ class ProductDetailSizeQuantityTests(TestCase):
             48,
         )
         self.assertContains(response, 'id="product-page-data"')
+
+    def test_length_only_option_has_no_carton_quantity(self):
+        product = Product.objects.create(
+            name='خرطوم', length_label='الطول', image=_image_file()
+        )
+        length = Size.objects.create(name='20 متر')
+        ProductSize.objects.create(product=product, size=length, pcs_carton=None)
+
+        response = self.client.get(reverse('products:product_detail', args=[product.slug]))
+        option = response.context['product_page_data']['directSizePrices'][0]
+        api_data = ProductDetailSerializer(product).data['size_options'][0]
+        endpoint = reverse('products:product_carton_quantity', args=[product.slug])
+        endpoint_data = self.client.get(endpoint, {'size_id': length.pk}).json()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(option['pcsCarton'])
+        self.assertFalse(option['supportsCarton'])
+        self.assertContains(response, 'يباع بالطول مباشرة')
+        self.assertIsNone(api_data['pcs_carton'])
+        self.assertTrue(api_data['is_length_only'])
+        self.assertFalse(endpoint_data['supports_carton'])
 
     def test_direct_length_label_is_exposed_on_page_and_api(self):
         product = Product.objects.create(

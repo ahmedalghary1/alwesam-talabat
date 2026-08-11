@@ -314,7 +314,9 @@
                     {% endif %}
                     
                     <div class="item-meta">
-                        {% if item.unit_type == 'piece' %}
+                        {% if item.is_length_only %}
+                        <i class="fas fa-ruler-horizontal"></i> بيع بالطول: <strong>{{ item.quantity }} وحدة من الطول المحدد</strong>
+                        {% elif item.unit_type == 'piece' %}
                         <i class="fas fa-cube"></i> طلب بالقطعة: <strong>{{ item.quantity }} قطعة</strong> 
                         ({{ item.get_pcs_carton }} قطعة/كرتون)
                         {% else %}

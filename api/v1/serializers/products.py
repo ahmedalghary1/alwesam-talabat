@@ -45,10 +45,14 @@ class SizeCartonQuantitySerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='size.name', read_only=True)
     order = serializers.IntegerField(source='size.order', read_only=True)
     images = SizeImageSerializer(many=True, read_only=True)
+    is_length_only = serializers.SerializerMethodField()
 
     class Meta:
         model = VariantSize
-        fields = ['id', 'name', 'order', 'pcs_carton', 'images']
+        fields = ['id', 'name', 'order', 'pcs_carton', 'is_length_only', 'images']
+
+    def get_is_length_only(self, obj):
+        return obj.pcs_carton is None
 
 
 class ProductImageSerializer(serializers.ModelSerializer):

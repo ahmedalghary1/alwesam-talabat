@@ -584,7 +584,7 @@
         <div class="cart-items">
             {% for item in cart_items %}
             <div class="cart-item" data-item-id="{{ item.id }}" data-unit-type="{{ item.unit_type }}"
-                data-pcs-carton="{{ item.get_pcs_carton }}">
+                data-pcs-carton="{{ item.get_pcs_carton }}" data-is-length-only="{% if item.is_length_only %}true{% else %}false{% endif %}">
                 <a href="{% url 'products:product_detail' item.product.slug %}" style="display: block;">
                     {% if item.product.image %}
                     <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="item-image">
@@ -625,7 +625,11 @@
 
                     <!-- Unit Type Badge -->
                     <div class="badges-container">
-                        {% if item.unit_type == 'piece' %}
+                        {% if item.is_length_only %}
+                        <span class="badge badge-unit-piece">
+                            <i class="fas fa-ruler-horizontal"></i> يباع بالطول مباشرة
+                        </span>
+                        {% elif item.unit_type == 'piece' %}
                         <span class="badge badge-unit-piece">
                             <i class="fas fa-cube"></i> طلب بالقطعة
                         </span>
@@ -637,7 +641,10 @@
                     </div>
 
                     <p class="item-meta">
-                        {% if item.unit_type == 'carton' %}
+                        {% if item.is_length_only %}
+                        <i class="fas fa-ruler-horizontal"></i>
+                        <strong style="color: #22c55e; font-size: 1.1rem;">{{ item.quantity }}</strong> وحدة من الطول المحدد
+                        {% elif item.unit_type == 'carton' %}
                         <i class="fas fa-box"></i>
                         <strong style="color: #FFC400; font-size: 1.1rem;">{{ item.get_quantity_in_cartons|floatformat:0 }}</strong> كرتون
                         <span style="color: var(--text-secondary); font-size: 0.9rem;">
@@ -693,7 +700,7 @@
             {% endif %}
 
             <div class="summary-item">
-                <span class="summary-label">إجمالي القطع:</span>
+                <span class="summary-label">إجمالي القطع/الوحدات:</span>
                 <span class="summary-value" id="total-pieces">{{ total_pieces }}</span>
             </div>
 
@@ -760,7 +767,7 @@
                 </div>
 
                 <div class="summary-item">
-                    <span class="summary-label">إجمالي القطع:</span>
+                    <span class="summary-label">إجمالي القطع/الوحدات:</span>
                     <span class="summary-value" id="local-total-pieces">0</span>
                 </div>
 
@@ -885,6 +892,7 @@
         // Get unit type and pcs_carton from data attributes
         const unitType = itemElement.dataset.unitType || 'carton';
         const pcsCarton = parseInt(itemElement.dataset.pcsCarton) || 24;
+        const isLengthOnly = itemElement.dataset.isLengthOnly === 'true';
 
         const qtyElement = itemElement.querySelector('.qty-value');
         const currentQty = parseInt(qtyElement.textContent);
@@ -924,7 +932,11 @@
                 // Update item metadata display (pieces info)
                 const metaEl = itemElement.querySelector('.item-meta');
                 if (metaEl) {
-                    if (unitType === 'carton') {
+                    if (isLengthOnly) {
+                        metaEl.innerHTML = `
+                            <i class="fas fa-ruler-horizontal"></i>
+                            <strong style="color: #22c55e; font-size: 1.1rem;">${newQty}</strong> وحدة من الطول المحدد`;
+                    } else if (unitType === 'carton') {
                         metaEl.innerHTML = `
                             <i class="fas fa-box"></i>
                             <strong style="color: #FFC400; font-size: 1.1rem;">${newQty}</strong> كرتون
@@ -1105,6 +1117,7 @@
                 const unitType = item.unit_type || 'carton';
                 const pcsCarton = item.pcs_carton || 24;
                 const quantityInPieces = item.quantity;
+                const isLengthOnly = item.is_length_only === true;
 
                 // Calculate display quantity based on unit type
                 let displayQuantity, badgeHtml, metaHtml, colorSizeBadges = '';
@@ -1129,7 +1142,16 @@
                     colorSizeBadges += '</div>';
                 }
 
-                if (unitType === 'piece') {
+                if (isLengthOnly) {
+                    displayQuantity = quantityInPieces;
+                    badgeHtml = `<div class="badges-container">
+                        <span class="badge badge-unit-piece">
+                            <i class="fas fa-ruler-horizontal"></i> يباع بالطول مباشرة
+                        </span>
+                    </div>`;
+                    metaHtml = `<i class="fas fa-ruler-horizontal"></i>
+                        <strong style="color: #22c55e; font-size: 1.1rem;">${quantityInPieces}</strong> وحدة من الطول المحدد`;
+                } else if (unitType === 'piece') {
                     displayQuantity = quantityInPieces;
                     badgeHtml = `<div class="badges-container">
                         <span class="badge badge-unit-piece">

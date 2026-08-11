@@ -53,6 +53,10 @@ class CartItem(models.Model):
         default='',
         verbose_name="اسم خيار الطول/المقاس وقت الإضافة",
     )
+    is_length_only = models.BooleanField(
+        default=False,
+        verbose_name="يباع بالطول مباشرة",
+    )
     pcs_carton_snapshot = models.PositiveIntegerField(
         default=0,
         verbose_name="عدد القطع في الكرتونة وقت الإضافة للسلة",
@@ -81,30 +85,30 @@ class CartItem(models.Model):
         """Resolve current product data when creating or migrating an item."""
         if self.variant:
             if self.size_id:
-                size_price = self.variant.size_prices.filter(
+                size_option = self.variant.size_prices.filter(
                     size_id=self.size_id
-                ).values_list('pcs_carton', flat=True).first()
-                if size_price is not None:
-                    return size_price
+                ).only('pcs_carton').first()
+                if size_option is not None:
+                    return size_option.pcs_carton or 1
             elif self.size_name:
-                size_price = self.variant.size_prices.filter(
+                size_option = self.variant.size_prices.filter(
                     size__name=self.size_name
-                ).values_list('pcs_carton', flat=True).first()
-                if size_price is not None:
-                    return size_price
+                ).only('pcs_carton').first()
+                if size_option is not None:
+                    return size_option.pcs_carton or 1
             return self.variant.pcs_carton
         if self.size_id:
-            size_price = self.product.size_prices.filter(
+            size_option = self.product.size_prices.filter(
                 size_id=self.size_id
-            ).values_list('pcs_carton', flat=True).first()
-            if size_price is not None:
-                return size_price
+            ).only('pcs_carton').first()
+            if size_option is not None:
+                return size_option.pcs_carton or 1
         elif self.size_name:
-            size_price = self.product.size_prices.filter(
+            size_option = self.product.size_prices.filter(
                 size__name=self.size_name
-            ).values_list('pcs_carton', flat=True).first()
-            if size_price is not None:
-                return size_price
+            ).only('pcs_carton').first()
+            if size_option is not None:
+                return size_option.pcs_carton or 1
         return self.product.pcs_carton
     
     def get_quantity_in_cartons(self):
@@ -125,6 +129,8 @@ class CartItem(models.Model):
         return self.product.name
 
     def __str__(self):
+        if self.is_length_only:
+            return f"{self.get_display_name()} x {self.quantity} وحدة طول"
         unit = 'قطعة' if self.unit_type == 'piece' else 'كرتونة'
         if self.unit_type == 'piece':
             return f"{self.get_display_name()} x {self.quantity} قطعة"

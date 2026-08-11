@@ -15,7 +15,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
         model = OrderItem
         fields = ['id', 'product', 'product_name', 'display_name',
                   'quantity', 'unit_type', 'color_name', 'size_name',
-                  'length_label', 'quantity_in_cartons']
+                  'length_label', 'is_length_only', 'quantity_in_cartons']
     
     def get_display_name(self, obj):
         return obj.get_display_name()

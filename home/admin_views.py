@@ -48,6 +48,13 @@ def _positive_int(value, default=None):
     return value
 
 
+def _optional_positive_int(value):
+    """Parse an optional positive integer, using None for direct length sales."""
+    if value in (None, ''):
+        return None
+    return _positive_int(value)
+
+
 def _variant_sizes_from_post(request, form_key):
     """Read variant sizes without relying on fragile parallel checkbox lists."""
     size_ids = request.POST.getlist(f'variant_{form_key}_size_ids[]')
@@ -61,7 +68,7 @@ def _variant_sizes_from_post(request, form_key):
         quantity = request.POST.get(f'variant_{form_key}_size_pcs_{size_id}')
         if quantity is None and index < len(legacy_quantities):
             quantity = legacy_quantities[index]
-        result.append((size_id, _positive_int(quantity, 24)))
+        result.append((size_id, _optional_positive_int(quantity)))
         seen.add(size_id)
     return result
 
@@ -263,12 +270,13 @@ def admin_product_add(request):
             # ========== Direct product sizes (ProductSize) ==========
                 product_size_ids = request.POST.getlist('product_size_ids[]')
                 product_size_pcs = request.POST.getlist('product_size_pcs[]')
-                for size_id, pcs in zip(product_size_ids, product_size_pcs):
-                    if size_id and pcs:
+                for index, size_id in enumerate(product_size_ids):
+                    pcs = product_size_pcs[index] if index < len(product_size_pcs) else ''
+                    if size_id:
                         product_size, _ = ProductSize.objects.update_or_create(
                             product=product,
                             size_id=_positive_int(size_id),
-                            defaults={'pcs_carton': _positive_int(pcs)}
+                            defaults={'pcs_carton': _optional_positive_int(pcs)}
                         )
                         _add_size_images(
                             request,
@@ -519,13 +527,14 @@ def admin_product_edit(request, product_id):
             new_ps_pcs = request.POST.getlist('new_product_size_pcs[]')
 
             # Update existing
-            for ps_id, pcs in zip(existing_ps_ids, existing_ps_pcs):
-                if ps_id and pcs:
+            for index, ps_id in enumerate(existing_ps_ids):
+                pcs = existing_ps_pcs[index] if index < len(existing_ps_pcs) else ''
+                if ps_id:
                     product_size = ProductSize.objects.filter(
                         id=ps_id, product=product
                     ).first()
                     if product_size:
-                        product_size.pcs_carton = _positive_int(pcs)
+                        product_size.pcs_carton = _optional_positive_int(pcs)
                         product_size.save(update_fields=['pcs_carton'])
                         _add_size_images(
                             request,
@@ -540,12 +549,13 @@ def admin_product_edit(request, product_id):
             product.size_prices.exclude(id__in=kept_ps_ids).delete()
 
             # Add new
-            for size_id, pcs in zip(new_ps_size_ids, new_ps_pcs):
-                if size_id and pcs:
+            for index, size_id in enumerate(new_ps_size_ids):
+                pcs = new_ps_pcs[index] if index < len(new_ps_pcs) else ''
+                if size_id:
                     product_size, _ = ProductSize.objects.update_or_create(
                         product=product,
                         size_id=_positive_int(size_id),
-                        defaults={'pcs_carton': _positive_int(pcs)}
+                        defaults={'pcs_carton': _optional_positive_int(pcs)}
                     )
                     _add_size_images(
                         request,

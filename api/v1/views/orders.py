@@ -77,6 +77,7 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
                         color_name=color_name,
                         size_name=size_name,
                         length_label=cart_item.length_label or 'المقاس',
+                        is_length_only=cart_item.is_length_only,
                         pcs_carton=cart_item.get_pcs_carton(),
                     )
 

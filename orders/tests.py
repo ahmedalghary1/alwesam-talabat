@@ -93,6 +93,38 @@ class OrderSizeQuantityTests(TestCase):
         self.assertEqual(OrderItem.objects.filter(product=product).count(), 1)
 
     @patch('utils.email_tasks.send_order_confirmation_email_task.delay')
+    def test_order_snapshots_length_only_sale(self, send_email):
+        product = Product.objects.create(
+            name='خرطوم طلب', length_label='الطول', image=_image_file()
+        )
+        length = Size.objects.create(name='20 متر')
+        ProductSize.objects.create(product=product, size=length, pcs_carton=None)
+        cart, _ = Cart.objects.get_or_create(user=self.user)
+        CartItem.objects.create(
+            cart=cart,
+            product=product,
+            size=length,
+            size_name=length.name,
+            length_label='الطول',
+            is_length_only=True,
+            pcs_carton_snapshot=1,
+            unit_type='piece',
+            quantity=2,
+        )
+
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.post(reverse('orders:create_order'), {
+                'phone_number': self.user.phone,
+                'address': self.user.address,
+            })
+
+        self.assertEqual(response.status_code, 302)
+        item = OrderItem.objects.get(product=product)
+        self.assertTrue(item.is_length_only)
+        self.assertEqual(item.quantity, 2)
+        self.assertEqual(item.length_label, 'الطول')
+
+    @patch('utils.email_tasks.send_order_confirmation_email_task.delay')
     def test_order_without_email_does_not_schedule_confirmation(self, send_email):
         self.user.email = None
         self.user.save(update_fields=['email'])

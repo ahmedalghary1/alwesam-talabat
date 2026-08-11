@@ -209,12 +209,16 @@ class ProductVariantInline(admin.StackedInline):
             return '-'
         return format_html_join(
             '<br>',
-            '<a href="{}">{}: {} قطعة - إدارة صور المقاس</a>',
+            '<a href="{}">{}: {} - إدارة صور المقاس</a>',
             (
                 (
                     reverse('admin:products_variantsize_change', args=[size_price.pk]),
                     size_price.size.name,
-                    size_price.pcs_carton,
+                    (
+                        f'{size_price.pcs_carton} قطعة/كرتونة'
+                        if size_price.pcs_carton
+                        else 'بيع بالطول'
+                    ),
                 )
                 for size_price in size_prices
             ),
@@ -412,7 +416,10 @@ class ProductVariantAdmin(SortableAdminMixin, admin.ModelAdmin):
     color_preview.short_description = "اللون"
 
     def sizes_list(self, obj):
-        size_info = [f"{vs.size.name} ({vs.pcs_carton})" for vs in obj.size_prices.all()]
+        size_info = [
+            f"{vs.size.name} ({vs.pcs_carton or 'بيع بالطول'})"
+            for vs in obj.size_prices.all()
+        ]
         return ", ".join(size_info) if size_info else "-"
     sizes_list.short_description = "المقاسات (الكمية)"
 

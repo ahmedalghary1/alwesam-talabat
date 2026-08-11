@@ -19,8 +19,8 @@ class CartItemSerializer(serializers.ModelSerializer):
         fields = ['id', 'product', 'product_name', 'product_image',
                   'variant', 'variant_info', 'quantity',
                   'unit_type', 'size', 'size_name', 'length_label',
-                  'quantity_in_cartons']
-        read_only_fields = ['id', 'size']
+                  'is_length_only', 'quantity_in_cartons']
+        read_only_fields = ['id', 'size', 'length_label', 'is_length_only']
     
     def get_variant_info(self, obj):
         if obj.variant:
