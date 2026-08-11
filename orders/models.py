@@ -58,6 +58,12 @@ class OrderItem(models.Model):
     # بيانات محفوظة وقت الطلب
     color_name = models.CharField(max_length=100, blank=True)
     size_name = models.CharField(max_length=100, blank=True)
+    length_label = models.CharField(
+        max_length=50,
+        blank=True,
+        default='',
+        verbose_name="اسم خيار الطول/المقاس وقت الطلب",
+    )
     pcs_carton = models.PositiveIntegerField(default=24, verbose_name="عدد القطع في الكرتونة وقت الطلب")
 
     class Meta:
@@ -74,7 +80,7 @@ class OrderItem(models.Model):
         if self.color_name:
             parts.append(f"لون: {self.color_name}")
         if self.size_name:
-            parts.append(f"مقاس: {self.size_name}")
+            parts.append(f"{self.length_label or 'المقاس'}: {self.size_name}")
         if self.variant and not (self.color_name or self.size_name):
             parts.append(self.variant.name)
         return " - ".join(parts)

@@ -38,7 +38,9 @@ class OrderSizeQuantityTests(TestCase):
 
     @patch('utils.email_tasks.send_order_confirmation_email_task.delay')
     def test_order_snapshots_direct_size_carton_quantity(self, send_email):
-        product = Product.objects.create(name='منتج طلب', pcs_carton=24, image=_image_file())
+        product = Product.objects.create(
+            name='منتج طلب', pcs_carton=24, length_label='طول السلك', image=_image_file()
+        )
         size = Size.objects.create(name='مقاس الطلب')
         ProductSize.objects.create(product=product, size=size, pcs_carton=60)
         cart, _ = Cart.objects.get_or_create(user=self.user)
@@ -47,6 +49,7 @@ class OrderSizeQuantityTests(TestCase):
             product=product,
             size=size,
             size_name=size.name,
+            length_label='طول السلك',
             unit_type='carton',
             quantity=120,
         )
@@ -61,6 +64,12 @@ class OrderSizeQuantityTests(TestCase):
         item = OrderItem.objects.get(product=product)
         self.assertEqual(item.pcs_carton, 60)
         self.assertEqual(item.get_quantity_in_cartons(), 2)
+        self.assertEqual(item.length_label, 'طول السلك')
+
+        product.length_label = 'اسم معدل'
+        product.save(update_fields=['length_label'])
+        item.refresh_from_db()
+        self.assertEqual(item.length_label, 'طول السلك')
         send_email.assert_called_once_with(item.order_id, self.user.email)
 
     def test_product_delete_keeps_historical_order_items(self):

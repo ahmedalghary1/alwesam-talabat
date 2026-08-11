@@ -18,7 +18,8 @@ class CartItemSerializer(serializers.ModelSerializer):
         model = CartItem
         fields = ['id', 'product', 'product_name', 'product_image',
                   'variant', 'variant_info', 'quantity',
-                  'unit_type', 'size', 'size_name', 'quantity_in_cartons']
+                  'unit_type', 'size', 'size_name', 'length_label',
+                  'quantity_in_cartons']
         read_only_fields = ['id', 'size']
     
     def get_variant_info(self, obj):

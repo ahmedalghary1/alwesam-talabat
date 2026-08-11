@@ -55,6 +55,13 @@ class Product(ImageCompressionMixin, models.Model):
     description = models.TextField(blank=True)
     # Default pieces per carton (can be overridden by variants or direct sizes)
     pcs_carton = models.PositiveIntegerField(default=24)
+    length_label = models.CharField(
+        max_length=50,
+        blank=True,
+        default='',
+        verbose_name="اسم خيار الطول/المقاس",
+        help_text="مثال: الطول، مقاس السلك، طول الإصبع. يترك فارغاً لاستخدام كلمة المقاس.",
+    )
     # Indexed for URL routing and faster queries
     slug = models.CharField(max_length=255, unique=True, blank=True, db_index=True)
     image = models.ImageField(upload_to='product-image')
@@ -97,6 +104,10 @@ class Product(ImageCompressionMixin, models.Model):
 
     def __str__(self):
         return self.name
+
+    def get_length_label(self):
+        """Return the customer-facing name for direct size/length options."""
+        return self.length_label.strip() or 'المقاس'
 
 
 class ProductImages(ImageCompressionMixin, models.Model):
@@ -368,3 +379,7 @@ class ProductVariant(ImageCompressionMixin, models.Model):
 
     def __str__(self):
         return self.name or f"{self.product.name}"
+
+    def get_length_label(self):
+        """Return the variant label, falling back to its product label."""
+        return (self.length_label or '').strip() or self.product.get_length_label()

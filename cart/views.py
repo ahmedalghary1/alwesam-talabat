@@ -147,6 +147,7 @@ def add_to_cart(request, product_id):
             "quantity": quantity_in_pieces,
             "size": selection.size,
             "pcs_carton_snapshot": pcs_carton,
+            "length_label": selection.length_label,
         },
     )
 
@@ -174,6 +175,7 @@ def add_to_cart(request, product_id):
         if size_name:
             cart_item.size_name = size_name
         cart_item.size = selection.size
+        cart_item.length_label = selection.length_label
         cart_item.save()
 
     message = f"تم إضافة {product.name} إلى السلة"
@@ -327,6 +329,7 @@ def sync_cart_from_local(request):
                         "quantity": quantity_in_pieces,
                         "size": selection.size,
                         "pcs_carton_snapshot": selection.pcs_carton,
+                        "length_label": selection.length_label,
                     },
                 )
 
@@ -345,7 +348,8 @@ def sync_cart_from_local(request):
                         else unit_quantity
                     )
                     cart_item.size = selection.size
-                    cart_item.save(update_fields=["quantity", "size"])
+                    cart_item.length_label = selection.length_label
+                    cart_item.save(update_fields=["quantity", "size", "length_label"])
 
                 synced_count += 1
             except (Product.DoesNotExist, InvalidProductSelection, TypeError, ValueError) as exc:

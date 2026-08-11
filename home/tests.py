@@ -66,6 +66,55 @@ def _slide_image_file(name='slide.png', color='red', size=(1024, 443)):
     return SimpleUploadedFile(name, output.getvalue(), content_type='image/png')
 
 
+class LengthManagementTests(TestCase):
+    def setUp(self):
+        self.staff = get_user_model().objects.create_user(
+            username='length-admin',
+            email='length-admin@example.com',
+            phone='01000000911',
+            address='Cairo',
+            password='password',
+            is_staff=True,
+            is_active=True,
+        )
+        self.client.force_login(self.staff)
+
+    def test_staff_can_create_and_update_length_values(self):
+        response = self.client.post(reverse('admin_app:admin_lengths'), {
+            'action': 'create',
+            'name': '2 متر',
+            'order': '3',
+        })
+        size = Size.objects.get(name='2 متر')
+
+        self.assertRedirects(response, reverse('admin_app:admin_lengths'))
+        self.assertEqual(size.order, 3)
+
+        response = self.client.post(reverse('admin_app:admin_lengths'), {
+            'action': 'update',
+            'size_id': size.pk,
+            'name': '200 سم',
+            'order': '1',
+        })
+        size.refresh_from_db()
+
+        self.assertRedirects(response, reverse('admin_app:admin_lengths'))
+        self.assertEqual((size.name, size.order), ('200 سم', 1))
+
+    def test_used_length_cannot_be_deleted(self):
+        size = Size.objects.create(name='1 متر')
+        product = Product.objects.create(name='منتج طول', image=_image_file())
+        ProductSize.objects.create(product=product, size=size, pcs_carton=12)
+
+        response = self.client.post(reverse('admin_app:admin_lengths'), {
+            'action': 'delete',
+            'size_id': size.pk,
+        })
+
+        self.assertRedirects(response, reverse('admin_app:admin_lengths'))
+        self.assertTrue(Size.objects.filter(pk=size.pk).exists())
+
+
 class HomeSlideManagementTests(TestCase):
     def setUp(self):
         self.media_root = tempfile.mkdtemp()

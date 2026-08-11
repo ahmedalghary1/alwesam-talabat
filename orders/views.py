@@ -113,6 +113,7 @@ def create_order(request):
                     unit_type=cart_item.unit_type,
                     color_name=color_name,
                     size_name=cart_item.size_name or '',
+                    length_label=cart_item.length_label or 'المقاس',
                     pcs_carton=pcs_carton_value,           # ⬅️ حقل جديد يجب إضافته في نموذج OrderItem
                 )
 

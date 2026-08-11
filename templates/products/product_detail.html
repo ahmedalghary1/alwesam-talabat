@@ -94,8 +94,7 @@
 
                 <!-- Size Selection Section (Hidden initially) -->
                 <div class="size-selection-wrapper" id="size-selection-wrapper" style="display: none;">
-                    <h4><i class="fas fa-ruler"></i> اختر مقاس <span id="dynamic-length-label"
-                            style="font-size: 0.9em; color: var(--text-secondary); font-weight: normal;"></span></h4>
+                    <h4><i class="fas fa-ruler"></i> اختر <span id="dynamic-length-label">المقاس</span></h4>
                     <div class="size-selection" id="size-selection">
                         <!-- Will be populated by JavaScript -->
                     </div>
@@ -110,7 +109,7 @@
             <div class="variant-selection-section mt-3">
                 <h4>
                     <i class="fas fa-ruler"></i>
-                    اختر المقاس
+                    اختر {{ product.get_length_label }}
                 </h4>
 
                 <div class="size-selection">
@@ -467,8 +466,7 @@
             sizeContainer.innerHTML = '';
 
             if (labelSpan && variants.length > 0) {
-                const label = variants[0].lengthLabel;
-                labelSpan.textContent = label ? `(${label})` : '';
+                labelSpan.textContent = variants[0].lengthLabel || PRODUCT_DATA.lengthLabel || 'المقاس';
             }
 
             variants.forEach(variant => {
@@ -553,6 +551,7 @@
             selectedVariantId = variant ? Number(variant.id) : null;
             selectedSizeId = sizePrice ? Number(sizePrice.sizeId) : null;
             selectedSizeName = sizePrice ? String(sizePrice.sizeName) : null;
+            selectedLengthLabel = variant?.lengthLabel || PRODUCT_PAGE_DATA.product.lengthLabel || 'المقاس';
             const hiddenVariant = document.getElementById('selected-variant-id');
             if (hiddenVariant) hiddenVariant.value = selectedVariantId || '';
 
@@ -639,6 +638,7 @@
         let selectedColorName = null;
         let selectedSizeId = null;
         let selectedSizeName = null;
+        let selectedLengthLabel = PRODUCT_PAGE_DATA.product.lengthLabel || 'المقاس';
         let selectedUnit = null;
         
         const productHasSizes = PRODUCT_PAGE_DATA.product.hasSizes;
@@ -804,11 +804,11 @@
                 variant => Number(variant.id) === Number(selectedVariantId)
             );
             if (selectedVariant?.sizePrices?.length > 0 && !selectedSizeId) {
-                showValidationError('⚠️ يرجى اختيار المقاس أولاً', '#size-selection-wrapper');
+                showValidationError(`⚠️ يرجى اختيار ${selectedVariant.lengthLabel || selectedLengthLabel} أولاً`, '#size-selection-wrapper');
                 return;
             }
             if (ALL_VARIANTS.length === 0 && productHasSizes && !selectedSizeName) {
-                alert("اختر المقاس أولاً");
+                alert(`اختر ${selectedLengthLabel} أولاً`);
                 return;
             }
 
@@ -821,7 +821,7 @@
             const isAuth = document.body.dataset.userAuthenticated === 'true';
 
             if (window.addToCart) {
-                await window.addToCart(PRODUCT_DATA.id, PRODUCT_DATA.name, quantity, pcsPerCarton, PRODUCT_DATA.image, isAuth, selectedVariantId, selectedUnit, selectedSizeName, selectedSizeId);
+                await window.addToCart(PRODUCT_DATA.id, PRODUCT_DATA.name, quantity, pcsPerCarton, PRODUCT_DATA.image, isAuth, selectedVariantId, selectedUnit, selectedSizeName, selectedSizeId, selectedLengthLabel);
                 return;
             }
 
@@ -902,6 +902,7 @@
                         color_name: selectedColorName,
                         size_name: selectedSizeName,
                         size_id: selectedSizeId,
+                        length_label: selectedLengthLabel,
                         unit_quantity: quantity,
                         unit_type: selectedUnit,
                         added_at: new Date().toISOString()

@@ -47,6 +47,12 @@ class CartItem(models.Model):
         related_name='cart_items',
     )
     size_name = models.CharField(max_length=100, blank=True, help_text="اسم الطول/المقاس المختار")
+    length_label = models.CharField(
+        max_length=50,
+        blank=True,
+        default='',
+        verbose_name="اسم خيار الطول/المقاس وقت الإضافة",
+    )
     pcs_carton_snapshot = models.PositiveIntegerField(
         default=0,
         verbose_name="عدد القطع في الكرتونة وقت الإضافة للسلة",

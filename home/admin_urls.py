@@ -37,6 +37,7 @@ urlpatterns = [
     path('categories/add/', admin_views.admin_category_add, name='admin_category_add'),
     path('categories/<int:category_id>/edit/', admin_views.admin_category_edit, name='admin_category_edit'),
     path('categories/<int:category_id>/delete/', admin_views.admin_category_delete, name='admin_category_delete'),
+    path('lengths/', admin_views.admin_lengths, name='admin_lengths'),
     path('orders/', admin_views.admin_orders, name='admin_orders'),
     path('orders/<int:order_id>/', admin_views.admin_order_detail, name='admin_order_detail'),
     # User Management

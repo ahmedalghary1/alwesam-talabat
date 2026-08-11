@@ -84,12 +84,13 @@ class ProductVariantSerializer(serializers.ModelSerializer):
     size_options = SizeCartonQuantitySerializer(source='size_prices', many=True, read_only=True)
     images = VariantImageSerializer(many=True, read_only=True)
     attributes = VariantAttributeValueSerializer(many=True, read_only=True)
+    length_label = serializers.CharField(source='get_length_label', read_only=True)
     
     class Meta:
         model = ProductVariant
         fields = [
             'id', 'name', 'colors', 'sizes', 'size_options', 'code', 'pcs_carton',
-            'is_available', 'images', 'attributes', 'order'
+            'length_label', 'is_available', 'images', 'attributes', 'order'
         ]
     
     def get_colors(self, obj):
@@ -116,12 +117,13 @@ class ProductListSerializer(serializers.ModelSerializer):
     """Simplified serializer for product list."""
     category_name = serializers.CharField(source='category.name', read_only=True)
     category_slug = serializers.CharField(source='category.slug', read_only=True)
+    length_label = serializers.CharField(source='get_length_label', read_only=True)
     
     class Meta:
         model = Product
         fields = [
             'id', 'name', 'slug', 'category_name', 'category_slug',
-            'image', 'pcs_carton', 'is_available', 'order'
+            'image', 'pcs_carton', 'length_label', 'is_available', 'order'
         ]
 
 
@@ -131,12 +133,13 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     variants = serializers.SerializerMethodField()
     additional_images = ProductImageSerializer(many=True, read_only=True)
     size_options = SizeCartonQuantitySerializer(source='size_prices', many=True, read_only=True)
+    length_label = serializers.CharField(source='get_length_label', read_only=True)
     
     class Meta:
         model = Product
         fields = [
             'id', 'name', 'slug', 'description', 'category',
-            'image', 'pcs_carton', 'is_available', 'order',
+            'image', 'pcs_carton', 'length_label', 'is_available', 'order',
             'variants', 'size_options', 'additional_images',
             'created_at', 'updated_at'
         ]

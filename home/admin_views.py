@@ -231,6 +231,7 @@ def admin_product_add(request):
         name = request.POST.get('name')
         description = request.POST.get('description', '')
         pcs_carton = request.POST.get('pcs_carton', 1)
+        length_label = request.POST.get('length_label', '').strip()
         product_order = request.POST.get('order', 0)
         category_id = request.POST.get('category')
         image = request.FILES.get('image')
@@ -247,6 +248,7 @@ def admin_product_add(request):
                     slug='',
                     description=description,
                     pcs_carton=_positive_int(pcs_carton, 1),
+                    length_label=length_label,
                     order=max(int(product_order or 0), 0),
                     category_id=category_id if category_id else None,
                     image=image,
@@ -468,6 +470,7 @@ def admin_product_edit(request, product_id):
                 raise ValueError('اسم المنتج مطلوب')
             product.description = request.POST.get('description', product.description)
             product.pcs_carton = _positive_int(request.POST.get('pcs_carton'), product.pcs_carton)
+            product.length_label = request.POST.get('length_label', '').strip()
             product.is_available = 'is_available' in request.POST
             product.order = max(int(request.POST.get('order') or 0), 0)
 
@@ -825,6 +828,59 @@ def admin_categories(request):
     """Category management"""
     categories = Category.objects.all().order_by('order', 'name')
     return render(request, 'admin/categories.html', {'categories': categories})
+
+
+@staff_member_required
+def admin_lengths(request):
+    """Create, rename, reorder, and safely remove length/size values."""
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        try:
+            if action == 'create':
+                name = request.POST.get('name', '').strip()
+                if not name:
+                    raise ValueError('اسم الطول/المقاس مطلوب')
+                if Size.objects.filter(name__iexact=name).exists():
+                    raise ValueError('هذا الطول/المقاس موجود بالفعل')
+                size = Size.objects.create(
+                    name=name,
+                    order=max(int(request.POST.get('order') or 0), 0),
+                )
+                messages.success(request, f'تمت إضافة "{size.name}" بنجاح')
+
+            elif action == 'update':
+                size = get_object_or_404(Size, id=request.POST.get('size_id'))
+                name = request.POST.get('name', '').strip()
+                if not name:
+                    raise ValueError('اسم الطول/المقاس مطلوب')
+                if Size.objects.filter(name__iexact=name).exclude(pk=size.pk).exists():
+                    raise ValueError('هذا الطول/المقاس موجود بالفعل')
+                size.name = name
+                size.order = max(int(request.POST.get('order') or 0), 0)
+                size.save(update_fields=['name', 'order'])
+                messages.success(request, 'تم تحديث الطول/المقاس بنجاح')
+
+            elif action == 'delete':
+                size = get_object_or_404(Size, id=request.POST.get('size_id'))
+                if size.product_prices.exists() or size.variant_prices.exists():
+                    raise ValueError('لا يمكن حذف طول/مقاس مستخدم في منتج. أزله من المنتجات أولاً.')
+                name = size.name
+                size.delete()
+                messages.success(request, f'تم حذف "{name}"')
+            else:
+                raise ValueError('العملية المطلوبة غير صحيحة')
+        except (TypeError, ValueError) as exc:
+            messages.error(request, str(exc))
+        return redirect('admin_app:admin_lengths')
+
+    sizes = Size.objects.annotate(
+        products_count=Count('product_prices', distinct=True),
+        variants_count=Count('variant_prices', distinct=True),
+    ).order_by('order', 'name')
+    return render(request, 'admin/lengths.html', {
+        'sizes': sizes,
+        'lengths_active': 'active',
+    })
 
 
 @staff_member_required

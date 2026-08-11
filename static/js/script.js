@@ -96,7 +96,7 @@ const CartManager = {
     },
 
     // Add item to cart
-    addItem(productId, productName, quantity, pcsCarton, imageUrl, variantId = null, unitType = 'carton', sizeName = '', sizeId = null) {
+    addItem(productId, productName, quantity, pcsCarton, imageUrl, variantId = null, unitType = 'carton', sizeName = '', sizeId = null, lengthLabel = 'المقاس') {
         let cart = this.getCart();
 
         // Convert to pieces if ordering by carton
@@ -123,6 +123,7 @@ const CartManager = {
             }
             cart[existingIndex].quantity += quantityInPieces;
             cart[existingIndex].unit_quantity = previousUnitQuantity + quantity;
+            cart[existingIndex].length_label = lengthLabel;
         } else {
             cart.push({
                 product_id: productId,
@@ -134,6 +135,7 @@ const CartManager = {
                 unit_type: unitType,  // NEW
                 size_name: sizeName,  // NEW: Store size name
                 size_id: sizeId,
+                length_label: lengthLabel,
                 unit_quantity: quantity,
                 added_at: new Date().toISOString()
             });
@@ -260,7 +262,7 @@ function removeFromCartLocal(productId, variantId = null, unitType = 'carton') {
 }
 
 // ==================== ADD TO CART - UNIVERSAL FUNCTION ====================
-async function addToCart(productId, productName, quantity, pcsCarton, imageUrl, isAuthenticated, variantId = null, unitType = 'carton', sizeName = '', sizeId = null) {
+async function addToCart(productId, productName, quantity, pcsCarton, imageUrl, isAuthenticated, variantId = null, unitType = 'carton', sizeName = '', sizeId = null, lengthLabel = 'المقاس') {
     if (isAuthenticated) {
         // Authenticated user - add via server
         try {
@@ -319,7 +321,7 @@ async function addToCart(productId, productName, quantity, pcsCarton, imageUrl, 
         }
     } else {
         // Non-authenticated user - use localStorage
-        CartManager.addItem(productId, productName, quantity, pcsCarton, imageUrl, variantId, unitType, sizeName, sizeId);
+        CartManager.addItem(productId, productName, quantity, pcsCarton, imageUrl, variantId, unitType, sizeName, sizeId, lengthLabel);
         showNotification(`تم إضافة ${productName} إلى السلة`, 'success');
         return { success: true };
     }

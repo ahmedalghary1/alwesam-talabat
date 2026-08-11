@@ -9,6 +9,10 @@
             <i class="fas fa-box"></i>
             <span>المنتجات</span>
         </a>
+        <a href="{% url 'admin_app:admin_lengths' %}" class="sidebar-link {{ lengths_active }}">
+            <i class="fas fa-ruler-horizontal"></i>
+            <span>الأطوال والمقاسات</span>
+        </a>
 
         <a href="{% url 'admin_app:admin_slides' %}" class="sidebar-link {{ slides_active }}">
             <i class="fas fa-images"></i>

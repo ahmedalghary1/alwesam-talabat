@@ -75,6 +75,7 @@ class CartViewSet(viewsets.ViewSet):
                 'quantity': quantity,
                 'size': selection.size,
                 'pcs_carton_snapshot': selection.pcs_carton,
+                'length_label': selection.length_label,
             }
         )
         
@@ -97,7 +98,8 @@ class CartViewSet(viewsets.ViewSet):
                 )
             cart_item.quantity += added_pieces
             cart_item.size = selection.size
-            cart_item.save(update_fields=['quantity', 'size'])
+            cart_item.length_label = selection.length_label
+            cart_item.save(update_fields=['quantity', 'size', 'length_label'])
         
         return Response(
             CartItemSerializer(cart_item).data,

@@ -49,6 +49,32 @@ class ProductDetailSizeQuantityTests(TestCase):
         )
         self.assertContains(response, 'id="product-page-data"')
 
+    def test_direct_length_label_is_exposed_on_page_and_api(self):
+        product = Product.objects.create(
+            name='سلك', pcs_carton=24, length_label='الطول', image=_image_file()
+        )
+        size = Size.objects.create(name='2 متر')
+        ProductSize.objects.create(product=product, size=size, pcs_carton=12)
+
+        response = self.client.get(reverse('products:product_detail', args=[product.slug]))
+        api_data = ProductDetailSerializer(product).data
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'اختر الطول')
+        self.assertEqual(response.context['product_page_data']['product']['lengthLabel'], 'الطول')
+        self.assertEqual(api_data['length_label'], 'الطول')
+
+    def test_variant_inherits_product_length_label_when_its_label_is_blank(self):
+        product = Product.objects.create(
+            name='خرطوم', length_label='طول اللفة', image=_image_file()
+        )
+        variant = ProductVariant.objects.create(product=product, name='أحمر')
+
+        data = ProductDetailSerializer(product).data
+
+        self.assertEqual(variant.get_length_label(), 'طول اللفة')
+        self.assertEqual(data['variants'][0]['length_label'], 'طول اللفة')
+
     def test_variant_size_quantity_is_sent_from_database(self):
         product = Product.objects.create(name='منتج بنمط', pcs_carton=24, image=_image_file())
         size = Size.objects.create(name='وسط')
@@ -68,6 +94,7 @@ class ProductDetailSizeQuantityTests(TestCase):
         })
         self.assertEqual(quantity_response.status_code, 200)
         self.assertEqual(quantity_response.json()['pcs_carton'], 72)
+        self.assertEqual(quantity_response.json()['length_label'], 'المقاس')
         self.assertIn('no-store', quantity_response['Cache-Control'])
 
     def test_each_size_exposes_its_own_images_without_losing_quantity(self):

@@ -437,7 +437,7 @@ class ProductAdmin(SortableAdminMixin, admin.ModelAdmin):
             'fields': ('name', 'slug', 'description', 'category')
         }),
         ('المواصفات', {
-            'fields': ('pcs_carton', 'is_available', 'order')
+            'fields': ('pcs_carton', 'length_label', 'is_available', 'order')
         }),
         ('الصور', {
             'fields': ('image', 'image_preview'),

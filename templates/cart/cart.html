@@ -618,8 +618,7 @@
 
                         {% if item.size_name %}
                         <span class="badge badge-size">
-                            <i class="fas fa-ruler"></i>مقاس
-                            {% if item.variant.length_label %}{{ item.variant.length_label }}: {% endif %}{{ item.size_name }}
+                            <i class="fas fa-ruler"></i> {{ item.length_label|default:"المقاس" }}: {{ item.size_name }}
                         </span>
                         {% endif %}
                     </div>
@@ -1075,6 +1074,12 @@
     document.head.appendChild(style);
 
     // ==================== LOCAL STORAGE CART ====================
+    function escapeHtml(value) {
+        const node = document.createElement('div');
+        node.textContent = String(value ?? '');
+        return node.innerHTML;
+    }
+
     // Render localStorage cart for non-authenticated users
     function renderLocalCart() {
         const container = document.getElementById('local-cart-container');
@@ -1117,7 +1122,7 @@
 
                     if (item.size_name) {
                         colorSizeBadges += `<span class="badge badge-size">
-                            <i class="fas fa-ruler"></i> ${item.size_name}
+                            <i class="fas fa-ruler"></i> ${escapeHtml(item.length_label || 'المقاس')}: ${escapeHtml(item.size_name)}
                         </span>`;
                     }
 

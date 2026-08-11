@@ -54,6 +54,6 @@ class OrderItemAdmin(admin.ModelAdmin):
         if obj.color_name:
             info_parts.append(f"لون: {obj.color_name}")
         if obj.size_name:
-            info_parts.append(f"مقاس: {obj.size_name}")
+            info_parts.append(f"{obj.length_label or 'المقاس'}: {obj.size_name}")
         return " | ".join(info_parts) if info_parts else "-"
     get_display_info.short_description = 'التفاصيل'

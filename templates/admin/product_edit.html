@@ -29,6 +29,13 @@
         </div>
 
         <div class="form-group">
+            <label class="form-label"><i class="fas fa-ruler-horizontal"></i> اسم خيار الطول/المقاس</label>
+            <input type="text" name="length_label" class="form-input" maxlength="50"
+                value="{{ product.length_label }}" placeholder="مثال: الطول، مقاس السلك، طول الإصبع">
+            <small style="color: var(--text-secondary);">يظهر هذا الاسم للعميل فوق الخيارات المباشرة، ويكون افتراضيًا للأنماط التي لا تحدد اسمًا خاصًا.</small>
+        </div>
+
+        <div class="form-group">
             <label class="form-label"><i class="fas fa-th-large"></i> القسم</label>
             <select name="category" class="form-select">
                 <option value="">بدون قسم</option>
@@ -90,14 +97,14 @@
         <!-- المقاسات المباشرة للمنتج (ProductSize) -->
         <div class="form-group" style="border: 2px dashed var(--border-color); padding: 1.5rem; border-radius: 12px; background: var(--bg-secondary); margin-top: 1.5rem;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                <label class="form-label" style="margin-bottom: 0;"><i class="fas fa-ruler"></i> مقاسات المنتج المباشرة (مع الكمية)</label>
-                <small style="color: var(--text-secondary);">يمكنك تحديد كمية مختلفة لكل مقاس</small>
+                <label class="form-label" style="margin-bottom: 0;"><i class="fas fa-ruler"></i> أطوال/مقاسات المنتج المباشرة (مع الكمية)</label>
+                <a href="{% url 'admin_app:admin_lengths' %}" style="color:#b88600;font-weight:700;">إدارة قيم الأطوال والمقاسات</a>
             </div>
 
             <!-- المقاسات الحالية -->
             {% if product_size_data %}
             <div style="margin-bottom: 1rem;">
-                <label style="display: block; font-size: 0.875rem; margin-bottom: 0.5rem; color: var(--text-secondary); font-weight: 600;">المقاسات الحالية</label>
+                <label style="display: block; font-size: 0.875rem; margin-bottom: 0.5rem; color: var(--text-secondary); font-weight: 600;">الأطوال/المقاسات الحالية</label>
                 {% for ps in product_size_data %}
                 <div class="size-image-editor" style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; margin-bottom: 0.5rem; background: var(--card-bg); padding: 0.5rem; border-radius: 8px;">
                     <input type="hidden" name="product_size_id[]" value="{{ ps.id }}">
@@ -129,7 +136,7 @@
                 <label style="display: block; font-size: 0.875rem; margin-bottom: 0.5rem; color: var(--text-secondary); font-weight: 600;">إضافة مقاس جديد</label>
                 <div class="size-image-editor" style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: center;">
                     <select name="new_product_size_id[]" class="form-select" style="flex: 2;" onchange="syncSizeImageField(this, 'product_size_', '_new_images[]')">
-                        <option value="">اختر مقاس...</option>
+                        <option value="">اختر طولًا/مقاسًا...</option>
                         {% for size in sizes %}
                         <option value="{{ size.id }}">{{ size.name }}</option>
                         {% endfor %}
@@ -142,7 +149,7 @@
                         <div class="size-images-preview"></div>
                     </div>
                 </div>
-                <small style="color: var(--text-secondary);">أضف المزيد عبر تكرار الحقل (يمكنك إضافة عدة مقاسات)</small>
+                <small style="color: var(--text-secondary);">أضف المزيد عبر تكرار الحقل (يمكنك إضافة عدة أطوال/مقاسات)</small>
             </div>
             <div style="margin-top: 0.5rem;">
                 <button type="button" onclick="addNewProductSizeRow()" style="background: #FFC400; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer;">
@@ -397,7 +404,7 @@
         row.style.marginTop = '0.5rem';
         row.innerHTML = `
             <select name="new_product_size_id[]" class="form-select" style="flex: 2;" onchange="syncSizeImageField(this, 'product_size_', '_new_images[]')">
-                <option value="">اختر مقاس...</option>
+                <option value="">اختر طولًا/مقاسًا...</option>
                 ${window.allSizes.map(s => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('')}
             </select>
             <input type="number" name="new_product_size_pcs[]" class="form-input" style="flex: 1;" placeholder="الكمية" min="1">
@@ -508,8 +515,8 @@
                     <input type="checkbox" name="variant_available[]" value="${formKey}" ${variantAvailable ? 'checked' : ''} style="width: 20px; height: 20px;">
                 </div>
                 <div style="grid-column: span 2;">
-                    <label style="display: block; font-size: 0.875rem; margin-bottom: 0.25rem;"><i class="fas fa-tag"></i> نوع الطول</label>
-                    <input type="text" name="variant_length_label[]" class="form-input" style="padding: 0.625rem;" value="${variantLengthLabel}" placeholder="مثال: مقاس السلك، طول الصابع">
+                    <label style="display: block; font-size: 0.875rem; margin-bottom: 0.25rem;"><i class="fas fa-tag"></i> اسم خيار الطول/المقاس</label>
+                    <input type="text" name="variant_length_label[]" class="form-input" maxlength="50" style="padding: 0.625rem;" value="${variantLengthLabel}" placeholder="مثال: الطول، مقاس السلك، طول الإصبع">
                 </div>
                 <div style="grid-column: span 2;">
                     <label style="display: block; font-size: 0.875rem; margin-bottom: 0.5rem;"><i class="fas fa-ruler"></i> الأطوال المتاحة مع الكمية</label>

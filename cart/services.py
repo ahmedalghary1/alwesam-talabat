@@ -12,6 +12,7 @@ class ProductSelection:
     variant: ProductVariant | None
     size: Size | None
     pcs_carton: int
+    length_label: str
 
 
 def _selection_id(value, label):
@@ -77,10 +78,20 @@ def resolve_product_selection(
             variant=variant,
             size=size_price.size,
             pcs_carton=size_price.pcs_carton,
+            length_label=(
+                variant.get_length_label()
+                if variant
+                else product.get_length_label()
+            ),
         )
 
     return ProductSelection(
         variant=variant,
         size=None,
         pcs_carton=default_pcs_carton,
+        length_label=(
+            variant.get_length_label()
+            if variant
+            else product.get_length_label()
+        ),
     )

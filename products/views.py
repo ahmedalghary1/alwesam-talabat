@@ -141,7 +141,7 @@ def product_detail(request, slug):
                 'colorId': color.pk if color else None,
                 'colorName': color.value if color else '',
                 'colorHex': color.hex_code if color and color.hex_code else '',
-                'lengthLabel': variant.length_label or '',
+                'lengthLabel': variant.get_length_label(),
                 'sizePrices': [
                     {
                         'sizeId': size_price.size_id,
@@ -174,6 +174,7 @@ def product_detail(request, slug):
                 'image': product.image.url if product.image else '',
                 'pcsCarton': product.pcs_carton,
                 'hasSizes': bool(direct_size_prices),
+                'lengthLabel': product.get_length_label(),
                 'cartonQuantityUrl': reverse(
                     'products:product_carton_quantity', args=[product.slug]
                 ),
@@ -255,6 +256,11 @@ def product_carton_quantity(request, slug):
         'variant_id': variant_id or None,
         'size_id': size_price.size_id,
         'size_name': size_price.size.name,
+        'length_label': (
+            size_price.variant.get_length_label()
+            if variant_id
+            else product.get_length_label()
+        ),
         'pcs_carton': size_price.pcs_carton,
     })
     response['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'

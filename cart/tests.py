@@ -37,7 +37,9 @@ class CartSizeQuantityTests(TestCase):
         self.client.force_login(self.user)
 
     def test_direct_size_uses_its_carton_quantity(self):
-        product = Product.objects.create(name='منتج', pcs_carton=24, image=_image_file())
+        product = Product.objects.create(
+            name='منتج', pcs_carton=24, length_label='الطول', image=_image_file()
+        )
         size = Size.objects.create(name='كبير')
         ProductSize.objects.create(product=product, size=size, pcs_carton=48)
 
@@ -54,6 +56,12 @@ class CartSizeQuantityTests(TestCase):
         self.assertEqual(item.quantity, 96)
         self.assertEqual(item.get_pcs_carton(), 48)
         self.assertEqual(item.get_quantity_in_cartons(), 2)
+        self.assertEqual(item.length_label, 'الطول')
+
+        product.length_label = 'اسم جديد'
+        product.save(update_fields=['length_label'])
+        item.refresh_from_db()
+        self.assertEqual(item.length_label, 'الطول')
 
     def test_variant_size_uses_its_carton_quantity(self):
         product = Product.objects.create(name='منتج بنمط', pcs_carton=24, image=_image_file())
@@ -75,6 +83,7 @@ class CartSizeQuantityTests(TestCase):
         self.assertEqual(item.size, size)
         self.assertEqual(item.quantity, 144)
         self.assertEqual(item.get_quantity_in_cartons(), 2)
+        self.assertEqual(item.length_label, 'المقاس')
 
     def test_size_is_required_when_variant_has_sizes(self):
         product = Product.objects.create(name='منتج يحتاج مقاس', image=_image_file())
