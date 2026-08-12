@@ -1136,6 +1136,26 @@ class UserExcelExportTests(TestCase):
         self.assertContains(response, self.export_url)
         self.assertContains(response, 'استخراج جميع المستخدمين إلى Excel')
 
+    def test_users_page_shows_address_instead_of_email(self):
+        self.client.force_login(self.staff)
+
+        response = self.client.get(reverse('admin_app:all_users'))
+
+        self.assertContains(response, '<th>العنوان</th>', html=True)
+        self.assertContains(response, self.user.address)
+        self.assertNotContains(response, '<th>البريد الإلكتروني</th>', html=True)
+        self.assertNotContains(response, self.user.email)
+
+    def test_users_page_can_search_by_address(self):
+        self.client.force_login(self.staff)
+
+        response = self.client.get(
+            reverse('admin_app:all_users'),
+            {'search': 'مدينة نصر'},
+        )
+
+        self.assertContains(response, self.user.username)
+
     def test_export_is_a_complete_arabic_excel_workbook(self):
         self.client.force_login(self.staff)
         self.staff.profile.delete()

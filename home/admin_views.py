@@ -1002,7 +1002,8 @@ def admin_all_users(request):
         users = users.filter(
             Q(username__icontains=search_query) |
             Q(email__icontains=search_query) |
-            Q(phone__icontains=search_query)
+            Q(phone__icontains=search_query) |
+            Q(address__icontains=search_query)
         )
 
     if status_filter == 'active':

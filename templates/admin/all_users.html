@@ -32,7 +32,7 @@
         <form method="get" class="filter-form">
             <div class="search-box">
                 <i class="fas fa-search"></i>
-                <input type="text" name="search" placeholder="بحث بالاسم، البريد، أو الهاتف..."
+                <input type="text" name="search" placeholder="بحث بالاسم، العنوان، أو الهاتف..."
                     value="{{ search_query }}">
             </div>
 
@@ -52,7 +52,7 @@
             <thead>
                 <tr>
                     <th>المستخدم</th>
-                    <th>البريد الإلكتروني</th>
+                    <th>العنوان</th>
                     <th>رقم الهاتف</th>
                     <th>الحالة</th>
                     <th>تاريخ التسجيل</th>
@@ -80,7 +80,7 @@
                             </div>
                         </div>
                     </td>
-                    <td>{{ user.email }}</td>
+                    <td>{{ user.address|default:"غير محدد" }}</td>
                     <td>{{ user.phone }}</td>
                     <td>
                         {% if user.is_active %}
