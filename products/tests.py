@@ -82,7 +82,7 @@ class ProductDetailSizeQuantityTests(TestCase):
         self.assertContains(response, "key = 'color_' + variant.id")
         self.assertContains(
             response,
-            'variant.variantName || group.colorName',
+            "label.textContent = group.colorName || 'اختيار'",
         )
 
     def test_length_only_option_has_no_carton_quantity(self):
