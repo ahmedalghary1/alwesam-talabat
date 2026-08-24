@@ -112,10 +112,7 @@ def product_detail(request, slug):
     """
     try:
         # تحسين استعلامات قاعدة البيانات مع ترتيب الأنماط والأطوال والألوان
-        # Keep unavailable variants in the selector so an existing product option
-        # does not disappear from the storefront. The client marks those options
-        # as disabled and prevents adding them to the cart.
-        variants_qs = ProductVariant.objects.order_by('order').prefetch_related(
+        variants_qs = ProductVariant.objects.filter(is_available=True).order_by('order').prefetch_related(
             Prefetch('sizes', queryset=Size.objects.all().order_by('order')),
             Prefetch('attributes', queryset=VariantAttributeValue.objects.select_related('attribute')),
             Prefetch(

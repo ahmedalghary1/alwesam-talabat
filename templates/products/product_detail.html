@@ -295,7 +295,10 @@
             ALL_VARIANTS.forEach(variant => {
                 let key;
                 if (variant.attributeType === 'color') {
-                    key = variant.colorId ?? 'no-color';
+                    // A color is a visual property, not the identity of a variant.
+                    // Keep a unique group per variant so patterns sharing a color
+                    // are not merged into one storefront option.
+                    key = 'color_' + variant.id;
                 } else {
                     key = 'text_' + variant.id;   // مفتاح فريد لكل variant نصي
                 }
@@ -360,12 +363,6 @@
                     colorDiv.dataset.variantId = displayVariant.id;
                     colorDiv.dataset.pcsCarton = displayVariant.pcsCarton;
                     colorDiv.className = 'color-option';
-                    const groupIsAvailable = group.variants.some(item => item.isAvailable);
-                    if (!groupIsAvailable) {
-                        colorDiv.classList.add('disabled');
-                        colorDiv.setAttribute('aria-disabled', 'true');
-                        colorDiv.title = 'غير متوفر';
-                    }
                     if (group.colorHex && group.colorHex.trim() !== '') {
                         colorDiv.style.backgroundColor = group.colorHex;
                     } else {
@@ -374,13 +371,12 @@
                     }
                     // تم إزالة تحديد width/height لأنها موجودة في CSS
                     colorDiv.onclick = () => {
-                        if (!groupIsAvailable) return;
                         setDisplayedCartonQuantity(displayVariant.pcsCarton);
-                        selectColor(group.colorId || 'no-color', group.variants);
+                        selectColor(group.colorId || 'no-color', group.variants, colorDiv);
                     };
 
                     const label = document.createElement('span');
-                    label.textContent = group.colorName || 'اختيار';
+                    label.textContent = variant.variantName || group.colorName || 'اختيار';
                     label.style.cssText = 'font-size:0.85em; display:block; color:#333; margin-top:6px';
 
                     wrapper.appendChild(colorDiv);
@@ -398,13 +394,7 @@
                     textDiv.dataset.pcsCarton = variant.pcsCarton;
                     textDiv.className = 'text-option';
                     textDiv.textContent = variant.variantName || variant.colorName || 'اختيار';
-                    if (!variant.isAvailable) {
-                        textDiv.classList.add('disabled');
-                        textDiv.setAttribute('aria-disabled', 'true');
-                        textDiv.title = 'غير متوفر';
-                    }
                     textDiv.onclick = () => {
-                        if (!variant.isAvailable) return;
                         setDisplayedCartonQuantity(variant.pcsCarton);
                         selectTextVariant(variant);
                     };
@@ -414,8 +404,8 @@
                 }
             });
         }
-        function selectColor(colorId, variants) {
-            const selectedColor = document.querySelector(`[data-color-id="${colorId}"]`);
+        function selectColor(colorId, variants, selectedColor = null) {
+            selectedColor = selectedColor || document.querySelector(`[data-color-id="${colorId}"]`);
 
             // Toggle behavior: If color is already selected, deselect it
             if (selectedColor && selectedColor.classList.contains('selected')) {
