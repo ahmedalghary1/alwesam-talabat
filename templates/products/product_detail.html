@@ -360,6 +360,12 @@
                     colorDiv.dataset.variantId = displayVariant.id;
                     colorDiv.dataset.pcsCarton = displayVariant.pcsCarton;
                     colorDiv.className = 'color-option';
+                    const groupIsAvailable = group.variants.some(item => item.isAvailable);
+                    if (!groupIsAvailable) {
+                        colorDiv.classList.add('disabled');
+                        colorDiv.setAttribute('aria-disabled', 'true');
+                        colorDiv.title = 'غير متوفر';
+                    }
                     if (group.colorHex && group.colorHex.trim() !== '') {
                         colorDiv.style.backgroundColor = group.colorHex;
                     } else {
@@ -368,6 +374,7 @@
                     }
                     // تم إزالة تحديد width/height لأنها موجودة في CSS
                     colorDiv.onclick = () => {
+                        if (!groupIsAvailable) return;
                         setDisplayedCartonQuantity(displayVariant.pcsCarton);
                         selectColor(group.colorId || 'no-color', group.variants);
                     };
@@ -391,7 +398,13 @@
                     textDiv.dataset.pcsCarton = variant.pcsCarton;
                     textDiv.className = 'text-option';
                     textDiv.textContent = variant.variantName || variant.colorName || 'اختيار';
+                    if (!variant.isAvailable) {
+                        textDiv.classList.add('disabled');
+                        textDiv.setAttribute('aria-disabled', 'true');
+                        textDiv.title = 'غير متوفر';
+                    }
                     textDiv.onclick = () => {
+                        if (!variant.isAvailable) return;
                         setDisplayedCartonQuantity(variant.pcsCarton);
                         selectTextVariant(variant);
                     };

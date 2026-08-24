@@ -1250,3 +1250,17 @@ body.theme-dark .pcs-badge.length-badge strong {
 .thumb-btn img {
     pointer-events: none; /* يمنع الصورة من اعتراض أحداث اللمس */
 }
+
+.text-option.disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    border-color: var(--border-color);
+    background: var(--bg-secondary);
+    transform: none;
+}
+
+.text-option.disabled:hover {
+    border-color: var(--border-color);
+    box-shadow: none;
+    transform: none;
+}

@@ -49,6 +49,32 @@ class ProductDetailSizeQuantityTests(TestCase):
         )
         self.assertContains(response, 'id="product-page-data"')
 
+    def test_unavailable_variant_is_shown_as_a_disabled_option(self):
+        product = Product.objects.create(
+            name='منتج بأنماط', pcs_carton=24, image=_image_file()
+        )
+        variant = ProductVariant.objects.create(
+            product=product,
+            name='نمط غير متوفر',
+            is_available=False,
+        )
+
+        response = self.client.get(
+            reverse('products:product_detail', args=[product.slug])
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'id="color-selection"')
+        self.assertEqual(list(response.context['variants']), [variant])
+        self.assertEqual(
+            response.context['product_page_data']['variants'][0]['name'],
+            variant.name,
+        )
+        self.assertFalse(
+            response.context['product_page_data']['variants'][0]['isAvailable']
+        )
+        self.assertContains(response, "textDiv.classList.add('disabled')")
+
     def test_length_only_option_has_no_carton_quantity(self):
         product = Product.objects.create(
             name='خرطوم', length_label='الطول', image=_image_file()
