@@ -5,6 +5,7 @@ app_name = 'admin_support'
 
 urlpatterns = [
     path('messages/', admin_views.messages_list, name='messages_list'),
+    path('messages/new/', admin_views.start_conversation, name='start_conversation'),
     path('messages/<int:message_id>/', admin_views.conversation_detail, name='conversation_detail'),
     path('messages/<int:message_id>/reply/', admin_views.send_reply, name='send_reply'),
     path('messages/<int:message_id>/mark-read/', admin_views.mark_as_read, name='mark_as_read'),

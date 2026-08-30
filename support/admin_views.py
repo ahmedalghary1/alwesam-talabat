@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.db.models import Max, Count, Q, Prefetch
 from django.views.decorators.http import require_POST
+from django.contrib.auth import get_user_model
 from .models import CustomerMessage, MessageReply
 
 @staff_member_required
@@ -42,6 +43,46 @@ def messages_list(request):
 
 
 @staff_member_required
+def start_conversation(request):
+    """Allow a staff member to start a new support conversation with a customer."""
+    user_model = get_user_model()
+    customers = user_model.objects.filter(is_staff=False).order_by('username', 'id')
+
+    selected_customer_id = request.POST.get('customer', '').strip()
+    message_text = request.POST.get('message', '').strip()
+
+    if request.method == 'POST':
+        customer = (
+            customers.filter(pk=selected_customer_id).first()
+            if selected_customer_id.isdigit()
+            else None
+        )
+        if customer is None:
+            messages.error(request, 'يرجى اختيار عميل صحيح.')
+        elif not message_text:
+            messages.error(request, 'الرسالة فارغة.')
+        else:
+            initial_message = CustomerMessage.objects.create(
+                user=customer,
+                message=message_text,
+                sent_by_admin=True,
+                admin_user=request.user,
+                is_read=True,
+            )
+            messages.success(request, f'تم بدء المحادثة مع {customer.username} بنجاح.')
+            return redirect(
+                'admin_support:conversation_detail',
+                message_id=initial_message.id,
+            )
+
+    return render(request, 'admin/support/start_conversation.html', {
+        'customers': customers,
+        'selected_customer_id': selected_customer_id,
+        'message_text': message_text,
+    })
+
+
+@staff_member_required
 def conversation_detail(request, message_id):
     """
     show all messages of a user (full conversation)
@@ -53,7 +94,7 @@ def conversation_detail(request, message_id):
     # Get all messages of this user with replies
     all_user_messages = CustomerMessage.objects.filter(
         user=user
-    ).select_related('user').prefetch_related(
+    ).select_related('user', 'admin_user').prefetch_related(
         Prefetch('replies', queryset=MessageReply.objects.select_related('admin_user'))
     ).order_by('created_at')
     

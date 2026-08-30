@@ -13,6 +13,15 @@ class CustomerMessage(models.Model):
         verbose_name="المستخدم"
     )
     message = models.TextField(verbose_name="الرسالة")
+    sent_by_admin = models.BooleanField(default=False, verbose_name="مرسلة من الإدارة")
+    admin_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='initiated_support_messages',
+        verbose_name="المسؤول المرسل",
+    )
     is_read = models.BooleanField(default=False, verbose_name="مقروءة")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="تاريخ الإرسال")
     
@@ -22,7 +31,8 @@ class CustomerMessage(models.Model):
         ordering = ['-created_at']
     
     def __str__(self):
-        return f"رسالة من {self.user.username} - {self.created_at.strftime('%Y-%m-%d %H:%M')}"
+        sender = self.admin_user.username if self.sent_by_admin and self.admin_user else self.user.username
+        return f"رسالة من {sender} - {self.created_at.strftime('%Y-%m-%d %H:%M')}"
     
     @property
     def has_reply(self):

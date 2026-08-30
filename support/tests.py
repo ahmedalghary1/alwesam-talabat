@@ -62,3 +62,75 @@ class FloatingSupportChatTests(TestCase):
 
         messages = response.json()['messages']
         self.assertEqual([message['id'] for message in messages], [self.message.id])
+
+
+class AdminInitiatedConversationTests(TestCase):
+    def setUp(self):
+        user_model = get_user_model()
+        self.customer = user_model.objects.create_user(
+            username='new-conversation-customer',
+            phone='01000000211',
+            address='Cairo',
+            password='StrongPass123!',
+            is_active=True,
+        )
+        self.admin = user_model.objects.create_user(
+            username='new-conversation-admin',
+            phone='01000000212',
+            address='Cairo',
+            password='StrongPass123!',
+            is_active=True,
+            is_staff=True,
+        )
+
+    def test_staff_can_start_conversation_with_customer(self):
+        self.client.force_login(self.admin)
+
+        response = self.client.post(reverse('admin_support:start_conversation'), {
+            'customer': self.customer.id,
+            'message': 'نود إبلاغك بوصول طلبك.',
+        })
+
+        initial_message = CustomerMessage.objects.get(user=self.customer)
+        self.assertRedirects(
+            response,
+            reverse('admin_support:conversation_detail', args=[initial_message.id]),
+        )
+        self.assertTrue(initial_message.sent_by_admin)
+        self.assertEqual(initial_message.admin_user, self.admin)
+        self.assertEqual(initial_message.message, 'نود إبلاغك بوصول طلبك.')
+
+    def test_customer_receives_admin_initiated_message(self):
+        initial_message = CustomerMessage.objects.create(
+            user=self.customer,
+            message='رسالة بدأت من الإدارة',
+            sent_by_admin=True,
+            admin_user=self.admin,
+            is_read=True,
+        )
+        self.client.force_login(self.customer)
+
+        response = self.client.get(reverse('support:get_user_messages'))
+
+        returned_message = response.json()['messages'][0]
+        self.assertEqual(returned_message['id'], initial_message.id)
+        self.assertTrue(returned_message['is_admin'])
+        self.assertEqual(returned_message['admin'], self.admin.username)
+
+    def test_non_staff_cannot_open_new_conversation_page(self):
+        self.client.force_login(self.customer)
+
+        response = self.client.get(reverse('admin_support:start_conversation'))
+
+        self.assertEqual(response.status_code, 302)
+
+    def test_blank_initial_message_is_rejected(self):
+        self.client.force_login(self.admin)
+
+        response = self.client.post(reverse('admin_support:start_conversation'), {
+            'customer': self.customer.id,
+            'message': '   ',
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(CustomerMessage.objects.filter(user=self.customer).exists())

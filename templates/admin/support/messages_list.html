@@ -39,6 +39,8 @@
     .filter-tabs {
         display: flex;
         gap: 1rem;
+        align-items: center;
+        flex-wrap: wrap;
     }
 
     .filter-tab {
@@ -57,6 +59,18 @@
         background: var(--brand-yellow);
         color: var(--brand-black);
         border-color: var(--brand-yellow);
+    }
+
+    .new-conversation-btn {
+        padding: 0.625rem 1.25rem;
+        border-radius: 8px;
+        background: var(--brand-yellow);
+        color: var(--brand-black);
+        text-decoration: none;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
     }
 
     .messages-table {
@@ -187,6 +201,10 @@
         </h1>
 
         <div class="filter-tabs">
+            <a href="{% url 'admin_support:start_conversation' %}" class="new-conversation-btn">
+                <i class="fas fa-plus"></i>
+                محادثة جديدة
+            </a>
             <button type="button" class="filter-tab active" onclick="filterMessages('all', this)">
                 الكل ({{ conversations|length }})
             </button>

@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from utils.image_utils import ImageCompressionMixin
 from django.conf import settings
+from .validators import validate_phone_number
 
 
 class CustomUser(AbstractUser):
@@ -20,7 +21,12 @@ class CustomUser(AbstractUser):
         verbose_name="البريد الإلكتروني",
     )
     # Indexed for performance when searching/filtering users by phone
-    phone = models.CharField(max_length=20, unique=True, verbose_name="رقم الهاتف")
+    phone = models.CharField(
+        max_length=20,
+        unique=True,
+        validators=[validate_phone_number],
+        verbose_name="رقم الهاتف",
+    )
     address = models.TextField(verbose_name="العنوان")
     
     # The authentication backend still accepts either username or email.

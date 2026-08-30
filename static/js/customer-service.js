@@ -137,9 +137,11 @@ function refreshSupportMessages() {
             data.messages.forEach(message => {
                 displayMessage({
                     id: message.id,
+                    record_type: 'message',
                     text: message.text,
                     created_at: message.created_at,
-                    is_user: true
+                    is_user: !message.is_admin,
+                    admin_name: message.admin
                 });
 
                 (message.replies || []).forEach(reply => {
@@ -191,7 +193,7 @@ function displayMessage(messageData) {
     const chatBody = document.getElementById('supportChatBody');
     if (!chatBody) return null;
 
-    const messageType = messageData.is_user ? 'message' : 'reply';
+    const messageType = messageData.record_type || (messageData.is_user ? 'message' : 'reply');
     const existingMessage = findRenderedMessage(messageType, messageData.id);
     if (existingMessage) return existingMessage;
 
@@ -200,7 +202,7 @@ function displayMessage(messageData) {
     if (messageData.pending) messageDiv.classList.add('pending');
 
     if (messageData.id !== undefined && messageData.id !== null) {
-        const attribute = messageData.is_user ? 'supportMessageId' : 'supportReplyId';
+        const attribute = messageType === 'message' ? 'supportMessageId' : 'supportReplyId';
         messageDiv.dataset[attribute] = String(messageData.id);
     }
 

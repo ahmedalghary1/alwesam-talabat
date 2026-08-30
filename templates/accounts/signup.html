@@ -252,6 +252,9 @@
                     رقم الهاتف
                 </label>
                 <input type="tel" name="phone" class="form-input" placeholder="+20 106 269 2455" required
+                    inputmode="tel" autocomplete="tel" maxlength="20"
+                    pattern="\+?[0-9٠-٩۰-۹ ()-]{10,20}"
+                    title="أدخل رقم هاتف صحيحًا بدون حروف"
                     value="{{ form.phone.value|default:'' }}">
                 {% if form.phone.errors %}
                 <div class="error-text" style="color: #ef4444; font-size: 0.85rem; margin-top: 0.25rem;">

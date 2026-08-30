@@ -309,12 +309,16 @@
         <div class="conversation-body">
             <!-- All customer messages with replies -->
             {% for msg in user_messages %}
-            <!-- Message from customer -->
-            <div class="conversation-message customer">
+            <div class="conversation-message {% if msg.sent_by_admin %}admin{% else %}customer{% endif %}">
                 <div class="message-meta">
                     <span class="message-sender">
+                        {% if msg.sent_by_admin %}
+                        <i class="fas fa-headset"></i>
+                        {{ msg.admin_user.username|default:"خدمة العملاء" }}
+                        {% else %}
                         <i class="fas fa-user-circle"></i>
                         {{ client.username }}
+                        {% endif %}
                     </span>
                     <span class="message-time">{{ msg.created_at|date:"Y-m-d H:i" }}</span>
                 </div>
@@ -345,19 +349,19 @@
         <div class="reply-form">
             <h3>
                 <i class="fas fa-reply"></i>
-                إرسال رد
+                إرسال رسالة
             </h3>
 
             <form method="POST" action="{% url 'admin_support:send_reply' user_messages.last.id %}" id="replyForm">
                 {% csrf_token %}
                 <div class="form-group">
-                    <textarea name="reply" class="form-control" placeholder="اكتب ردك هنا..." required></textarea>
+                    <textarea name="reply" class="form-control" placeholder="اكتب رسالتك هنا..." required></textarea>
                 </div>
 
                 <div class="action-buttons">
                     <button type="submit" class="btn-submit">
                         <i class="fas fa-paper-plane"></i>
-                        إرسال الرد
+                        إرسال الرسالة
                     </button>
                 </div>
             </form>

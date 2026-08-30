@@ -41,6 +41,45 @@ class PhoneUniquenessTests(TestCase):
         self.assertFalse(serializer.is_valid())
         self.assertIn('phone', serializer.errors)
 
+    def test_web_registration_rejects_letters_in_phone(self):
+        response = self.client.post(reverse('accounts:signup'), {
+            'username': 'invalid-web-phone',
+            'email': 'invalid-web-phone@example.com',
+            'phone': 'Ahmed Mohamed',
+            'address': 'Cairo',
+            'password1': 'StrongPass123!',
+            'password2': 'StrongPass123!',
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'رقم الهاتف يجب أن يحتوي على أرقام فقط.')
+        self.assertFalse(self.user_model.objects.filter(username='invalid-web-phone').exists())
+
+    def test_api_registration_rejects_letters_in_phone(self):
+        serializer = RegisterSerializer(data={
+            'username': 'invalid-api-phone',
+            'email': 'invalid-api-phone@example.com',
+            'phone': 'Ahmed Mohamed',
+            'address': 'Cairo',
+            'password': 'StrongPass123!',
+            'password_confirm': 'StrongPass123!',
+        })
+
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('phone', serializer.errors)
+
+    def test_registration_accepts_common_phone_formatting(self):
+        serializer = RegisterSerializer(data={
+            'username': 'formatted-phone',
+            'email': 'formatted-phone@example.com',
+            'phone': '+20 106 269 2455',
+            'address': 'Cairo',
+            'password': 'StrongPass123!',
+            'password_confirm': 'StrongPass123!',
+        })
+
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+
 
 class OptionalEmailTests(TestCase):
     def setUp(self):

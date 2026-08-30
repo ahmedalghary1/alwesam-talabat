@@ -1,0 +1,119 @@
+{% extends "admin/admin_base.html" %}
+{% load static %}
+
+{% block title %}محادثة جديدة - لوحة التحكم{% endblock %}
+{% block sidebar_support %}active{% endblock %}
+
+{% block admin_extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin.css' %}">
+<style>
+    .new-conversation-card {
+        max-width: 760px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: var(--card-bg);
+        border: 2px solid var(--brand-yellow);
+        border-radius: 12px;
+    }
+
+    .new-conversation-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    .new-conversation-header h1 {
+        margin: 0;
+        color: var(--text-primary);
+        font-size: 1.6rem;
+    }
+
+    .back-btn {
+        color: var(--text-primary);
+        text-decoration: none;
+        font-weight: 700;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 0.65rem;
+        color: var(--text-primary);
+        font-weight: 700;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.9rem 1rem;
+        border: 2px solid var(--border-color);
+        border-radius: 8px;
+        background: var(--card-bg);
+        color: var(--text-primary);
+        font-family: inherit;
+        font-size: 1rem;
+    }
+
+    textarea.form-control {
+        min-height: 160px;
+        resize: vertical;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--brand-yellow);
+    }
+
+    .submit-btn {
+        padding: 0.9rem 1.6rem;
+        border: 0;
+        border-radius: 8px;
+        background: var(--brand-yellow);
+        color: var(--brand-black);
+        font-weight: 700;
+        cursor: pointer;
+    }
+</style>
+{% endblock %}
+
+{% block admin_content %}
+{% include 'includes/messages.html' %}
+<div class="new-conversation-card">
+    <div class="new-conversation-header">
+        <h1><i class="fas fa-comment-medical"></i> بدء محادثة جديدة</h1>
+        <a href="{% url 'admin_support:messages_list' %}" class="back-btn">
+            <i class="fas fa-arrow-right"></i> العودة
+        </a>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="customer" class="form-label">العميل</label>
+            <select id="customer" name="customer" class="form-control" required>
+                <option value="">اختر العميل</option>
+                {% for customer in customers %}
+                <option value="{{ customer.id }}" {% if selected_customer_id == customer.id|stringformat:"s" %}selected{% endif %}>
+                    {{ customer.username }} — {{ customer.phone }}{% if customer.email %} — {{ customer.email }}{% endif %}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="message" class="form-label">الرسالة</label>
+            <textarea id="message" name="message" class="form-control" placeholder="اكتب رسالتك للعميل..." required>{{ message_text }}</textarea>
+        </div>
+
+        <button type="submit" class="submit-btn">
+            <i class="fas fa-paper-plane"></i> إرسال وبدء المحادثة
+        </button>
+    </form>
+</div>
+{% endblock %}

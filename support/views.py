@@ -63,7 +63,7 @@ def get_user_messages(request):
     try:
         messages = CustomerMessage.objects.filter(
             user=request.user
-        ).prefetch_related(
+        ).select_related('admin_user').prefetch_related(
             Prefetch(
                 'replies',
                 queryset=MessageReply.objects.select_related('admin_user').order_by('created_at', 'id')
@@ -77,6 +77,12 @@ def get_user_messages(request):
                 'text': msg.message,
                 'created_at': msg.created_at.strftime('%Y-%m-%d %H:%M'),
                 'is_read': msg.is_read,
+                'is_admin': msg.sent_by_admin,
+                'admin': (
+                    msg.admin_user.username
+                    if msg.sent_by_admin and msg.admin_user
+                    else 'خدمة العملاء'
+                ),
                 'replies': []
             }
             
@@ -112,7 +118,7 @@ def get_conversation(request, message_id):
     Returns message with all its replies.
     """
     try:
-        message = CustomerMessage.objects.prefetch_related('replies').get(
+        message = CustomerMessage.objects.select_related('admin_user').prefetch_related('replies').get(
             id=message_id,
             user=request.user
         )
@@ -122,6 +128,12 @@ def get_conversation(request, message_id):
             'text': message.message,
             'created_at': message.created_at.strftime('%Y-%m-%d %H:%M'),
             'is_read': message.is_read,
+            'is_admin': message.sent_by_admin,
+            'admin': (
+                message.admin_user.username
+                if message.sent_by_admin and message.admin_user
+                else 'خدمة العملاء'
+            ),
             'replies': []
         }
         
